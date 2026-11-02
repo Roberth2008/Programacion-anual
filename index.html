@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Programación Anual DREC-2026 | DRE Cañas · MEP</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        mep: {
+                            navy: '#0A192F',
+                            darkBlue: '#0A192F',
+                            blue: '#1E40AF',
+                            red: '#DC2626',
+                            gold: '#D97706',
+                            emerald: '#059669',
+                            lightBg: '#F8FAFC'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts: Inter (texto) + Plus Jakarta Sans (títulos editoriales) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- SheetJS XLSX (exportación Excel con estilo) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+    <!-- Firebase SDK (App, Authentication y Firestore) -->
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+    <!-- Lógica del sistema -->
+    <script src="script.js"></script>
+</head>
+<body class="min-h-screen bg-mep-lightBg text-slate-800">
+
+    <!-- ==================== PANEL DE INICIO DE SESIÓN (SOLO ADMINISTRADORES) ==================== -->
+    <!-- La consulta pública de la programación NO requiere iniciar sesión: el
+         visitante navega en Modo Lectura y usa el botón «Iniciar sesión» de la
+         barra superior únicamente cuando necesita credenciales de Administrador. -->
+    <section id="loginScreen" class="login-screen hidden fixed inset-0 z-[80] overflow-y-auto min-h-screen flex items-center justify-center p-4 sm:p-6">
+        <div class="mesh-blob mesh-blob-a"></div>
+        <div class="mesh-blob mesh-blob-b"></div>
+        <div class="w-full max-w-md login-card relative z-10 p-7 sm:p-9">
+            <div class="text-center mb-7">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-amber-400">
+                    <i data-lucide="calendar-days" class="w-8 h-8"></i>
+                </div>
+                <p class="text-[11px] font-extrabold uppercase tracking-[0.25em] text-blue-300">DRE Cañas · MEP</p>
+                <h1 class="font-display text-2xl font-extrabold text-white mt-2">Programación Anual <span class="anio-dinamico text-amber-400">2026</span></h1>
+                <p class="text-sm text-blue-100/70 mt-2">Acceso exclusivo para cuentas de Administrador</p>
+            </div>
+
+            <div id="loginInfo" class="hidden bg-blue-500/10 border border-blue-400/20 rounded-2xl p-3 mb-5 text-xs text-blue-100 font-medium"></div>
+
+            <form id="loginForm" class="space-y-4" onsubmit="event.preventDefault(); iniciarSesion();">
+                <div>
+                    <label for="loginEmail" class="block text-[11px] font-bold uppercase tracking-wider text-blue-100/70 mb-1.5">Correo institucional</label>
+                    <input id="loginEmail" type="email" autocomplete="username" required class="login-input" placeholder="nombre@mep.go.cr">
+                </div>
+                <div>
+                    <label for="loginPassword" class="block text-[11px] font-bold uppercase tracking-wider text-blue-100/70 mb-1.5">Contraseña</label>
+                    <input id="loginPassword" type="password" autocomplete="current-password" required class="login-input" placeholder="Ingrese su contraseña">
+                </div>
+                <p id="loginError" role="alert" class="hidden text-xs text-red-200 bg-red-500/10 border border-red-400/20 rounded-2xl p-3"></p>
+                <button id="btnLogin" type="submit" class="btn-mep-primary w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2">
+                    <i data-lucide="arrow-right-to-line" class="w-4 h-4"></i> Ingresar al sistema
+                </button>
+                <button id="btnRecuperar" type="button" onclick="recuperarContrasena()" class="w-full text-center text-[11px] font-bold text-blue-200 hover:text-white hover:underline focus:outline-none transition">
+                    ¿Olvidó su contraseña?
+                </button>
+                <button type="button" onclick="cerrarLoginPublico()" class="w-full text-center bg-white/5 hover:bg-white/10 border border-white/10 text-blue-100 text-xs font-bold rounded-2xl py-2.5 transition flex items-center justify-center gap-1.5">
+                    <i data-lucide="eye" class="w-4 h-4"></i> Continuar en Modo Lectura (acceso público)
+                </button>
+            </form>
+
+            <!-- Acceso de demostración (visible solo cuando Firebase no está configurado) -->
+            <div id="loginDemo" class="hidden mt-6 pt-5 border-t border-white/10 space-y-3">
+                <p class="text-[11px] font-extrabold text-blue-100/50 text-center uppercase tracking-widest">Modo demostración · Firebase sin configurar</p>
+                <button type="button" onclick="iniciarSesionDemo('admin')" class="w-full bg-white/10 hover:bg-white/20 border border-white/10 text-white text-xs font-bold rounded-2xl py-2.5 transition flex items-center justify-center gap-1.5">
+                    <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i> Administrador (demo)
+                </button>
+                <p class="text-[10px] text-blue-100/40 text-center">Los datos se guardan en este navegador (LocalStorage) e incluyen ejemplos precargados. El público consulta sin sesión en Modo Lectura.</p>
+            </div>
+
+            <p class="text-[11px] text-blue-100/40 text-center mt-6">Panel de uso exclusivo del personal administrativo autorizado del MEP.</p>
+        </div>
+    </section>
+
+    <!-- ==================== APLICACIÓN (solo con sesión iniciada) ==================== -->
+    <div id="appShell" class="hidden app-shell">
+
+        <!-- Overlay del sidebar (móvil) -->
+        <div id="sidebarOverlay" class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+        <!-- ============ SIDEBAR NAVEGABLE INTELIGENTE ============ -->
+        <aside id="sidebar" class="sidebar">
+            <div class="sidebar-brand">
+                <img src="logo-dre-canas.png" alt="Logo DRE Cañas - MEP" class="h-10 w-auto object-contain" onerror="this.style.display='none'">
+                <div class="min-w-0">
+                    <p class="font-display text-sm font-extrabold text-white leading-tight">Programación Anual</p>
+                    <p class="text-[10px] text-blue-200/60 font-semibold uppercase tracking-wider"><span class="anio-dinamico">2026</span> · DRE Cañas</p>
+                </div>
+                <button class="sidebar-cerrar" onclick="toggleSidebar()" title="Cerrar menú">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Elementos generados por script.js (con grupos: General / Programación / Administración) -->
+            <nav class="sidebar-nav" id="navTabs"></nav>
+
+            <div class="sidebar-foot">
+                <div class="sidebar-foot-info">
+                    <div class="min-w-0">
+                        <img src="logo.png" alt="Logo MEP" class="h-12 w-auto object-contain">
+                         </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ COLUMNA PRINCIPAL ============ -->
+        <div class="app-columna">
+
+            <!-- Encabezado dinámico en cristal (glassmorphism sobrio) -->
+            <header id="appHeader" class="app-header">
+                <button class="hamburger" onclick="toggleSidebar()" title="Menú">
+                    <i data-lucide="menu" class="w-5 h-5"></i>
+                </button>
+                <div class="header-titulo min-w-0">
+                    <h2 id="pageHeaderTitulo" class="font-display text-base sm:text-xl font-extrabold text-mep-navy truncate">Inicio</h2>
+                    <p class="text-[10px] sm:text-[11px] text-slate-500 font-semibold uppercase tracking-wider truncate">Programación Anual DREC · Sistema Oficial</p>
+                </div>
+                <div class="header-acciones shrink-0">
+                    <span id="firebaseStatus" class="chip chip-demo">Verificando...</span>
+                    <span id="roleBadge" class="chip chip-rol hidden md:inline-flex">Rol: Solo Lectura</span>
+                    <!-- Botón de acceso al panel de autenticación (exclusivo para Administradores).
+                         Visible para todo visitante que navega en Modo Lectura. -->
+                    <button type="button" id="btnHeaderLogin" onclick="abrirLoginPublico()" class="btn-mep-primary px-4 py-2 rounded-2xl font-bold text-xs flex items-center gap-1.5">
+                        <i data-lucide="log-in" class="w-4 h-4"></i> Iniciar sesión
+                    </button>
+                    <!-- Chip de usuario: solo aparece cuando un Administrador tiene sesión iniciada. -->
+                    <div id="userChipWrap" class="user-chip hidden">
+                        <span class="user-avatar"><i data-lucide="user-round" class="w-3.5 h-3.5"></i></span>
+                        <span id="userName" class="text-xs font-semibold max-w-[120px] truncate">—</span>
+                        <button onclick="cerrarSesion()" class="user-salir" title="Cerrar sesión">
+                            <i data-lucide="log-out" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Banners informativos -->
+            <div id="bannerDemo" class="hidden banner banner-demo">⚠️ Modo demostración: los datos se guardan solo en este navegador. Para producción, configure firebaseConfig en script.js.</div>
+            <div id="bannerPublicacion" class="hidden banner banner-publicacion">ℹ️ La Programación Anual aún no ha sido publicada oficialmente por la administración.</div>
+
+            <main id="appMain" class="app-main w-full">
+
+                <!-- ==================== VISTA: INICIO / PORTADA (BENTO) ==================== -->
+                <section id="view-inicio" class="vista space-y-4 sm:space-y-5">
+                    <!-- Hero editorial con degradado de malla -->
+                    <div class="mesh-hero rounded-3xl p-6 sm:p-10 text-white relative overflow-hidden">
+                        <div class="mesh-blob mesh-blob-a"></div>
+                        <div class="mesh-blob mesh-blob-c"></div>
+                        <div class="relative z-10">
+                            <p class="text-[11px] font-extrabold uppercase tracking-[0.3em] text-amber-400">Dirección Regional de Educación Cañas · MEP</p>
+                            <h2 class="font-display text-3xl sm:text-4xl font-black mt-3 leading-tight">Programación Anual <span class="anio-dinamico text-amber-400">2026</span></h2>
+                            <p class="text-sm text-blue-100/80 mt-3 max-w-2xl">Documento institucional oficial que organiza las actividades, ferias, festivales, pruebas académicas, juegos deportivos y estrategias de permanencia del año lectivo.</p>
+                            <div class="flex flex-wrap items-center gap-2 mt-5">
+                                <span class="hero-pill">Versión: <span id="portadaVersion">—</span></span>
+                                <span id="portadaEstado" class="hero-pill">—</span>
+                                <span class="hero-pill">Circuitos 01 – 05</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-4 items-stretch">
+                        <!-- Saludo institucional -->
+                        <div class="card card-hover col-span-12 lg:col-span-7 p-6 flex flex-col">
+                            <div class="flex items-start justify-between gap-3 mb-3">
+                                <h3 class="font-display text-base sm:text-lg font-bold text-mep-navy flex items-center gap-2">
+                                    <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="message-square-quote" class="w-[18px] h-[18px]"></i></span> Saludo Institucional
+                                </h3>
+                                <button type="button" onclick="abrirEditorPortada()" class="solo-admin text-[11px] font-bold text-mep-blue hover:underline focus:outline-none flex items-center gap-1">
+                                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Editar portada
+                                </button>
+                            </div>
+                            <p id="saludoTexto" class="flex-1 text-sm text-slate-600 leading-relaxed whitespace-pre-line min-h-[80px]"></p>
+                            <p id="saludoAutor" class="text-xs font-extrabold text-mep-navy mt-4 text-right flex items-center justify-end gap-1.5">
+                                <span class="w-6 h-0.5 bg-mep-gold rounded-full"></span><span></span>
+                            </p>
+                        </div>
+
+                        <!-- Ideas rectoras -->
+                        <div class="card card-hover col-span-12 lg:col-span-5 p-6 flex flex-col">
+                            <div class="flex items-start justify-between gap-3 mb-1">
+                                <h3 class="font-display text-base sm:text-lg font-bold text-mep-navy flex items-center gap-2">
+                                    <span class="icono-tile bg-amber-50 text-mep-gold"><i data-lucide="lightbulb" class="w-[18px] h-[18px]"></i></span> Ideas Rectoras del Año
+                                </h3>
+                                <span class="shrink-0 inline-flex items-center whitespace-nowrap text-[10px] font-extrabold uppercase tracking-widest text-mep-gold bg-amber-50 border border-amber-200/70 rounded-full px-3 py-1.5 mt-1">Año <span class="anio-dinamico">2026</span></span>
+                            </div>
+                            <p class="text-xs text-slate-500 mb-4">Directrices institucionales que orientan la gestión educativa regional.</p>
+                            <div id="ideasGrid" class="flex-1 min-h-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 content-start overflow-y-auto overscroll-contain pr-1"></div>
+                        </div>
+                    </div>
+
+                    <!-- ==================== MARCO FILOSÓFICO INSTITUCIONAL (MISIÓN · VISIÓN · VALORES) ==================== -->
+                    <div class="grid grid-cols-12 gap-4 items-stretch">
+                        <!-- Misión -->
+                        <div class="col-span-12 lg:col-span-6 mesh-hero rounded-3xl p-6 sm:p-7 text-white relative overflow-hidden">
+                            <div class="mesh-blob mesh-blob-a"></div>
+                            <div class="relative z-10">
+                                <div class="flex items-center gap-2.5 mb-4">
+                                    <span class="icono-tile bg-white/10 border border-white/15 text-amber-400"><i data-lucide="target" class="w-[18px] h-[18px]"></i></span>
+                                    <p class="text-[11px] font-extrabold uppercase tracking-[0.25em] text-amber-400">Misión</p>
+                                </div>
+                                <p class="text-sm text-blue-100/85 leading-relaxed">&ldquo;El MEP es el ente rector que garantiza a los habitantes del país el derecho fundamental a una educación de calidad, con acceso equitativo e inclusivo, con aprendizajes pertinentes y relevantes, para la formación plena e integral de las personas y la convivencia.&rdquo;</p>
+                                <p class="text-[10px] font-extrabold uppercase tracking-widest text-blue-200/60 mt-4">Ministerio de Educación Pública</p>
+                            </div>
+                        </div>
+
+                        <!-- Visión -->
+                        <div class="col-span-12 lg:col-span-6 rounded-3xl p-6 sm:p-7 text-white relative overflow-hidden" style="background: linear-gradient(150deg, #0A192F 0%, #123563 58%, #1E40AF 100%); box-shadow: 0 24px 48px -20px rgba(10, 25, 47, 0.55);">
+                            <div class="absolute -right-4 -bottom-4 opacity-10"><i data-lucide="compass" class="w-32 h-32"></i></div>
+                            <div class="relative z-10">
+                                <div class="flex items-center gap-2.5 mb-4">
+                                    <span class="icono-tile bg-white/10 border border-white/15 text-amber-400"><i data-lucide="compass" class="w-[18px] h-[18px]"></i></span>
+                                    <p class="text-[11px] font-extrabold uppercase tracking-[0.25em] text-amber-400">Visión</p>
+                                </div>
+                                <p class="text-sm text-blue-100/85 leading-relaxed">&ldquo;Ser una institución reconocida a nivel nacional e internacional, como la rectora del sistema educativo costarricense mediante el mejoramiento continuo de la gestión, con estándares modernos de eficacia, eficiencia y transparencia; orientada a la construcción de una sociedad inclusiva e integrada.&rdquo;</p>
+                                <p class="text-[10px] font-extrabold uppercase tracking-widest text-blue-200/60 mt-4">Gestión <span class="anio-dinamico">2026</span> · DRE Cañas</p>
+                            </div>
+                        </div>
+
+                        <!-- Encabezado de valores -->
+                        <div class="col-span-12 flex items-center gap-3 pt-1">
+                            <span class="icono-tile bg-amber-50 text-mep-gold"><i data-lucide="gem" class="w-[18px] h-[18px]"></i></span>
+                            <h3 class="font-display text-base sm:text-lg font-bold text-mep-navy whitespace-nowrap">Valores Institucionales</h3>
+                            <span class="flex-1 h-px bg-slate-200"></span>
+                        </div>
+
+                        <!-- Compromiso -->
+                        <div class="card card-hover col-span-12 md:col-span-6 xl:col-span-3 p-5 flex flex-col">
+                            <div class="flex items-center gap-2.5 mb-3">
+                                <span class="icono-tile" style="background:#D9770614;color:#D97706"><i data-lucide="handshake" class="w-[18px] h-[18px]"></i></span>
+                                <h4 class="font-display text-sm font-extrabold text-mep-navy">Compromiso</h4>
+                            </div>
+                            <p class="text-[11px] text-slate-500 leading-relaxed flex-1">Es una decisión de vida de aceptación libre y conciencia de dar más de lo mínimo requerido. Con entrega, mística, honestidad y dedicación ante cualquier acción ejecutada a nivel laboral, personal y profesional; para el logro de los objetivos institucionales y el bienestar de la organización.</p>
+                        </div>
+
+                        <!-- Respeto -->
+                        <div class="card card-hover col-span-12 md:col-span-6 xl:col-span-3 p-5 flex flex-col">
+                            <div class="flex items-center gap-2.5 mb-3">
+                                <span class="icono-tile" style="background:#05966914;color:#059669"><i data-lucide="heart-handshake" class="w-[18px] h-[18px]"></i></span>
+                                <h4 class="font-display text-sm font-extrabold text-mep-navy">Respeto</h4>
+                            </div>
+                            <p class="text-[11px] text-slate-500 leading-relaxed flex-1">Cuidar en el trato al otro, el valor y la dignidad que posee como persona humana, el entorno, atendiendo la particularidad sin imponer convicciones o creencias en congruencia con la normativa vigente.</p>
+                        </div>
+
+                        <!-- Transparencia -->
+                        <div class="card card-hover col-span-12 md:col-span-6 xl:col-span-3 p-5 flex flex-col">
+                            <div class="flex items-center gap-2.5 mb-3">
+                                <span class="icono-tile" style="background:#1E40AF14;color:#1E40AF"><i data-lucide="scale" class="w-[18px] h-[18px]"></i></span>
+                                <h4 class="font-display text-sm font-extrabold text-mep-navy">Transparencia</h4>
+                            </div>
+                            <p class="text-[11px] text-slate-500 leading-relaxed flex-1">Conjunto de acciones coherentes con aspectos de la política institucional y la normativa vigente, para el acceso de la ciudadanía a información veraz, comunicándola de forma asertiva, que genere confianza y promueva la imparcialidad. Que dé cuenta de las actuaciones del MEP, de tal forma que permita la evaluación de su gestión.</p>
+                        </div>
+
+                        <!-- Responsabilidad -->
+                        <div class="card card-hover col-span-12 md:col-span-6 xl:col-span-3 p-5 flex flex-col">
+                            <div class="flex items-center gap-2.5 mb-3">
+                                <span class="icono-tile" style="background:#7C3AED14;color:#7C3AED"><i data-lucide="shield-check" class="w-[18px] h-[18px]"></i></span>
+                                <h4 class="font-display text-sm font-extrabold text-mep-navy">Responsabilidad</h4>
+                            </div>
+                            <p class="text-[11px] text-slate-500 leading-relaxed flex-1">Es el cumplimiento continuo, consciente, diligente y oportuno de los deberes y obligaciones inherentes al cargo, según la normativa vigente, que conlleva al funcionario a asumir las consecuencias de sus actuaciones y tiene como finalidad la satisfacción del interés público.</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-12 gap-4 items-stretch">
+                        <!-- Resumen de módulos -->
+                        <div class="card card-hover col-span-12 p-6">
+                            <h3 class="font-display text-base sm:text-lg font-bold text-mep-navy flex items-center gap-2 mb-4">
+                                <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="layout-grid" class="w-[18px] h-[18px]"></i></span> Contenido de la Programación Anual
+                            </h3>
+                            <div id="portadaModulos" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== VISTA: PANEL DE CONTROL (BENTO GRID) ==================== -->
+                <section id="view-dashboard" class="vista hidden grid grid-cols-12 gap-4">
+                    <div class="card card-hover col-span-6 lg:col-span-3 p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Actividades totales</p>
+                                <h3 id="statActividades" class="font-display text-3xl font-black text-mep-navy mt-1">0</h3>
+                            </div>
+                            <div class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="calendar-check" class="w-5 h-5"></i></div>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-2 font-medium">Todos los módulos del año</p>
+                    </div>
+                    <div class="col-span-6 lg:col-span-3 rounded-3xl p-5 relative overflow-hidden text-white gradient-esmeralda">
+                        <div class="absolute -right-5 -bottom-5 opacity-15"><i data-lucide="clock" class="w-28 h-28"></i></div>
+                        <div class="relative z-10">
+                            <p class="text-[10px] font-extrabold text-emerald-100 uppercase tracking-widest">Próximas 30 días</p>
+                            <h3 id="statProximas" class="font-display text-3xl font-black mt-1">0</h3>
+                            <p class="text-[11px] text-emerald-50/80 mt-2 font-medium">Actividades por ejecutar</p>
+                        </div>
+                    </div>
+                    <div class="card card-hover col-span-6 lg:col-span-3 p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Directorio</p>
+                                <h3 id="statDirectorio" class="font-display text-3xl font-black text-mep-navy mt-1">0</h3>
+                            </div>
+                            <div class="icono-tile bg-slate-100 text-slate-600"><i data-lucide="phone" class="w-5 h-5"></i></div>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-2 font-medium">Departamentos y circuitos</p>
+                    </div>
+                    <div class="card card-hover col-span-6 lg:col-span-3 p-5">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">Módulos activos</p>
+                                <h3 id="statModulos" class="font-display text-3xl font-black text-mep-navy mt-1">0</h3>
+                            </div>
+                            <div class="icono-tile bg-amber-50 text-mep-gold"><i data-lucide="layout-grid" class="w-5 h-5"></i></div>
+                        </div>
+                        <p class="text-[11px] text-slate-400 mt-2 font-medium">Secciones con información</p>
+                    </div>
+
+                    <div class="card card-hover col-span-12 lg:col-span-8 p-6">
+                        <h2 class="font-display text-lg font-bold text-mep-navy flex items-center gap-2 mb-1">
+                            <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="calendar-clock" class="w-[18px] h-[18px]"></i></span> Próximas actividades
+                        </h2>
+                        <p class="text-xs text-slate-500 mb-4">Las siguientes actividades de la programación regional, ordenadas por fecha.</p>
+                        <div id="proximasList" class="space-y-2.5 max-h-[380px] overflow-y-auto pr-1"></div>
+                    </div>
+                    <div class="card card-hover col-span-12 lg:col-span-4 p-6">
+                        <h2 class="font-display text-lg font-bold text-mep-navy flex items-center gap-2 mb-1">
+                            <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="chart-column" class="w-[18px] h-[18px]"></i></span> Distribución por módulo
+                        </h2>
+                        <p class="text-xs text-slate-500 mb-4">Cantidad de actividades por sección.</p>
+                        <div id="modulosBars" class="space-y-3"></div>
+                    </div>
+
+                    <div class="card card-hover col-span-12 p-6">
+                        <h2 class="font-display text-lg font-bold text-mep-navy flex items-center gap-2 mb-1">
+                            <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="bar-chart-3" class="w-[18px] h-[18px]"></i></span> Actividades por mes
+                        </h2>
+                        <p class="text-xs text-slate-500 mb-4">Volumen programado mes a mes del año <span class="anio-dinamico">2026</span>.</p>
+                        <div id="mesesBars" class="grid grid-cols-6 sm:grid-cols-12 gap-2 items-end"></div>
+                    </div>
+                </section>
+
+                <!-- ==================== VISTA: CALENDARIO MENSUAL INTERACTIVO ==================== -->
+                <section id="view-calendario" class="vista hidden space-y-4">
+                    <div class="card p-5 flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div>
+                            <h2 class="font-display text-lg font-bold text-mep-navy flex items-center gap-2">
+                                <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="calendar-days" class="w-[18px] h-[18px]"></i></span> Calendario Anual Interactivo
+                            </h2>
+                            <p class="text-xs text-slate-500 mt-1">Todas las actividades del año, mes a mes. Seleccione un día para ver su detalle.</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <button onclick="cambiarMes(-1)" class="btn-flecha" title="Mes anterior"><i data-lucide="chevron-left" class="w-4 h-4"></i></button>
+                            <span id="calMesAnio" class="font-display font-extrabold text-mep-navy min-w-[150px] text-center text-sm"></span>
+                            <button onclick="cambiarMes(1)" class="btn-flecha" title="Mes siguiente"><i data-lucide="chevron-right" class="w-4 h-4"></i></button>
+                            <button onclick="irAMesActual()" class="btn-suave">Hoy</button>
+                            <button onclick="exportarCalendario()" class="btn-suave btn-suave-acento"><i data-lucide="download" class="w-3.5 h-3.5"></i> Excel</button>
+                        </div>
+                    </div>
+
+                    <div class="card p-5">
+                        <div id="calLeyenda" class="flex flex-wrap gap-2 mb-4"></div>
+                        <div class="grid grid-cols-7 gap-1.5 mb-1.5" id="calHeaders"></div>
+                        <div id="calGrid" class="grid grid-cols-7 gap-1.5"></div>
+                    </div>
+
+                    <div id="calDetalle" class="card p-5 hidden"></div>
+                </section>
+
+                <!-- ==================== SECCIONES DE MÓDULOS (generadas por script.js) ==================== -->
+                <div id="contenedorModulos"></div>
+
+                <!-- ==================== VISTA: CONFIGURACIÓN (solo administrador) ==================== -->
+                <section id="view-configuracion" class="vista hidden space-y-4 solo-admin">
+                    <div class="card p-6">
+                        <h2 class="font-display text-lg font-bold text-mep-navy flex items-center gap-2 mb-4">
+                            <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="settings" class="w-[18px] h-[18px]"></i></span> Metadatos y publicación oficial
+                        </h2>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                            <div class="mini-stat">
+                                <p class="text-[10px] font-extrabold uppercase text-slate-400 tracking-widest">Año</p>
+                                <p id="cfgAnioVal" class="font-display text-xl font-black text-mep-navy">—</p>
+                            </div>
+                            <div class="mini-stat">
+                                <p class="text-[10px] font-extrabold uppercase text-slate-400 tracking-widest">Versión</p>
+                                <p id="cfgVersionVal" class="font-display text-xl font-black text-mep-navy">—</p>
+                            </div>
+                            <div class="mini-stat">
+                                <p class="text-[10px] font-extrabold uppercase text-slate-400 tracking-widest">Estado oficial</p>
+                                <p id="cfgEstadoVal" class="text-sm font-black text-mep-navy mt-1.5">—</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="abrirEditorPortada()" class="btn-mep-primary px-4 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-1.5">
+                                <i data-lucide="pencil" class="w-4 h-4"></i> Editar metadatos y saludo
+                            </button>
+                            <button onclick="togglePublicado()" id="btnTogglePublicado" class="btn-suave flex items-center gap-1.5">
+                                <i data-lucide="megaphone" class="w-4 h-4"></i> Publicar / Despublicar
+                            </button>
+                            <button onclick="publicarTodo()" class="btn-suave btn-suave-exito flex items-center gap-1.5">
+                                <i data-lucide="check-circle-2" class="w-4 h-4"></i> Publicar todas las actividades
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="card p-6">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+                            <div>
+                                <h2 class="font-display text-lg font-bold text-mep-navy flex items-center gap-2">
+                                    <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="users" class="w-[18px] h-[18px]"></i></span> Usuarios autorizados
+                                </h2>
+                                <p class="text-xs text-slate-500 mt-1">Cuentas de Administrador (el público consulta en Modo Lectura sin cuenta).</p>
+                            </div>
+                            <button onclick="abrirModalUsuario()" class="btn-mep-primary px-4 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-1.5 self-start">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i> Registrar usuario
+                            </button>
+                        </div>
+                        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-3 mb-4 text-[11px] text-blue-900 font-medium">
+                            
+                            Su UID actual: <strong id="miUid">—</strong>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="tabla">
+                                <thead>
+                                    <tr>
+                                        <th class="p-3">Nombre</th>
+                                        <th class="p-3">Correo</th>
+                                        <th class="p-3">UID</th>
+                                        <th class="p-3">Agregado por</th>
+                                        <th class="p-3">Rol</th>
+                                        <th class="p-3 text-center">Estado</th>
+                                        <th class="p-3 text-center">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tablaUsuariosBody" class="divide-y divide-slate-100 font-medium text-slate-700"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div id="cardDatosDemo" class="card hidden !border-amber-200 p-6">
+                        <h2 class="font-display text-lg font-bold text-mep-navy flex items-center gap-2 mb-2">
+                            <span class="icono-tile bg-amber-50 text-mep-gold"><i data-lucide="database" class="w-[18px] h-[18px]"></i></span> Datos de demostración
+                        </h2>
+                        <p class="text-xs text-slate-500 mb-4">El sistema corre en modo demostración con datos de ejemplo guardados en este navegador.</p>
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="restaurarDemo()" class="btn-suave flex items-center gap-1.5">
+                                <i data-lucide="refresh-cw" class="w-4 h-4"></i> Restaurar datos de ejemplo
+                            </button>
+                            <button onclick="borrarTodoDemo()" class="btn-mep-danger px-4 py-2.5 rounded-2xl font-bold text-xs flex items-center gap-1.5">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i> Borrar todos los datos
+                            </button>
+                        </div>
+                    </div>
+                </section>
+            </main>
+
+            <footer class="app-footer">
+                <p>Programación Anual <span class="anio-dinamico">2026</span> · Dirección Regional de Educación Cañas · Ministerio de Educación Pública de Costa Rica</p>
+            </footer>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: EDITOR GENÉRICO ==================== -->
+    <div id="modalEditor" class="fixed inset-0 z-50 hidden p-4 bg-slate-950/60 backdrop-blur-md">
+        <div class="modal-caja w-full max-w-2xl">
+            <div class="modal-cabecera">
+                <h3 id="editorTitulo" class="font-display font-extrabold text-mep-navy text-sm sm:text-base"></h3>
+                <button onclick="cerrarModal('modalEditor')" class="modal-cerrar">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <form id="editorForm" class="p-6 space-y-4" onsubmit="guardarEditor(event)"></form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: REGISTRO DE NUEVO USUARIO ==================== -->
+    <div id="modalUsuario" class="fixed inset-0 z-50 hidden p-4 bg-slate-950/60 backdrop-blur-md">
+        <div class="modal-caja w-full max-w-lg">
+            <div class="modal-cabecera">
+                <h3 class="font-display font-extrabold text-mep-navy text-sm sm:text-base flex items-center gap-2">
+                    <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="user-plus" class="w-[18px] h-[18px]"></i></span>
+                    Registrar nuevo usuario
+                </h3>
+                <button onclick="cerrarModal('modalUsuario')" class="modal-cerrar">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <form id="formUsuario" class="p-6 space-y-4" onsubmit="guardarUsuarioModal(event)">
+                <!-- El selector de rol fue eliminado: toda cuenta registrada aquí es de
+                     rol ADMINISTRADOR. El público consulta la programación en Modo
+                     Lectura sin necesidad de cuenta. -->
+                <div class="bg-blue-50 border border-blue-100 rounded-2xl p-3 text-[11px] text-blue-900 font-medium flex items-start gap-2">
+                    <i data-lucide="shield-check" class="w-4 h-4 mt-0.5 shrink-0 text-mep-blue"></i>
+                    <span>La cuenta que se registre tendrá rol de <strong>Administrador</strong>: acceso total a la gestión de la programación y de los usuarios. El público general consulta la información en <strong>Modo Lectura</strong> sin iniciar sesión.</span>
+                </div>
+                <div>
+                    <label for="nuNombre" class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Nombre completo *</label>
+                    <input type="text" id="nuNombre" autocomplete="off" class="campo" placeholder="Ej: Lic. Nombre Apellido" required>
+                </div>
+                <div>
+                    <label for="nuEmail" class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Correo institucional *</label>
+                    <input type="email" id="nuEmail" autocomplete="off" class="campo" placeholder="nombre@mep.go.cr" required>
+                </div>
+                <div>
+                    <label for="nuPassword" class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Contraseña inicial *</label>
+                    <div class="relative">
+                        <input type="password" id="nuPassword" autocomplete="new-password" minlength="6" class="campo pr-12" placeholder="Mínimo 6 caracteres" required>
+                        <button type="button" onclick="alternarClave('nuPassword', this)" class="absolute right-2 top-1/2 -translate-y-1/2 w-9 h-9 inline-flex items-center justify-center rounded-xl text-slate-400 hover:text-mep-blue hover:bg-blue-50 transition" title="Mostrar / ocultar contraseña">
+                            <i data-lucide="eye" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <p class="text-[10px] text-slate-400 mt-1 font-medium">La cuenta se crea directamente en Firebase Authentication desde esta aplicación; no necesita usar la consola.</p>
+                </div>
+                <p id="nuAuditoria" class="text-[11px] text-slate-500 bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium flex items-start gap-1.5">
+                    <i data-lucide="history" class="w-3.5 h-3.5 mt-0.5 shrink-0 text-slate-400"></i>
+                    <span id="nuAuditoriaTexto"></span>
+                </p>
+                <p id="nuError" role="alert" class="hidden text-xs font-bold text-red-700 bg-red-50 border border-red-200 rounded-xl p-3"></p>
+                <div class="flex flex-col-reverse sm:flex-row justify-end gap-2 pt-2">
+                    <button type="button" onclick="cerrarModal('modalUsuario')" class="btn-suave">Cancelar</button>
+                    <button type="submit" id="btnCrearUsuario" class="btn-mep-primary px-6 py-2.5 rounded-2xl font-bold text-sm flex items-center gap-2">
+                        <i data-lucide="user-plus" class="w-4 h-4"></i> Crear usuario
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: DETALLE DE REGISTRO ==================== -->
+    <div id="modalDetalle" class="fixed inset-0 z-50 hidden p-4 bg-slate-950/60 backdrop-blur-md">
+        <div class="modal-caja w-full max-w-xl">
+            <div class="modal-cabecera">
+                <h3 id="detalleTitulo" class="font-display font-extrabold text-mep-navy text-sm sm:text-base"></h3>
+                <button onclick="cerrarModal('modalDetalle')" class="modal-cerrar">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <div id="detalleCuerpo" class="p-6"></div>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: PORTADA / METADATOS ==================== -->
+    <div id="modalPortada" class="fixed inset-0 z-50 hidden p-4 bg-slate-950/60 backdrop-blur-md">
+        <div class="modal-caja w-full max-w-2xl">
+            <div class="modal-cabecera">
+                <h3 class="font-display font-extrabold text-mep-navy text-sm sm:text-base">Metadatos de la Programación Anual</h3>
+                <button onclick="cerrarModal('modalPortada')" class="modal-cerrar">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <form class="p-6 space-y-4" onsubmit="guardarPortada(event)">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Año de la programación *</label>
+                        <input type="number" id="pcAnio" min="2020" max="2035" required class="campo">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Versión del documento *</label>
+                        <input type="text" id="pcVersion" placeholder="Ej: Vs.001" required class="campo">
+                    </div>
+                </div>
+                <label class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-2xl p-3 cursor-pointer">
+                    <input type="checkbox" id="pcPublicado" class="rounded text-mep-blue w-4 h-4">
+                    <span class="text-xs font-bold text-slate-700">Programación publicada oficialmente (visible para el público en Modo Lectura)</span>
+                </label>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Saludo institucional</label>
+                    <textarea id="pcSaludo" rows="5" class="campo" placeholder="Mensaje del Director(a) Regional de Educación..."></textarea>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Firma del saludo</label>
+                    <input type="text" id="pcAutor" placeholder="Ej: Nombre completo, Directora Regional de Educación" class="campo">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Ideas rectoras (una por línea)</label>
+                    <textarea id="pcIdeas" rows="4" class="campo" placeholder="Escriba cada idea rectora en una línea distinta"></textarea>
+                </div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="cerrarModal('modalPortada')" class="btn-suave">Cancelar</button>
+                    <button type="submit" class="btn-mep-primary px-6 py-2.5 rounded-2xl font-bold text-sm">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toasts -->
+    <div id="toastContainer" class="fixed bottom-4 left-4 z-[70] space-y-2 w-[calc(100%-2rem)] max-w-sm pointer-events-none"></div>
+</body>
+</html>
