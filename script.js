@@ -166,18 +166,41 @@ let calDiaSel = null;         // ISO "YYYY-MM-DD"
 
 let filtrosState = {};         // { modulo: { campo: valor } }
 
-/* ==================== CATÁLOGO DE MÓDULOS ==================== */
+/* ==================== CATÁLOGO OFICIAL Y REGLAS DE CALIDAD DE DATOS ====================
+   Catálogo cerrado de Circuitos de la DRE Cañas: es la ÚNICA fuente válida para los
+   selectores de Circuito/Región y para sus filtros. No se aceptan valores escritos a
+   mano, con errores ortográficos ni fuera de lista: se rechazan tanto en el formulario
+   (en vivo) como al guardar, y los filtros solo ofrecen las opciones oficiales. */
+const CIRCUITOS_OFICIALES = ["Regional (todos)", "Dirección Regional", "Circuito 01 (Cañas)", "Circuito 02 (Abangares)", "Circuito 03 (Tilarán)", "Circuito 04 (Colorado)", "Circuito 05 (La Altura)"];
+
+/* Reglas de validación, formateo y normalización por campo:
+   · min / max ......... longitud mínima y máxima del texto ya normalizado
+   · normalizar ........ "titulo" | "nombre" | "texto" | "correo" | "telefono" | "hora"
+   · telefono .......... exige formato costarricense válido: fijo 8 dígitos (2xxx-xxxx),
+                         celular 8 dígitos (inicia 5–9) o extensión corta (2–5 dígitos)
+   · correoInstitucional exige formato de correo válido y dominio oficial del MEP
+   · catalogo .......... fuerza que el valor pertenezca exactamente al catálogo oficial
+   · noAnteriorQue ..... valida que esta fecha no sea anterior a la de otro campo */
+const RE_CORREO = /^[a-z0-9!#$%&'*+\/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+\/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}$/i;
+const RE_TELEFONO_CR_8 = /^[2-9]\d{3}-?\d{4}$/;   // fijo 2xxx-xxxx y celular 8 dígitos (5–9)
+const RE_EXTENSION_CR = /^\d{2,5}$/;              // extensión telefónica interna
+const DOMINIOS_CORREO_OFICIALES = ["mep.go.cr", "qe.edu.cr", "dtpe.edu.cr"];
+
 const F = {
-    titulo:  { clave: "titulo", etiqueta: "Título / Actividad", tipo: "text", requerido: true },
+    titulo:  { clave: "titulo", etiqueta: "Título / Actividad", tipo: "text", requerido: true,
+               min: 5, max: 120, normalizar: "titulo",
+               ayuda: "Entre 5 y 120 caracteres. Se formatea automáticamente con iniciales en mayúscula." },
     fecha:   { clave: "fecha", etiqueta: "Fecha inicial", tipo: "date", requerido: true },
-    fechaFin:{ clave: "fechaFin", etiqueta: "Fecha final (opcional)", tipo: "date" },
-    hora:    { clave: "hora", etiqueta: "Hora", tipo: "text" },
-    sede:    { clave: "sede", etiqueta: "Sede / Lugar", tipo: "text" },
-    part:    { clave: "participantes", etiqueta: "Participantes / Público", tipo: "text" },
-    resp:    { clave: "responsable", etiqueta: "Responsable / Coordinación", tipo: "text" },
-    desc:    { clave: "descripcion", etiqueta: "Descripción / Observaciones", tipo: "textarea" },
-    circuito:{ clave: "circuito", etiqueta: "Circuito", tipo: "select",
-               opciones: ["", "Regional (todos)", "Circuito 01 (Cañas)", "Circuito 02 (Abangares)", "Circuito 03 (Tilarán)", "Circuito 04 (Colorado)", "Circuito 05 (La Altura)"] }
+    fechaFin:{ clave: "fechaFin", etiqueta: "Fecha final (opcional)", tipo: "date", noAnteriorQue: "fecha" },
+    hora:    { clave: "hora", etiqueta: "Hora", tipo: "text", max: 60, normalizar: "hora",
+               ayuda: "Ej: 8:00 a.m. · 2:00 p.m. · 8:00 a.m. – 12:00 m.d." },
+    sede:    { clave: "sede", etiqueta: "Sede / Lugar", tipo: "text", max: 120, normalizar: "titulo" },
+    part:    { clave: "participantes", etiqueta: "Participantes / Público", tipo: "text", max: 200, normalizar: "texto" },
+    resp:    { clave: "responsable", etiqueta: "Responsable / Coordinación", tipo: "text", max: 120, normalizar: "nombre" },
+    desc:    { clave: "descripcion", etiqueta: "Descripción / Observaciones", tipo: "textarea", max: 600, normalizar: "texto",
+               ayuda: "Máximo 600 caracteres, sin bloques de texto sin formato." },
+    circuito:{ clave: "circuito", etiqueta: "Circuito", tipo: "select", catalogo: CIRCUITOS_OFICIALES,
+               opciones: [""].concat(CIRCUITOS_OFICIALES) }
 };
 
 const MODULOS = {
@@ -188,9 +211,9 @@ const MODULOS = {
         icono: "sparkles", color: "#D97706", prefijo: "CEL",
         coleccion: COLECCIONES.actividades,
         columnas: [ {campo:"titulo",etiqueta:"Semana / Día"}, {campo:"tipo",etiqueta:"Tipo"}, {campo:"fecha",etiqueta:"Inicio"}, {campo:"fechaFin",etiqueta:"Finaliza"}, {campo:"descripcion",etiqueta:"Detalle"} ],
-        filtros: [ {campo:"tipo",etiqueta:"Tipo",opciones:["","Semana","Día Celebrativo"]}, {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
+        filtros: [ {campo:"tipo",etiqueta:"Tipo",opciones:["","Semana","Día Celebrativo"]}, {campo:"circuito",etiqueta:"Circuito",opciones:[""].concat(CIRCUITOS_OFICIALES)} ],
         campos: [ F.titulo,
-            { clave:"tipo", etiqueta:"Tipo", tipo:"select", requerido:true, opciones:["Semana","Día Celebrativo"] },
+            { clave:"tipo", etiqueta:"Tipo", tipo:"select", requerido:true, catalogo:["Semana","Día Celebrativo"], opciones:["Semana","Día Celebrativo"] },
             F.fecha, F.fechaFin, F.circuito, F.desc ]
     },
     ferias_festivales: {
@@ -200,9 +223,9 @@ const MODULOS = {
         icono: "theater", color: "#DC2626", prefijo: "FF",
         coleccion: COLECCIONES.actividades,
         columnas: [ {campo:"titulo",etiqueta:"Feria / Festival"}, {campo:"etapa",etiqueta:"Etapa"}, {campo:"circuito",etiqueta:"Circuito"}, {campo:"fecha",etiqueta:"Fecha"}, {campo:"sede",etiqueta:"Sede"} ],
-        filtros: [ {campo:"etapa",etiqueta:"Etapa",opciones:["","Institucional","Circuito","Regional","Nacional"]}, {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
+        filtros: [ {campo:"etapa",etiqueta:"Etapa",opciones:["","Institucional","Circuito","Regional","Nacional"]}, {campo:"circuito",etiqueta:"Circuito",opciones:[""].concat(CIRCUITOS_OFICIALES)} ],
         campos: [ F.titulo,
-            { clave:"etapa", etiqueta:"Etapa", tipo:"select", requerido:true, opciones:["Institucional","Circuito","Regional","Nacional"] },
+            { clave:"etapa", etiqueta:"Etapa", tipo:"select", requerido:true, catalogo:["Institucional","Circuito","Regional","Nacional"], opciones:["Institucional","Circuito","Regional","Nacional"] },
             F.circuito, F.fecha, F.fechaFin, F.hora, F.sede, F.part, F.resp, F.desc ]
     },
     pruebas_academicas: {
@@ -214,8 +237,8 @@ const MODULOS = {
         columnas: [ {campo:"titulo",etiqueta:"Prueba / Período"}, {campo:"modalidad",etiqueta:"Modalidad"}, {campo:"periodo",etiqueta:"Período"}, {campo:"fecha",etiqueta:"Inicio"}, {campo:"fechaFin",etiqueta:"Finaliza"} ],
         filtros: [ {campo:"modalidad",etiqueta:"Modalidad",opciones:["","Educación Formal","CINDEA","IPEC","Técnico Profesional (TP)"]}, {campo:"periodo",etiqueta:"Período",opciones:["","I Período","II Período"]} ],
         campos: [ F.titulo,
-            { clave:"modalidad", etiqueta:"Modalidad", tipo:"select", requerido:true, opciones:["Educación Formal","CINDEA","IPEC","Técnico Profesional (TP)"] },
-            { clave:"periodo", etiqueta:"Período", tipo:"select", opciones:["","I Período","II Período"] },
+            { clave:"modalidad", etiqueta:"Modalidad", tipo:"select", requerido:true, catalogo:["Educación Formal","CINDEA","IPEC","Técnico Profesional (TP)"], opciones:["Educación Formal","CINDEA","IPEC","Técnico Profesional (TP)"] },
+            { clave:"periodo", etiqueta:"Período", tipo:"select", catalogo:["","I Período","II Período"], opciones:["","I Período","II Período"] },
             F.fecha, F.fechaFin, F.sede, F.part, F.desc ]
     },
     pruebas_estandarizadas: {
@@ -227,8 +250,8 @@ const MODULOS = {
         columnas: [ {campo:"titulo",etiqueta:"Prueba"}, {campo:"etapa",etiqueta:"Etapa"}, {campo:"nivel",etiqueta:"Nivel"}, {campo:"fecha",etiqueta:"Fecha"}, {campo:"sede",etiqueta:"Sede"} ],
         filtros: [ {campo:"etapa",etiqueta:"Etapa",opciones:["","Convocatoria","Prueba Nacional","Ampliación"]}, {campo:"nivel",etiqueta:"Nivel",opciones:null} ],
         campos: [ F.titulo,
-            { clave:"etapa", etiqueta:"Etapa", tipo:"select", requerido:true, opciones:["Convocatoria","Prueba Nacional","Ampliación"] },
-            { clave:"nivel", etiqueta:"Nivel / Población", tipo:"text" },
+            { clave:"etapa", etiqueta:"Etapa", tipo:"select", requerido:true, catalogo:["Convocatoria","Prueba Nacional","Ampliación"], opciones:["Convocatoria","Prueba Nacional","Ampliación"] },
+            { clave:"nivel", etiqueta:"Nivel / Población", tipo:"text", max:120, normalizar:"titulo" },
             F.fecha, F.fechaFin, F.hora, F.sede, F.part, F.desc ]
     },
     deportivos: {
@@ -240,8 +263,8 @@ const MODULOS = {
         columnas: [ {campo:"titulo",etiqueta:"Actividad"}, {campo:"disciplina",etiqueta:"Disciplina"}, {campo:"fase",etiqueta:"Fase"}, {campo:"fecha",etiqueta:"Fecha"}, {campo:"sede",etiqueta:"Sede"} ],
         filtros: [ {campo:"disciplina",etiqueta:"Disciplina",opciones:null}, {campo:"fase",etiqueta:"Fase",opciones:["","Inscripción","Institucional","Circuitos","Interregional","Nacional"]} ],
         campos: [ F.titulo,
-            { clave:"disciplina", etiqueta:"Disciplina", tipo:"text", requerido:true },
-            { clave:"fase", etiqueta:"Fase", tipo:"select", opciones:["","Inscripción","Institucional","Circuitos","Interregional","Nacional"] },
+            { clave:"disciplina", etiqueta:"Disciplina", tipo:"text", requerido:true, min:3, max:60, normalizar:"titulo" },
+            { clave:"fase", etiqueta:"Fase", tipo:"select", catalogo:["","Inscripción","Institucional","Circuitos","Interregional","Nacional"], opciones:["","Inscripción","Institucional","Circuitos","Interregional","Nacional"] },
             F.fecha, F.fechaFin, F.hora, F.sede, F.part, F.resp, F.desc ]
     },
     ctp_tecnicos: {
@@ -251,10 +274,10 @@ const MODULOS = {
         icono: "wrench", color: "#DB2777", prefijo: "CTP",
         coleccion: COLECCIONES.actividades,
         columnas: [ {campo:"titulo",etiqueta:"Actividad / Gestión"}, {campo:"centro",etiqueta:"Centro / CTP"}, {campo:"modalidad",etiqueta:"Modalidad"}, {campo:"fecha",etiqueta:"Fecha"}, {campo:"sede",etiqueta:"Sede"} ],
-        filtros: [ {campo:"modalidad",etiqueta:"Modalidad",opciones:["","CTP Diurno","CTP Nocturno","CINDEA","IPEC","Educación Especial","Otra"]}, {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
+        filtros: [ {campo:"modalidad",etiqueta:"Modalidad",opciones:["","CTP Diurno","CTP Nocturno","CINDEA","IPEC","Educación Especial","Otra"]}, {campo:"circuito",etiqueta:"Circuito",opciones:[""].concat(CIRCUITOS_OFICIALES)} ],
         campos: [ F.titulo,
-            { clave:"centro", etiqueta:"Centro educativo / CTP", tipo:"text" },
-            { clave:"modalidad", etiqueta:"Modalidad", tipo:"select", requerido:true, opciones:["CTP Diurno","CTP Nocturno","CINDEA","IPEC","Educación Especial","Otra"] },
+            { clave:"centro", etiqueta:"Centro educativo / CTP", tipo:"text", max:120, normalizar:"titulo" },
+            { clave:"modalidad", etiqueta:"Modalidad", tipo:"select", requerido:true, catalogo:["CTP Diurno","CTP Nocturno","CINDEA","IPEC","Educación Especial","Otra"], opciones:["CTP Diurno","CTP Nocturno","CINDEA","IPEC","Educación Especial","Otra"] },
             F.circuito, F.fecha, F.fechaFin, F.hora, F.sede, F.part, F.resp, F.desc ]
     },
     permanencia: {
@@ -266,7 +289,7 @@ const MODULOS = {
         columnas: [ {campo:"titulo",etiqueta:"Estrategia / Actividad"}, {campo:"estrategia",etiqueta:"Componente"}, {campo:"fecha",etiqueta:"Fecha"}, {campo:"sede",etiqueta:"Sede"}, {campo:"responsable",etiqueta:"Responsable"} ],
         filtros: [ {campo:"estrategia",etiqueta:"Componente",opciones:["","ERP","EPI","UPRE","Alerta Temprana","Otro"]} ],
         campos: [ F.titulo,
-            { clave:"estrategia", etiqueta:"Componente", tipo:"select", opciones:["","ERP","EPI","UPRE","Alerta Temprana","Otro"] },
+            { clave:"estrategia", etiqueta:"Componente", tipo:"select", catalogo:["","ERP","EPI","UPRE","Alerta Temprana","Otro"], opciones:["","ERP","EPI","UPRE","Alerta Temprana","Otro"] },
             F.fecha, F.fechaFin, F.hora, F.sede, F.part, F.resp, F.desc ]
     },
     oferta_formativa: {
@@ -278,7 +301,7 @@ const MODULOS = {
         columnas: [ {campo:"titulo",etiqueta:"Capacitación / Taller"}, {campo:"fecha",etiqueta:"Fecha"}, {campo:"hora",etiqueta:"Hora"}, {campo:"sede",etiqueta:"Sede"}, {campo:"participantes",etiqueta:"Público"} ],
         filtros: [ {campo:"sede",etiqueta:"Sede",opciones:null} ],
         campos: [ F.titulo, F.fecha, F.fechaFin, F.hora, F.sede,
-            { clave:"facilitador", etiqueta:"Facilitador / Ponente", tipo:"text" },
+            { clave:"facilitador", etiqueta:"Facilitador / Ponente", tipo:"text", max:120, normalizar:"nombre" },
             F.part, F.desc ]
     },
     programacion_mensual: {
@@ -290,7 +313,7 @@ const MODULOS = {
         columnas: [ {campo:"fecha",etiqueta:"Fecha"}, {campo:"titulo",etiqueta:"Actividad"}, {campo:"hora",etiqueta:"Hora"}, {campo:"sede",etiqueta:"Sede"}, {campo:"compromiso",etiqueta:"Compromiso"} ],
         filtros: [ {campo:"mes",etiqueta:"Mes",opciones:null} ],
         campos: [ F.titulo, F.fecha, F.fechaFin, F.hora, F.sede, F.part, F.resp,
-            { clave:"compromiso", etiqueta:"Compromiso", tipo:"text" },
+            { clave:"compromiso", etiqueta:"Compromiso", tipo:"text", max:200, normalizar:"texto" },
             F.desc ]
     },
     directorio: {
@@ -300,16 +323,20 @@ const MODULOS = {
         icono: "phone", color: "#64748B", prefijo: "DIR",
         coleccion: COLECCIONES.directorio,
         columnas: [ {campo:"departamento",etiqueta:"Departamento / Oficina"}, {campo:"funcionario",etiqueta:"Funcionario"}, {campo:"puesto",etiqueta:"Puesto"}, {campo:"telefono",etiqueta:"Teléfono"}, {campo:"extension",etiqueta:"Ext."}, {campo:"correo",etiqueta:"Correo"}, {campo:"circuito",etiqueta:"Circuito"} ],
-        filtros: [ {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
+        filtros: [ {campo:"circuito",etiqueta:"Circuito",opciones:[""].concat(CIRCUITOS_OFICIALES)} ],
         campos: [
-            { clave:"departamento", etiqueta:"Departamento / Oficina", tipo:"text", requerido:true },
-            { clave:"funcionario", etiqueta:"Nombre del funcionario", tipo:"text", requerido:true },
-            { clave:"puesto", etiqueta:"Puesto", tipo:"text" },
-            { clave:"telefono", etiqueta:"Teléfono", tipo:"text" },
-            { clave:"extension", etiqueta:"Extensión", tipo:"text" },
-            { clave:"correo", etiqueta:"Correo institucional", tipo:"email" },
-            { clave:"circuito", etiqueta:"Circuito / Región", tipo:"select",
-              opciones:["","Dirección Regional","Circuito 01 (Cañas)","Circuito 02 (Abangares)","Circuito 03 (Tilarán)","Circuito 04 (Colorado)","Circuito 05 (La Altura)"] }
+            { clave:"departamento", etiqueta:"Departamento / Oficina", tipo:"text", requerido:true,
+              min:3, max:100, normalizar:"titulo" },
+            { clave:"funcionario", etiqueta:"Nombre del funcionario", tipo:"text", requerido:true,
+              min:5, max:100, normalizar:"nombre" },
+            { clave:"puesto", etiqueta:"Puesto", tipo:"text", max:80, normalizar:"titulo" },
+            { clave:"telefono", etiqueta:"Teléfono", tipo:"text", telefono:true, max:20, normalizar:"telefono",
+              ayuda:"Formato costarricense: 2695-5151 (fijo), 8 dígitos (celular) o extensión." },
+            { clave:"extension", etiqueta:"Extensión", tipo:"text", extension:true, max:5, normalizar:"extension",
+              ayuda:"Solo dígitos (2 a 5)." },
+            { clave:"correo", etiqueta:"Correo institucional", tipo:"email", correoInstitucional:true, max:120, normalizar:"correo" },
+            { clave:"circuito", etiqueta:"Circuito / Región", tipo:"select", catalogo:CIRCUITOS_OFICIALES,
+              opciones:[""].concat(CIRCUITOS_OFICIALES) }
         ]
     }
 };
@@ -317,8 +344,10 @@ const MODULOS = {
 const EDITOR_USUARIOS = {
     id: "usuarios", titulo: "Usuario administrador",
     campos: [
-        { clave:"nombre", etiqueta:"Nombre completo", tipo:"text", requerido:true },
-        { clave:"email", etiqueta:"Correo institucional", tipo:"email", requerido:true }
+        { clave:"nombre", etiqueta:"Nombre completo", tipo:"text", requerido:true,
+          min:5, max:100, normalizar:"nombre" },
+        { clave:"email", etiqueta:"Correo institucional", tipo:"email", requerido:true,
+          correoInstitucional:true, max:120, normalizar:"correo" }
     ]
 };
 // La contraseña NO se guarda en Firestore: se establece directamente en
@@ -374,6 +403,369 @@ function mesDeFecha(iso) {
 }
 function crearIconos() { try { if (window.lucide) lucide.createIcons(); } catch (e) {} }
 
+/* ==================== NORMALIZACIÓN Y VALIDACIÓN DE DATOS (CALIDAD / INTEGRIDAD) ====================
+   Motor central de reglas: se usa en los formularios (en vivo, mientras el
+   administrador escribe), al guardar cualquier registro y como respaldo
+   preventivo antes de escribir en Firestore / LocalStorage. */
+
+// Limpieza base: elimina caracteres de control, normaliza espacios y saltos de línea.
+function limpiarTextoCrudo(s) {
+    return String(s == null ? "" : s)
+        .replace(/\r\n?/g, "\n")
+        .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+        .replace(/[ \t\u00A0]+/g, " ")
+        .replace(/\s*\n\s*/g, "\n")
+        .trim();
+}
+
+// Mayúsculas iniciales respetando minúsculas institucionales y grados académicos.
+function capitalizarPalabras(txt) {
+    const minusculas = ["de", "del", "la", "el", "los", "las", "y", "e", "a", "b", "c", "d", "g", "i", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "en", "con", "por", "para", "desde", "hacia", "the"];
+    const partes = txt.split(/(\s+)/);
+    let salida = "";
+    partes.forEach(palabra => {
+        if (/^\s+$/.test(palabra)) { salida += palabra; return; }
+        if (!palabra) return;
+        // Conserva siglas y códigos oficiales escritos íntegros en mayúsculas (MEP, CINDEA, FEA…)
+        if (/^[A-ZÁÉÍÓÚÜÑ]{2,4}$/.test(palabra)) { salida += palabra.toUpperCase(); return; }
+        // Conserva grados académicos con su forma estándar (M.Sc., Ph.D., M.A.)
+        if (/^(m|ph|ma|msc|ing|lic)\./i.test(palabra)) { salida += palabra.replace(/^(m|ph|ma|msc|ing|lic)\./i, m => m.charAt(0).toUpperCase() + m.slice(1).toLowerCase()); return; }
+        // Conserva horas y abreviaturas de minuto (a.m., p.m., m.d.)
+        if (/^(a\.m\.|p\.m\.|m\.d\.)$/i.test(palabra)) { salida += palabra.toLowerCase(); return; }
+        const primera = palabra.charAt(0);
+        const resto = palabra.slice(1);
+        // Si la palabra venía toda en MAYÚSCULAS como bloque largo, se pasa a formato título
+        // (evita "GRITOS" en documentos oficiales); las cortas se consideran siglas.
+        const esGritoLargo = /^[A-ZÁÉÍÓÚÜÑ0-9\s\-–—/&().,]+$/.test(palabra) && palabra.length > 4;
+        const cuerpo = esGritoLargo ? palabra.toLowerCase() : (primera === primera.toLowerCase() && primera !== primera.toUpperCase() ? palabra : palabra.toLowerCase());
+        const iniciales = /^([^\p{L}\p{N}]*)(\S)/u.exec(cuerpo);
+        if (!iniciales) { salida += cuerpo; return; }
+        const prefijo = iniciales[1];
+        const letra = iniciales[2].toUpperCase();
+        let nueva = prefijo + letra + cuerpo.slice(prefijo.length + 1);
+        const raiz = nueva.replace(/^[^\p{L}]+/u, "").split(/[^p{L}]/u)[0] || nueva;
+        if (minusculas.indexOf(raiz.toLowerCase()) !== -1 && salida.trim().length > 0 && !/[:.!?]\s*$/.test(salida)) {
+            nueva = nueva.replace(raiz, raiz.toLowerCase());
+        }
+        salida += nueva;
+    });
+    return salida;
+}
+
+// Normalizadores por tipo de dato.
+function normalizarTitulo(s) {
+    const t = limpiarTextoCrudo(s);
+    if (!t) return "";
+    return capitalizarPalabras(t);
+}
+function normalizarNombre(s) {
+    // Nombres de funcionarios: respeta títulos/grados ("Lic.", "M.Sc.", "Ph.D.")
+    const t = limpiarTextoCrudo(s);
+    if (!t) return "";
+    const conGrados = t
+        .replace(/\bm\.?\s*sc\b/gi, "M.Sc.")
+        .replace(/\bmster\b/gi, "M.Sc.")
+        .replace(/\bma\b(?=\s)/g, "M.A.")
+        .replace(/\bph\.?\s*d\b/gi, "Ph.D.")
+        .replace(/\blic\b/gi, "Lic.")
+        .replace(/\bling\b/gi, "Ing.")
+        .replace(/\bprofa?\b/gi, "Prof.");
+    return capitalizarPalabras(conGrados);
+}
+function normalizarTextoSimple(s) {
+    // Descripciones: conserva el sentido, limpia espacios dobles y pegado de oraciones.
+    const t = limpiarTextoCrudo(s);
+    if (!t) return "";
+    const sinPegote = t.replace(/([.;:!?])\(?[a-záéíóúñ]/g, (m, p1, p2) => p1 + " " + p2);
+    return sinPegote.charAt(0).toUpperCase() + sinPegote.slice(1);
+}
+function normalizarCorreo(s) {
+    return String(s == null ? "" : s).replace(/\s+/g, "").toLowerCase();
+}
+function soloDigitos(s) { return String(s == null ? "" : s).replace(/\D/g, ""); }
+
+// Teléfono costarricense → formato estándar "2695-5151" / "88123456".
+function normalizarTelefono(s) {
+    const d = soloDigitos(s);
+    if (!d) return "";
+    if (d.length === 8) return d.slice(0, 4) + "-" + d.slice(4);
+    return d; // longitudes inválidas: se dejan tal cual para que la validación las marque
+}
+function normalizarExtension(s) { return soloDigitos(s).slice(0, 5); }
+
+// Hora MEP → "8:00 a.m." · "2:00 p.m." · "10:00 m.d." (acepta rangos unidos por – o -).
+function normalizarHoraParte(parte) {
+    let t = limpiarTextoCrudo(parte).replace(/\s+/g, " ");
+    const m = t.match(/^(\d{1,2})(?:[:;.](\d{1,2}))?\s*(am|a\.?m\.?|pm|p\.?m\.?|md|m\.?d\.?)?$/i);
+    if (!m) return t;
+    const hh = parseInt(m[1], 10);
+    const mm = m[2] != null && m[2] !== "" ? m[2].padStart(2, "0") : "00";
+    let suf = (m[3] || "").toLowerCase().replace(/\./g, "").replace(/\s/g, "");
+    if (!suf) suf = hh >= 12 ? "pm" : "am";
+    if (suf === "md") return (hh < 10 ? "0" : "") + hh + ":" + mm + " m.d.";
+    const h12 = suf === "pm" ? ((hh % 12) || 12) : ((hh % 12) || 12);
+    return h12 + ":" + mm + " " + (suf === "pm" ? "p.m." : "a.m.");
+}
+function normalizarHora(s) {
+    const t = limpiarTextoCrudo(s);
+    if (!t) return "";
+    const partes = t.split(/\s+[–—-]\s+|\s+-\s+/);
+    return partes.map(normalizarHoraParte).join(" – ");
+}
+
+// ¿Teléfono válido para Costa Rica? (fijo 8 dígitos, celular 8 dígitos o extensión corta)
+function esTelefonoValidoCr(valor, permitirExtension) {
+    const v = String(valor || "").trim();
+    if (!v) return true; // vacío: solo obligatorio si el campo lo exige
+    if (RE_TELEFONO_CR_8.test(v)) {
+        const d = soloDigitos(v);
+        return d.length === 8;
+    }
+    if (permitirExtension && RE_EXTENSION_CR.test(v)) return true;
+    return false;
+}
+
+// ¿El correo pertenece a un dominio oficial del MEP u otro dominio válido?
+function clasificarCorreo(valor) {
+    const v = normalizarCorreo(valor);
+    if (!RE_CORREO.test(v)) return "invalido";
+    const dominio = v.split("@")[1] || "";
+    const oficial = DOMINIOS_CORREO_OFICIALES.some(d => dominio === d || dominio.endsWith("." + d));
+    return oficial ? "oficial" : "valido";
+}
+
+// Detecta "masas de texto basura": caracteres extraños repetidos, glifos no
+// imprimibles o bloques larguísimos sin puntuación.
+function textoSuspicioso(txt) {
+    const t = String(txt || "");
+    if (!t) return null;
+    if (/(.)\1{6,}/.test(t)) return "Contiene cadenas de caracteres repetidos.";
+    if (/[\uFFFD\uFFFE\ufffe\uffff]/.test(t)) return "Contiene caracteres extraños o no imprimibles.";
+    // Bloques muy largos sin signos de puntuación: posible masa de texto sin formato.
+    const oraciones = t.split(/[.!?;:\n]/).filter(x => x.trim().length > 0);
+    const masLarga = oraciones.reduce((a, b) => b.trim().length > a.length ? b.trim() : a, "");
+    if (masLarga.length > 260) return "Contiene un bloque de texto muy largo sin puntuación. Redacte oraciones claras y breves.";
+    return null;
+}
+
+/* Normaliza un valor según el tipo de campo declarado en el esquema. */
+function normalizarValor(campo, bruto) {
+    const modo = campo.normalizar;
+    if (modo === "correo" || campo.tipo === "email") return normalizarCorreo(bruto);
+    if (modo === "telefono") return normalizarTelefono(bruto);
+    if (modo === "extension") return normalizarExtension(bruto);
+    if (modo === "hora") return normalizarHora(bruto);
+    if (modo === "titulo") return normalizarTitulo(bruto);
+    if (modo === "nombre") return normalizarNombre(bruto);
+    if (modo === "texto") return normalizarTextoSimple(bruto);
+    if (campo.tipo === "date") return String(bruto == null ? "" : bruto).trim();
+    if (campo.tipo === "select") return String(bruto == null ? "" : bruto).trim();
+    return limpiarTextoCrudo(bruto);
+}
+
+/* Valida UN campo contra todas sus reglas. Devuelve string de error o null. */
+function validarCampo(campo, valor, otrosValores) {
+    const v = String(valor == null ? "" : valor).trim();
+    const nombre = campo.etiqueta || campo.clave;
+
+    if (campo.requerido && !v) return "«" + nombre + "» es obligatorio.";
+
+    if (!v) return null; // campos opcionales vacíos: nada más que revisar
+
+    // Selectores de catálogo cerrado: solo opciones oficiales, nunca texto libre.
+    if (campo.tipo === "select") {
+        const permitidas = campo.catalogo || campo.opciones || [];
+        if (permitidas.indexOf(v) === -1) return "«" + nombre + "» debe ser una opción oficial del catálogo. Revise el selector.";
+        return null;
+    }
+
+    // Fechas
+    if (campo.tipo === "date") {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) return "«" + nombre + "» no es una fecha válida (formato AAAA-MM-DD).";
+        const partes = v.split("-");
+        const anio = parseInt(partes[0], 10), mes = parseInt(partes[1], 10), dia = parseInt(partes[2], 10);
+        const fecha = new Date(anio, mes - 1, dia);
+        if (anio < 2000 || anio > 2100 || isNaN(fecha.getTime()) ||
+            fecha.getFullYear() !== anio || fecha.getMonth() !== mes - 1 || fecha.getDate() !== dia) {
+            return "«" + nombre + "» no corresponde a una fecha real. Verifique el día y el mes.";
+        }
+        if (campo.noAnteriorQue && otrosValores) {
+            const base = otrosValores[campo.noAnteriorQue];
+            if (base && /^\d{4}-\d{2}-\d{2}$/.test(base) && v < base) {
+                return "La «Fecha final» no puede ser anterior a la «Fecha inicial» (" + fmtFecha(base) + "). Corrija el rango de fechas.";
+            }
+        }
+        return null;
+    }
+
+    // Longitudes
+    if (campo.min && v.length < campo.min) return "«" + nombre + "» debe tener al menos " + campo.min + " caracteres (actualmente " + v.length + ").";
+    if (campo.max && v.length > campo.max) return "«" + nombre + "» no puede superar los " + campo.max + " caracteres (actualmente " + v.length + ").";
+
+    // Teléfonos costarricenses
+    if (campo.telefono) {
+        if (!esTelefonoValidoCr(v, true)) {
+            return "«" + nombre + "» no tiene un formato válido. Use teléfono fijo de 8 dígitos (Ej: 2695-5151), celular de 8 dígitos (Ej: 8812-3456) o una extensión de 2 a 5 dígitos.";
+        }
+        return null;
+    }
+    if (campo.extension) {
+        if (!RE_EXTENSION_CR.test(v)) return "«" + nombre + "» debe contener únicamente de 2 a 5 dígitos.";
+        return null;
+    }
+
+    // Correos
+    if (campo.tipo === "email" || campo.correoInstitucional) {
+        const estado = clasificarCorreo(v);
+        if (estado === "invalido") return "«" + nombre + "» no tiene un formato de correo válido (Ej: nombre.apellido@mep.go.cr).";
+        if (campo.correoInstitucional && estado !== "oficial") {
+            return "«" + nombre + "» debe pertenecer a un dominio institucional oficial (@mep.go.cr, @qe.edu.cr o @dtpe.edu.cr).";
+        }
+        return null;
+    }
+
+    // Hora: si se escribió algo, debe reconocerse como hora
+    if (campo.normalizar === "hora") {
+        if (!/\d/.test(v) || !/(a\.m\.|p\.m\.|m\.d\.)/i.test(v)) {
+            return "«" + nombre + "» no se reconoce como hora. Use el formato regional: 8:00 a.m., 2:00 p.m. o rangos como 8:00 a.m. – 12:00 m.d.";
+        }
+    }
+
+    // Texto sospechoso / basura
+    const sospecha = textoSuspicioso(v);
+    if (sospecha) return "«" + nombre + "»: " + sospecha;
+
+    // Títulos y nombres: deben iniciar con letra o número (evita símbolos sueltos)
+    if ((campo.normalizar === "titulo" || campo.normalizar === "nombre") && !/^[\p{L}\p{N}]/u.test(v)) {
+        return "«" + nombre + "» debe comenzar con una letra o un número, no con símbolos.";
+    }
+
+    return null;
+}
+
+/* Recorre todo el formulario del editor: normaliza cada campo, devuelve los
+   errores encontrados y deja mensajes visuales bajo cada campo. */
+function procesarFormularioEditor(cfg, mostrarMensajes) {
+    const doc = {};
+    const errores = [];
+    cfg.campos.forEach(c => {
+        const el = document.getElementById("ef-" + c.clave);
+        if (!el) return;
+        const normalizado = normalizarValor(c, el.value);
+        if (normalizado !== el.value) el.value = normalizado; // formateo automático en vivo
+        doc[c.clave] = normalizado;
+    });
+    cfg.campos.forEach(c => {
+        const el = document.getElementById("ef-" + c.clave);
+        if (!el) return;
+        const err = validarCampo(c, doc[c.clave] == null ? "" : String(doc[c.clave]), doc);
+        if (mostrarMensajes) pintarErrorCampo(el, err);
+        if (err) errores.push(err);
+    });
+    return { doc: doc, errores: errores };
+}
+
+// Pinta / limpia el mensaje de error visual debajo de un campo del modal.
+function pintarErrorCampo(el, msg) {
+    const cont = el.closest("[data-campo-cont]");
+    const errEl = cont ? cont.querySelector("[data-error]"): null;
+    const aviso = cont ? cont.querySelector("[data-aviso]") : null;
+    if (msg) {
+        el.classList.add("campo-invalido");
+        el.classList.remove("campo-valido");
+        el.setAttribute("aria-invalid", "true");
+        if (errEl) { errEl.textContent = msg; errEl.classList.remove("hidden"); }
+        if (aviso) aviso.classList.add("hidden");
+    } else {
+        el.classList.remove("campo-invalido");
+        el.setAttribute("aria-invalid", "false");
+        if (el.value != null && String(el.value).trim() !== "") el.classList.add("campo-valido");
+        else el.classList.remove("campo-valido");
+        if (errEl) { errEl.textContent = ""; errEl.classList.add("hidden"); }
+        if (aviso && el.value && String(el.value).trim() !== "") aviso.classList.remove("hidden");
+    }
+}
+
+// Habilita o bloquea el botón «Guardar» del modal según el estado del formulario.
+function actualizarBotonGuardarEditor() {
+    const btn = document.getElementById("btnGuardarEditor");
+    if (!btn || btn.disabled === true && btn.getAttribute("data-ocupado") === "1") return;
+    const cfg = configDeEditor();
+    if (!cfg) return;
+    const r = procesarFormularioEditor(cfg, false);
+    const bloqueado = r.errores.length > 0;
+    btn.disabled = bloqueado;
+    btn.classList.toggle("btn-bloqueado", bloqueado);
+    const pista = document.getElementById("ef-pista-validacion");
+    if (pista) {
+        if (bloqueado) {
+            pista.textContent = "⚠ Revise los campos marcados: " + r.errores.length + (r.errores.length === 1 ? " detalle pendiente" : " detalles pendientes") + ". El botón Guardar se habilita al corregirlos.";
+            pista.classList.remove("hidden");
+        } else {
+            pista.classList.add("hidden");
+        }
+    }
+}
+
+// Enlazado de eventos de validación en vivo dentro del modal del editor.
+function activarValidacionEnVivoEditor() {
+    const form = document.getElementById("editorForm");
+    if (!form) return;
+    form.querySelectorAll("[id^='ef-']").forEach(el => {
+        if (el.dataset.validado === "1") return;
+        el.dataset.validado = "1";
+        const evento = (el.tagName === "SELECT" || el.type === "date" || el.type === "checkbox") ? "change" : "input";
+        el.addEventListener(evento, () => {
+            const clave = el.id.replace(/^ef-/, "");
+            const cfg = configDeEditor();
+            if (!cfg) return;
+            const campo = cfg.campos.find(c => c.clave === clave);
+            if (campo) {
+                const norm = normalizarValor(campo, el.value);
+                if (clave !== "fechaFin" && clave !== "fecha" && norm !== el.value) el.value = norm;
+                const docTemp = {};
+                cfg.campos.forEach(c => { const e2 = document.getElementById("ef-" + c.clave); if (e2) docTemp[c.clave] = e2.value; });
+                const err = validarCampo(campo, el.value, docTemp);
+                pintarErrorCampo(el, err);
+                if (campo.noAnteriorQue) {
+                    const base = document.getElementById("ef-" + campo.noAnteriorQue);
+                    if (base) {
+                        const errBase = validarCampo({ ...campo, noAnteriorQue: null }, base.value, docTemp);
+                        pintarErrorCampo(base, errBase);
+                    }
+                }
+            }
+            crearContadorCaracteres(el);
+            actualizarBotonGuardarEditor();
+        });
+        el.addEventListener("blur", () => {
+            const clave = el.id.replace(/^ef-/, "");
+            const cfg = configDeEditor();
+            if (!cfg) return;
+            const campo = cfg.campos.find(c => c.clave === clave);
+            if (!campo) return;
+            const norm = normalizarValor(campo, el.value);
+            if (norm !== el.value) el.value = norm;
+            const docTemp = {};
+            cfg.campos.forEach(c => { const e2 = document.getElementById("ef-" + c.clave); if (e2) docTemp[c.clave] = e2.value; });
+            pintarErrorCampo(el, validarCampo(campo, el.value, docTemp));
+            actualizarBotonGuardarEditor();
+        });
+    });
+    actualizarBotonGuardarEditor();
+}
+
+// Contador de caracteres para campos con límite máximo.
+function crearContadorCaracteres(el) {
+    const cont = el.closest("[data-campo-cont]");
+    const contador = cont ? cont.querySelector("[data-contador]") : null;
+    if (!contador) return;
+    const max = parseInt(contador.getAttribute("data-max"), 10) || 0;
+    const len = String(el.value || "").length;
+    contador.textContent = len + " / " + max + " caracteres";
+    contador.classList.toggle("text-red-600", max > 0 && len > max);
+    contador.classList.toggle("text-emerald-600", max > 0 && len > 0 && len <= max);
+}
 function aplicarAnio() {
     const anio = String(config.anio || new Date().getFullYear());
     document.querySelectorAll(".anio-dinamico").forEach(el => { el.textContent = anio; });
@@ -739,8 +1131,63 @@ function escucharDatos() {
     }
 }
 
+/* Respaldo preventivo de integridad: revisa las claves del documento contra
+   el catálogo oficial y los formatos exigidos, sin importar el origen de la
+   escritura (formulario, registro parcial o datos heredados). Devuelve la
+   lista de infracciones; si no está vacía, la escritura se bloquea. */
+function validarDocData(coleccion, doc) {
+    const errs = [];
+    if (!doc || typeof doc !== "object") return ["Documento inválido."];
+    const textoClaves = ["titulo", "departamento", "funcionario", "puesto", "centro", "facilitador", "compromiso", "nivel", "disciplina", "responsable", "sede", "participantes"];
+    textoClaves.forEach(k => {
+        if (doc[k] == null || String(doc[k]).trim() === "") return;
+        const v = String(doc[k]);
+        if (v.length > 250) errs.push("El campo «" + k + "» supera los 250 caracteres permitidos.");
+        const sospecha = textoSuspicioso(v);
+        if (sospecha) errs.push("El campo «" + k + "»: " + sospecha);
+    });
+    ["fecha", "fechaFin"].forEach(k => {
+        if (doc[k] == null || String(doc[k]).trim() === "") return;
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(String(doc[k]))) errs.push("La fecha «" + k + "» no tiene formato AAAA-MM-DD.");
+    });
+    if (doc.fecha && doc.fechaFin && /^\d{4}-\d{2}-\d{2}$/.test(String(doc.fecha)) && /^\d{4}-\d{2}-\d{2}$/.test(String(doc.fechaFin)) && String(doc.fechaFin) < String(doc.fecha)) {
+        errs.push("La fecha final («" + fmtFecha(doc.fechaFin) + "») es anterior a la fecha inicial («" + fmtFecha(doc.fecha) + "»).");
+    }
+    if (doc.telefono != null && String(doc.telefono).trim() !== "" && !esTelefonoValidoCr(String(doc.telefono), true)) {
+        errs.push("El teléfono «" + doc.telefono + "» no cumple el formato costarricense (8 dígitos tipo 2695-5151 o extensión).");
+    }
+    if (doc.extension != null && String(doc.extension).trim() !== "" && !RE_EXTENSION_CR.test(String(doc.extension).trim())) {
+        errs.push("La extensión «" + doc.extension + "» debe tener únicamente de 2 a 5 dígitos.");
+    }
+    if (doc.correo != null && String(doc.correo).trim() !== "" && clasificarCorreo(doc.correo) === "invalido") {
+        errs.push("El correo «" + doc.correo + "» no tiene un formato válido.");
+    }
+    if (doc.circuito != null && String(doc.circuito).trim() !== "" && CIRCUITOS_OFICIALES.indexOf(String(doc.circuito).trim()) === -1) {
+        errs.push("El circuito «" + doc.circuito + "» no pertenece al catálogo oficial de la DRE Cañas.");
+    }
+    Object.values(MODULOS).forEach(m => {
+        if (m.coleccion !== coleccion) return;
+        (m.campos || []).forEach(c => {
+            if (c.tipo !== "select") return;
+            const v = doc[c.clave];
+            if (v == null || String(v).trim() === "") return;
+            const permitidas = c.catalogo || c.opciones || [];
+            if (permitidas.indexOf(String(v).trim()) === -1) errs.push("«" + c.etiqueta + "» con valor «" + v + "» no es una opción oficial del catálogo.");
+        });
+    });
+    return errs;
+}
+
 /* ==================== ESCRITURA DE DATOS ==================== */
 function guardarDoc(coleccion, doc) {
+    // Integridad garantizada: ningún dato con formato inválido llega a Firestore/LocalStorage.
+    const bloqueos = validarDocData(coleccion, doc);
+    if (bloqueos.length > 0) {
+        console.warn("Escritura bloqueada por reglas de integridad de datos:", bloqueos);
+        if ($("ef-error")) mostrarErrorEditor("No se pudo guardar por problemas de integridad: " + bloqueos[0]);
+        else showToast("No se pudo guardar por problemas de integridad: " + bloqueos[0], "danger");
+        return Promise.resolve(false);
+    }
     if (MODO_DEMO) {
         if (coleccion === COLECCIONES.actividades) {
             const i = dbActividades.findIndex(a => String(a.id) === String(doc.id));
@@ -1409,27 +1856,51 @@ function abrirEditor(modId, id, prefillFecha) {
             '<option value="borrador"' + (estado === "borrador" ? " selected" : "") + '>Borrador (solo administración)</option>' +
             "</select></div>";
     }
-    html += '<div id="ef-error" class="hidden text-xs font-bold text-red-700 bg-red-50 border border-red-200 rounded-xl p-3"></div>' +
+    html += '<div id="ef-pista-validacion" class="hidden text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-200 rounded-xl p-3 mt-4"></div>' +
+        '<div id="ef-error" class="hidden text-xs font-bold text-red-700 bg-red-50 border border-red-200 rounded-xl p-3 mt-3"></div>' +
         '<div class="flex justify-end gap-2 pt-4">' +
         '<button type="button" onclick="cerrarModal(\'modalEditor\')" class="btn-suave">Cancelar</button>' +
         '<button type="submit" id="btnGuardarEditor" class="btn-mep-primary px-6 py-2.5 rounded-2xl font-bold text-sm">Guardar</button></div>';
     $("editorForm").innerHTML = html;
+    activarValidacionEnVivoEditor(); // validación, formateo y bloqueo preventivo en vivo
     abrirModal("modalEditor");
 }
 
 function campoInput(c, valor) {
     const base = 'id="ef-' + esc(c.clave) + '" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:ring-2 focus:ring-mep-blue focus:bg-white outline-none"';
+    // Atributos HTML5 de validación nativa (refuerzo de las reglas de JS)
+    let attrs = "";
+    if (c.requerido) attrs += " required";
+    if (c.min) attrs += ' minlength="' + c.min + '" data-min="' + c.min + '"';
+    if (c.max) attrs += ' maxlength="' + c.max + '"';
+    if (c.tipo === "date") {
+        attrs += ' min="2000-01-01" max="2100-12-31"';
+        if (c.noAnteriorQue) attrs += ' data-no-anterior-que="' + esc(c.noAnteriorQue) + '"';
+    }
+    if (c.telefono) attrs += ' inputmode="tel" autocomplete="tel" placeholder="Ej: 2695-5151"';
+    if (c.extension) attrs += ' inputmode="numeric" pattern="\d{2,5}" placeholder="Ej: 101"';
+    if (c.tipo === "email" || c.correoInstitucional) attrs += ' inputmode="email" autocomplete="email" placeholder="nombre.apellido@mep.go.cr"';
+    if (c.normalizar === "hora") attrs += ' placeholder="Ej: 8:00 a.m."';
+    if (c.tipo === "text" && !c.telefono && !c.extension && c.normalizar !== "hora" && !c.correoInstitucional && c.tipo !== "email") {
+        attrs += ' autocomplete="off" spellcheck="false"';
+    }
     let input;
     if (c.tipo === "select") {
-        input = "<select " + base + ">" + (c.opciones || []).map(o =>
-            '<option value="' + esc(o) + '"' + (String(valor) === String(o) ? " selected" : "") + ">" + (o === "" ? "— Sin especificar —" : esc(o)) + "</option>").join("") + "</select>";
+        // Catálogo cerrado: solo opciones oficiales; no admite escritura manual.
+        input = "<select " + base + attrs + ">" + (c.opciones || []).map(o =>
+            '<option value="' + esc(o) + '"' + (String(valor) === String(o) ? " selected" : "") + ">" + (o === "" ? "— Seleccione una opción oficial —" : esc(o)) + "</option>").join("") + "</select>";
     } else if (c.tipo === "textarea") {
-        input = "<textarea " + base + " rows='3'>" + esc(valor) + "</textarea>";
+        input = "<textarea " + base + attrs + " rows='3'>" + esc(valor) + "</textarea>";
     } else {
         const tipo = c.tipo === "email" ? "email" : c.tipo === "date" ? "date" : "text";
-        input = '<input type="' + tipo + '" ' + base + ' value="' + esc(valor) + '">';
+        input = '<input type="' + tipo + '" ' + base + attrs + ' value="' + esc(valor) + '">';
     }
-    return '<div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">' + esc(c.etiqueta) + (c.requerido ? " *" : "") + "</label>" + input + "</div>";
+    // Ayuda, contador de caracteres y espacio para el mensaje de error visual
+    let pie = "";
+    if (c.ayuda) pie += '<p data-aviso class="text-[10px] text-slate-400 mt-1 font-medium' + (valor ? " hidden" : "") + '">' + esc(c.ayuda) + "</p>";
+    if (c.max) pie += '<p data-contador data-max="' + c.max + '" class="text-[10px] text-slate-400 mt-1 font-semibold">' + String(valor || "").length + " / " + c.max + " caracteres</p>";
+    pie += '<p data-error class="hidden text-[11px] font-bold text-red-600 mt-1 flex items-start gap-1"><i data-lucide="alert-circle" class="w-3.5 h-3.5 shrink-0 mt-0.5"></i><span></span></p>';
+    return '<div data-campo-cont data-clave="' + esc(c.clave) + '"><label class="block text-xs font-bold text-slate-700 uppercase mb-1">' + esc(c.etiqueta) + (c.requerido ? ' <span class="text-mep-red">*</span>' : "") + "</label>" + input + pie + "</div>";
 }
 
 async function guardarEditor(event) {
@@ -1437,16 +1908,20 @@ async function guardarEditor(event) {
     if (!esAdmin()) return;
     const cfg = configDeEditor();
     if (!cfg) return;
-    const doc = {};
-    let valido = true;
-    cfg.campos.forEach(c => {
-        const el = $("ef-" + c.clave);
-        const v = el ? el.value.trim() : "";
-        if (c.requerido && !v) { valido = false; el.classList.add("border-red-400", "ring-1", "ring-red-300"); }
-        else if (el) el.classList.remove("border-red-400");
-        doc[c.clave] = v;
-    });
-    if (!valido) { showToast("Complete los campos obligatorios (*).", "warning"); return; }
+    // Motor de calidad de datos: 1) formatea/normaliza todos los campos,
+    // 2) valida cada uno contra sus reglas y 3) pinta los errores dentro del
+    // modal (sin alertas genéricas). Si algo falla, el guardado se bloquea.
+    const resultado = procesarFormularioEditor(cfg, true);
+    const doc = resultado.doc;
+    crearIconos();
+    if (resultado.errores.length > 0) {
+        actualizarBotonGuardarEditor();
+        mostrarErrorEditor("El formulario tiene " + resultado.errores.length + (resultado.errores.length === 1 ? " inconsistencia" : " inconsistencias") + " que impiden guardar información oficial. Corrija los campos marcados en rojo.");
+        const primerInvalido = document.querySelector("#editorForm .campo-invalido");
+        if (primerInvalido) { primerInvalido.focus(); primerInvalido.scrollIntoView({ behavior: "smooth", block: "center" }); }
+        return; // bloqueo preventivo: ningún dato inválido llega a Firestore / LocalStorage
+    }
+    ocultarErrorEditorGlobal();
 
     if (cfg === EDITOR_USUARIOS) {
         await guardarUsuarioDesdeEditor(doc);
@@ -1595,6 +2070,13 @@ function mostrarErrorEditor(msg) {
     if (!el) { showToast(msg, "danger"); return; }
     el.textContent = msg;
     el.classList.remove("hidden");
+    try { el.scrollIntoView({ behavior: "smooth", block: "nearest" }); } catch (e) {}
+}
+
+// Limpia el error persistente del modal una vez el formulario vuelve a estar válido.
+function ocultarErrorEditorGlobal() {
+    const el = $("ef-error");
+    if (el) { el.classList.add("hidden"); el.textContent = ""; }
 }
 
 // Bloquea el botón «Guardar» mientras opera contra Firebase (evita doble clic
@@ -1602,6 +2084,7 @@ function mostrarErrorEditor(msg) {
 function estadoBotonGuardar(ocupado) {
     const btn = $("btnGuardarEditor");
     if (!btn) return;
+    btn.setAttribute("data-ocupado", ocupado ? "1" : "0");
     btn.disabled = ocupado;
     btn.style.opacity = ocupado ? "0.6" : "";
     btn.style.pointerEvents = ocupado ? "none" : "";
