@@ -147,13 +147,32 @@ let dbActividades = [];   // todos los registros de drec_actividades (todos los 
 let dbDirectorio = [];    // drec_directorio
 let dbUsuarios = [];      // drec_usuarios (solo administradores lo consultan)
 
+// Textos por defecto del marco filosófico institucional (Misión · Visión ·
+// Valores). Un Administrador puede editarlos en vivo y se guardan en
+// drec_configuracion/sistema; los usuarios en Modo Lectura los ven
+// actualizarse automáticamente gracias a onSnapshot.
+const MARCO_DEFAULT = {
+    mision: "El MEP es el ente rector que garantiza a los habitantes del país el derecho fundamental a una educación de calidad, con acceso equitativo e inclusivo, con aprendizajes pertinentes y relevantes, para la formación plena e integral de las personas y la convivencia.",
+    vision: "Ser una institución reconocida a nivel nacional e internacional, como la rectora del sistema educativo costarricense mediante el mejoramiento continuo de la gestión, con estándares modernos de eficacia, eficiencia y transparencia; orientada a la construcción de una sociedad inclusiva e integrada.",
+    valores: {
+        compromiso: "Es una decisión de vida de aceptación libre y conciencia de dar más de lo mínimo requerido. Con entrega, mística, honestidad y dedicación ante cualquier acción ejecutada a nivel laboral, personal y profesional; para el logro de los objetivos institucionales y el bienestar de la organización.",
+        respeto: "Cuidar en el trato al otro, el valor y la dignidad que posee como persona humana, el entorno, atendiendo la particularidad sin imponer convicciones o creencias en congruencia con la normativa vigente.",
+        transparencia: "Conjunto de acciones coherentes con aspectos de la política institucional y la normativa vigente, para el acceso de la ciudadanía a información veraz, comunicándola de forma asertiva, que genere confianza y promueva la imparcialidad. Que dé cuenta de las actuaciones del MEP, de tal forma que permita la evaluación de su gestión.",
+        responsabilidad: "Es el cumplimiento continuo, consciente, diligente y oportuno de los deberes y obligaciones inherentes al cargo, según la normativa vigente, que conlleva al funcionario a asumir las consecuencias de sus actuaciones y tiene como finalidad la satisfacción del interés público."
+    }
+};
+
 let config = {
     anio: new Date().getFullYear(),
     version: "Vs.001",
     publicado: true,
     saludo: "",
     firma: "",
-    ideasRectoras: []
+    mision: MARCO_DEFAULT.mision,
+    vision: MARCO_DEFAULT.vision,
+    valores: Object.assign({}, MARCO_DEFAULT.valores),
+    valoresLista: null,          // lista dinámica de valores [{titulo, texto, icono}] (migración automática)
+    pestanasInhabilitadas: []   // ids de pestañas ocultas para el Modo Lectura
 };
 
 let editorModulo = null;      // módulo abierto en el editor ("usuarios" | id de MODULOS)
@@ -296,20 +315,29 @@ const MODULOS = {
     directorio: {
         id: "directorio", etiqueta: "Directorio",
         titulo: "Directorio Telefónico Institucional",
-        descripcion: "Departamentos, funcionarios, teléfonos, extensiones y correos de la DREC y sus circuitos.",
+        descripcion: "Telefonía fija, Asesoría Pedagógica, Supervisiones Escolares y Centros Educativos de la DREC y sus circuitos 01–05.",
         icono: "phone", color: "#64748B", prefijo: "DIR",
         coleccion: COLECCIONES.directorio,
-        columnas: [ {campo:"departamento",etiqueta:"Departamento / Oficina"}, {campo:"funcionario",etiqueta:"Funcionario"}, {campo:"puesto",etiqueta:"Puesto"}, {campo:"telefono",etiqueta:"Teléfono"}, {campo:"extension",etiqueta:"Ext."}, {campo:"correo",etiqueta:"Correo"}, {campo:"circuito",etiqueta:"Circuito"} ],
-        filtros: [ {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
+        columnas: [ {campo:"categoria",etiqueta:"Categoría"}, {campo:"circuito",etiqueta:"Circuito"}, {campo:"departamento",etiqueta:"Departamento / Oficina"}, {campo:"funcionario",etiqueta:"Funcionario"}, {campo:"puesto",etiqueta:"Puesto"}, {campo:"telefono",etiqueta:"Teléfono"}, {campo:"extension",etiqueta:"Ext."}, {campo:"movil",etiqueta:"Móvil"}, {campo:"correo",etiqueta:"Correo"} ],
+        filtros: [ {campo:"categoria",etiqueta:"Categoría",opciones:["","Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos"]}, {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
         campos: [
+            { clave:"categoria", etiqueta:"Categoría", tipo:"select", requerido:true,
+              opciones:["Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos"] },
+            { clave:"circuito", etiqueta:"Circuito / Región", tipo:"select",
+              opciones:["","Dirección Regional","Circuito 01 (Cañas)","Circuito 02 (Abangares)","Circuito 03 (Tilarán)","Circuito 04 (Colorado)","Circuito 05 (La Altura)"] },
             { clave:"departamento", etiqueta:"Departamento / Oficina", tipo:"text", requerido:true },
-            { clave:"funcionario", etiqueta:"Nombre del funcionario", tipo:"text", requerido:true },
+            { clave:"funcionario", etiqueta:"Nombre del funcionario / directora o director", tipo:"text", requerido:true },
             { clave:"puesto", etiqueta:"Puesto", tipo:"text" },
             { clave:"telefono", etiqueta:"Teléfono", tipo:"text" },
             { clave:"extension", etiqueta:"Extensión", tipo:"text" },
-            { clave:"correo", etiqueta:"Correo institucional", tipo:"email" },
-            { clave:"circuito", etiqueta:"Circuito / Región", tipo:"select",
-              opciones:["","Dirección Regional","Circuito 01 (Cañas)","Circuito 02 (Abangares)","Circuito 03 (Tilarán)","Circuito 04 (Colorado)","Circuito 05 (La Altura)"] }
+            { clave:"movil", etiqueta:"Móvil / Celular", tipo:"text" },
+            { clave:"correo", etiqueta:"Correo(s) electrónico(s)", tipo:"text" },
+            { clave:"numero", etiqueta:"Número (centros educativos)", tipo:"text" },
+            { clave:"codigoPresupuestario", etiqueta:"Código presupuestario", tipo:"text" },
+            { clave:"institucion", etiqueta:"Institución / Centro educativo", tipo:"text" },
+            { clave:"tipoDireccion", etiqueta:"Tipo de dirección", tipo:"select",
+              opciones:["","UNIDOCENTE","Dirección 1","Dirección 2","Dirección 3","Dirección 4","PEU","DEGB1","DEGB2","DEGB4","Director CTP","Director Colegio","Preescolar","Preescolar y Primaria","Preescolar, primaria y secundaria","Otra"] },
+            { clave:"notas", etiqueta:"Notas / Observaciones", tipo:"textarea" }
         ]
     }
 };
@@ -700,7 +728,12 @@ function escucharDatos() {
     }, err => { console.error("Directorio:", err); showToast("Se perdió la sincronización del directorio.", "warning"); }));
 
     unsubsTiempoReal.push(firebaseDB.collection(COLECCIONES.config).doc("sistema").onSnapshot(d => {
-        if (d.exists) config = Object.assign({ anio: new Date().getFullYear(), version: "Vs.001", publicado: true, saludo: "", firma: "", ideasRectoras: [] }, d.data());
+        if (d.exists) config = Object.assign({
+            anio: new Date().getFullYear(), version: "Vs.001", publicado: true, saludo: "", firma: "",
+            mision: MARCO_DEFAULT.mision, vision: MARCO_DEFAULT.vision,
+            valores: Object.assign({}, MARCO_DEFAULT.valores), valoresLista: null, pestanasInhabilitadas: []
+        }, d.data());
+        if (!config.valores) config.valores = Object.assign({}, MARCO_DEFAULT.valores);
         refrescarTodo();
     }, err => console.error("Configuración:", err)));
 
@@ -849,7 +882,7 @@ function borrarTodoDemo() {
     if (!confirm("¿Borrar TODOS los datos guardados en este navegador? Esta acción no se puede deshacer.")) return;
     dbActividades = [];
     dbDirectorio = [];
-    config = { anio: new Date().getFullYear(), version: "Vs.001", publicado: true, saludo: "", firma: "", ideasRectoras: [] };
+    config = { anio: new Date().getFullYear(), version: "Vs.001", publicado: true, saludo: "", firma: "", mision: MARCO_DEFAULT.mision, vision: MARCO_DEFAULT.vision, valores: Object.assign({}, MARCO_DEFAULT.valores), pestanasInhabilitadas: [] };
     persistirDemo();
     refrescarTodo();
     showToast("Datos borrados.", "info");
@@ -928,20 +961,17 @@ function sembrarDatosDemo() {
         { id: "DEMO-D09", departamento: "Asesoría Circuitual 03", funcionario: "M.Sc. Nombre Apellido IX", puesto: "Asesor(a) Supervisor(a)", telefono: "2695-5162", extension: "203", correo: "circuito03.canas@mep.go.cr", circuito: "Circuito 03 (Tilarán)" },
         { id: "DEMO-D10", departamento: "Asesoría Circuitual 04", funcionario: "Lic. Nombre Apellido X", puesto: "Asesor(a) Supervisor(a)", telefono: "2695-5163", extension: "204", correo: "circuito04.canas@mep.go.cr", circuito: "Circuito 04 (Colorado)" }
     ];
+    dbDirectorio.forEach(d => { if (!d.categoria) d.categoria = "Telefonía Fija"; });
     config = {
         anio: 2026,
         version: "Vs.001",
         publicado: true,
         saludo: "Para la Dirección Regional de Educación Cañas es un honor presentar la Programación Anual, instrumento rector que orienta la gestión educativa de nuestros circuitos y centros educativos. Invitamos a toda la comunidad educativa a conocer y apropiarse de las acciones aquí planificadas.",
         firma: "Dirección Regional de Educación Cañas · MEP",
-        ideasRectoras: [
-            "Cultura de paz y clima escolar positivo",
-            "Pertinencia cultural y equidad educativa",
-            "Permanencia y mitigación de la exclusión",
-            "Educación socioemocional y salud mental",
-            "Innovación y tecnología educativa",
-            "Trabajo colaborativo y corresponsabilidad"
-        ]
+        mision: MARCO_DEFAULT.mision,
+        vision: MARCO_DEFAULT.vision,
+        valores: Object.assign({}, MARCO_DEFAULT.valores),
+        pestanasInhabilitadas: []
     };
     persistirDemo();
 }
@@ -949,15 +979,45 @@ function sembrarDatosDemo() {
 /* ==================== REFRESCO GLOBAL DE VISTAS ==================== */
 function refrescarTodo() {
     aplicarAnio();
+    sincronizarNav();
     renderPortada();
+    renderMarco();
     renderDashboard();
     renderCalendario();
     if (calDiaSel) renderCalDetalle();
     Object.values(MODULOS).forEach(m => renderTabla(m));
     renderConfiguracion();
+    renderPestanasConfig();
     const banner = $("bannerPublicacion");
     if (banner) banner.classList.toggle("hidden", config.publicado !== false);
     crearIconos();
+}
+
+/* ==================== VISIBILIDAD DE PESTAÑAS ==================== */
+// Una pestaña «inhabilitada» solo la ve y la usa el Administrador:
+// para el Modo Lectura desaparece por completo del menú y de los accesos
+// directos de la portada.
+function pestanaHabilitada(id) {
+    if (esAdmin()) return true;
+    return (config.pestanasInhabilitadas || []).indexOf(id) === -1;
+}
+
+let navFirma = "";   // firma de las pestañas visibles (para reconstruir el menú en vivo)
+let tabActiva = "inicio";
+
+function sincronizarNav() {
+    const firma = navCompleta().map(v => v.id).join("|") + "#" + (currentUser ? currentUser.rol : "lectura");
+    if (firma === navFirma) return;
+    navFirma = firma;
+    construirNav();
+    // Si la pestaña activa dejó de ser visible para este usuario (p. ej.
+    // otro administrador la inhabilitó en vivo), se vuelve al Inicio.
+    if (!navCompleta().some(v => v.id === tabActiva)) {
+        switchTab("inicio");
+    } else {
+        const t = $("tab-" + tabActiva);
+        if (t) t.classList.add("activo");
+    }
 }
 
 /* ==================== NAVEGACIÓN Y SECCIONES ==================== */
@@ -965,7 +1025,7 @@ function navCompleta() {
     const items = VISTAS.slice();
     Object.values(MODULOS).forEach(m => items.push({ id: m.id, etiqueta: m.etiqueta, icono: m.icono }));
     items.push({ id: "configuracion", etiqueta: "Configuración", icono: "settings", soloAdmin: true });
-    return items.filter(v => !v.soloAdmin || esAdmin());
+    return items.filter(v => (!v.soloAdmin || esAdmin()) && pestanaHabilitada(v.id));
 }
 
 function construirNav() {
@@ -1021,7 +1081,8 @@ function construirSecciones() {
 function switchTab(tabId) {
     const item = navCompleta().find(v => v.id === tabId);
     if (!item) return;
-    if (item.soloAdmin && !esAdmin()) return;
+    if (!pestanaHabilitada(tabId)) return;
+    tabActiva = tabId;
     const ids = ["inicio", "dashboard", "calendario"].concat(Object.keys(MODULOS), ["configuracion"]);
     ids.forEach(id => {
         const v = $("view-" + id);
@@ -1083,8 +1144,15 @@ function valorCelda(r, campo) {
     const v = r[campo];
     if (v == null || v === "") return "—";
     if (campo === "fecha" || campo === "fechaFin") return fmtFecha(v);
-    if (campo === "telefono") return fmtTelefono(v);
-    if (campo === "correo") return '<a class="text-mep-blue hover:underline" href="mailto:' + esc(v) + '">' + esc(v) + '</a>';
+    if (campo === "telefono" || campo === "movil") return fmtTelefono(v);
+    if (campo === "correo") {
+        // Lista de correos: cada uno con su enlace mailto.
+        return String(v).trim().split(/[\s,;/]+/).filter(Boolean).map(c =>
+            '<a class="text-mep-blue hover:underline break-all" href="mailto:' + esc(c) + '">' + esc(c) + '</a>').join(" · ");
+    }
+    if (campo === "categoria") {
+        return '<span class="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase bg-slate-100 text-slate-600 rounded-full px-2 py-0.5">' + esc(v) + "</span>";
+    }
     return esc(v);
 }
 
@@ -1115,7 +1183,7 @@ function renderTabla(mod) {
 
     tbody.innerHTML = lista.map(r => {
         let fila = "<tr class='hover:bg-slate-50/80 transition'>";
-        cols.forEach(c => { fila += '<td class="p-3 align-top">' + valorCelda(r, c.campo) + "</td>"; });
+        cols.forEach(c => { fila += '<td class="p-3 align-top" data-label="' + esc(c.etiqueta) + '">' + valorCelda(r, c.campo) + "</td>"; });
         if (esAdmin()) {
             if (mod.coleccion === COLECCIONES.actividades) {
                 const pub = r.estado !== "borrador";
@@ -1150,13 +1218,7 @@ function renderPortada() {
     }
     $("saludoTexto").textContent = config.saludo || "El saludo institucional aún no ha sido redactado. La administración puede editarlo desde «Editar portada».";
     $("saludoAutor").textContent = config.firma || "";
-    const ideas = (config.ideasRectoras || []).filter(i => String(i).trim());
-    $("ideasGrid").innerHTML = ideas.length ? ideas.map(i =>
-        '<div class="bg-slate-50 border border-slate-200 rounded-xl p-3.5 flex items-start gap-2.5">' +
-        '<i data-lucide="lightbulb" class="w-4 h-4 text-mep-gold shrink-0 mt-0.5"></i>' +
-        '<p class="text-xs font-semibold text-slate-700 leading-snug">' + esc(i) + "</p></div>").join("")
-        : '<p class="text-xs text-slate-400">Aún no se han registrado ideas rectoras.</p>';
-    const modulos = Object.values(MODULOS).map(m => {
+    const modulos = Object.values(MODULOS).filter(m => pestanaHabilitada(m.id)).map(m => {
         const n = registrosDe(m).length;
         return '<button onclick="switchTab(\'' + m.id + '\')" class="bento-tile group">' +
             '<div class="flex items-center justify-between mb-2.5">' +
@@ -1175,25 +1237,199 @@ function abrirEditorPortada() {
     $("pcPublicado").checked = config.publicado !== false;
     $("pcSaludo").value = config.saludo || "";
     $("pcAutor").value = config.firma || "";
-    $("pcIdeas").value = (config.ideasRectoras || []).join("\n");
     abrirModal("modalPortada");
 }
 
 async function guardarPortada(event) {
     event.preventDefault();
     if (!esAdmin()) return;
-    const ideas = $("pcIdeas").value.split("\n").map(s => s.trim()).filter(Boolean);
     const ok = await guardarConfig({
         anio: parseInt($("pcAnio").value, 10) || new Date().getFullYear(),
         version: $("pcVersion").value.trim() || "Vs.001",
         publicado: $("pcPublicado").checked,
         saludo: $("pcSaludo").value.trim(),
-        firma: $("pcAutor").value.trim(),
-        ideasRectoras: ideas
+        firma: $("pcAutor").value.trim()
     });
     if (ok) {
         cerrarModal("modalPortada");
         showToast("Metadatos de la portada actualizados.", "success");
+    }
+}
+
+/* ==================== MARCO FILOSÓFICO (MISIÓN · VISIÓN · VALORES) ==================== */
+// Render en vivo de los 6 textos editables. Se ejecuta en cada refresco
+// (onSnapshot de drec_configuracion), de modo que un cambio hecho por un
+// Administrador se refleja al instante en los usuarios en Modo Lectura.
+/* ---- Valores institucionales dinámicos ----
+   El Administrador puede editar el TÍTULO y el TEXTO de cada valor,
+   eliminar valores existentes y agregar nuevos. Se almacenan en
+   drec_configuracion/sistema como «valoresLista»: [{titulo, texto, icono}].
+   La clave histórica «valores» (objeto fijo compromiso/respeto/...) se
+   mantiene sincronizada para compatibilidad con datos ya guardados. */
+const ICONOS_VALORES = ["handshake", "heart-handshake", "scale", "shield-check", "sprout", "lightbulb", "target", "leaf", "award", "flag", "sun", "star"];
+const COLORES_VALORES = ["#D97706", "#059669", "#1E40AF", "#7C3AED", "#DC2626", "#0891B2", "#DB2777", "#64748B"];
+
+// Normaliza cualquier formato antiguo o nuevo a una LISTA de valores.
+function valoresActivos() {
+    if (Array.isArray(config.valoresLista) && config.valoresLista.length > 0) {
+        return config.valoresLista.filter(v => v && (v.titulo || v.texto));
+    }
+    // Migración: convierte el objeto histórico {compromiso, respeto, ...}
+    // a la lista dinámica conservando títulos en bonito.
+    const base = config.valores || MARCO_DEFAULT.valores;
+    const bonito = { compromiso: "Compromiso", respeto: "Respeto", transparencia: "Transparencia", responsabilidad: "Responsabilidad" };
+    return Object.keys(base).map((k, i) => ({
+        titulo: bonito[k] || k.charAt(0).toUpperCase() + k.slice(1),
+        texto: base[k] || "",
+        icono: ICONOS_VALORES[i % ICONOS_VALORES.length]
+    })).filter(v => v.texto);
+}
+
+function renderMarco() {
+    const set = (id, val) => { const el = $(id); if (el) el.textContent = val || ""; };
+    set("misionTexto", config.mision || MARCO_DEFAULT.mision);
+    set("visionTexto", config.vision || MARCO_DEFAULT.vision);
+    const cont = $("valoresGrid");
+    if (!cont) return;
+    const lista = valoresActivos();
+    cont.innerHTML = lista.map((v, i) => {
+        const color = COLORES_VALORES[i % COLORES_VALORES.length];
+        const icono = v.icono || ICONOS_VALORES[i % ICONOS_VALORES.length];
+        return '<article class="valor-card col-span-12 md:col-span-6 xl:col-span-3">' +
+            '<div class="valor-card-brillo" style="background:radial-gradient(420px 120px at 12% 0%, ' + color + '26, transparent 70%)"></div>' +
+            '<header class="valor-card-head">' +
+                '<span class="valor-badge" style="background:' + color + '17;color:' + color + ';border-color:' + color + '33"><i data-lucide="' + esc(icono) + '"></i></span>' +
+                '<h4 class="valor-card-titulo">' + esc(v.titulo || "Valor institucional") + '</h4>' +
+                '<span class="valor-card-num">' + pad(i + 1) + '</span>' +
+            '</header>' +
+            '<p class="valor-card-texto">' + esc(v.texto || "") + '</p>' +
+            '</article>';
+    }).join("");
+    crearIconos();
+}
+
+// Filas dinámicas del editor del marco filosófico (título editable + texto + eliminar)
+function renderFilasValores(lista) {
+    const cont = $("mfValores");
+    if (!cont) return;
+    cont.innerHTML = lista.map(v =>
+        '<div class="mf-valor" data-icono="' + esc(v.icono || "gem") + '">' +
+            '<div class="flex items-center gap-2">' +
+                '<span class="icono-tile bg-blue-50 text-mep-blue shrink-0" style="width:32px;height:32px;border-radius:10px"><i data-lucide="' + esc(v.icono || "gem") + '" class="w-4 h-4"></i></span>' +
+                '<input type="text" data-tipo="titulo" maxlength="60" placeholder="Título del valor (ej: Honestidad) *" value="' + esc(v.titulo || "") + '" class="campo font-bold">' +
+                '<button type="button" onclick="quitarValorFila(this)" title="Eliminar este valor" class="accion-btn accion-borrar shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>' +
+            '</div>' +
+            '<textarea data-tipo="texto" rows="3" maxlength="900" placeholder="Descripción del valor institucional *" class="campo">' + esc(v.texto || "") + '</textarea>' +
+        '</div>').join("");
+    crearIconos();
+}
+
+function leerFilasValores() {
+    const cont = $("mfValores");
+    if (!cont) return [];
+    return Array.from(cont.querySelectorAll(".mf-valor")).map((fila, i) => ({
+        titulo: (fila.querySelector('[data-tipo="titulo"]') || {}).value || "",
+        texto: (fila.querySelector('[data-tipo="texto"]') || {}).value || "",
+        icono: fila.getAttribute("data-icono") || ICONOS_VALORES[i % ICONOS_VALORES.length]
+    }));
+}
+
+function agregarValorFila() {
+    const cont = $("mfValores");
+    if (!cont) return;
+    const i = cont.querySelectorAll(".mf-valor").length;
+    cont.insertAdjacentHTML("beforeend",
+        '<div class="mf-valor" data-icono="' + ICONOS_VALORES[i % ICONOS_VALORES.length] + '">' +
+            '<div class="flex items-center gap-2">' +
+                '<span class="icono-tile bg-blue-50 text-mep-blue shrink-0" style="width:32px;height:32px;border-radius:10px"><i data-lucide="' + ICONOS_VALORES[i % ICONOS_VALORES.length] + '" class="w-4 h-4"></i></span>' +
+                '<input type="text" data-tipo="titulo" maxlength="60" placeholder="Título del valor (ej: Honestidad) *" value="" class="campo font-bold">' +
+                '<button type="button" onclick="quitarValorFila(this)" title="Eliminar este valor" class="accion-btn accion-borrar shrink-0"><i data-lucide="trash-2" class="w-4 h-4"></i></button>' +
+            '</div>' +
+            '<textarea data-tipo="texto" rows="3" maxlength="900" placeholder="Descripción del valor institucional *" class="campo"></textarea>' +
+        '</div>');
+    crearIconos();
+    const filas = cont.querySelectorAll(".mf-valor");
+    filas[filas.length - 1].querySelector('[data-tipo="titulo"]').focus();
+}
+
+function quitarValorFila(btn) {
+    const fila = btn.closest(".mf-valor");
+    if (fila) fila.remove();
+}
+
+function abrirEditorMarco() {
+    if (!esAdmin()) return;
+    $("mfMision").value = config.mision || "";
+    $("mfVision").value = config.vision || "";
+    renderFilasValores(valoresActivos());
+    abrirModal("modalMarco");
+}
+
+async function guardarMarco(event) {
+    event.preventDefault();
+    if (!esAdmin()) return;
+    const lista = leerFilasValores();
+    // Validación: cada valor necesita título y texto; se descartan filas vacías.
+    const llenos = lista.filter(v => v.titulo.trim() || v.texto.trim());
+    const incompletos = llenos.filter(v => !v.titulo.trim() || !v.texto.trim());
+    if (incompletos.length > 0) {
+        showToast("Cada valor institucional necesita un título y su descripción.", "warning");
+        return;
+    }
+    if (llenos.length === 0) {
+        showToast("Agregue al menos un valor institucional.", "warning");
+        return;
+    }
+    // Sincroniza el objeto histórico «valores» para compatibilidad.
+    const legado = {};
+    llenos.forEach(v => { legado[normalize(v.titulo).replace(/[^a-z0-9]+/g, "_")] = v.texto.trim(); });
+    const ok = await guardarConfig({
+        mision: $("mfMision").value.trim(),
+        vision: $("mfVision").value.trim(),
+        valoresLista: llenos.map(v => ({ titulo: v.titulo.trim(), texto: v.texto.trim(), icono: v.icono })),
+        valores: legado
+    });
+    if (ok) {
+        cerrarModal("modalMarco");
+        showToast("Marco filosófico institucional actualizado. Los usuarios en Modo Lectura lo verán al instante.", "success");
+    }
+}
+
+/* ==================== CONTROL DE PESTAÑAS (ADMIN) ==================== */
+// Panel de Configuración: interruptores para inhabilitar pestañas del menú.
+// Las pestañas inhabilitadas solo las ve el Administrador.
+function renderPestanasConfig() {
+    const cont = $("pestanasConfig");
+    if (!cont || !esAdmin()) return;
+    const inhabilitadas = config.pestanasInhabilitadas || [];
+    const items = VISTAS.slice().concat(Object.values(MODULOS).map(m => ({ id: m.id, etiqueta: m.titulo, icono: m.icono })));
+    cont.innerHTML = items.map(v => {
+        const off = inhabilitadas.indexOf(v.id) !== -1;
+        return '<label class="flex items-center justify-between gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-3 cursor-pointer hover:border-mep-blue/40 transition">' +
+            '<span class="flex items-center gap-2.5 min-w-0">' +
+            '<i data-lucide="' + v.icono + '" class="w-4 h-4 text-mep-blue shrink-0"></i>' +
+            '<span class="text-xs font-bold text-mep-navy truncate">' + esc(v.etiqueta) + "</span></span>" +
+            '<span class="flex items-center gap-2 shrink-0">' +
+            '<span class="text-[10px] font-extrabold uppercase ' + (off ? "text-amber-600" : "text-emerald-600") + '">' + (off ? "Inhabilitada" : "Visible") + "</span>" +
+            '<input type="checkbox" ' + (off ? "" : "checked") + ' onchange="togglePestana(\'' + v.id + '\', this.checked)" class="rounded text-mep-blue w-4 h-4">' +
+            "</span></label>";
+    }).join("");
+    crearIconos();
+}
+
+async function togglePestana(id, visible) {
+    if (!esAdmin()) return;
+    let lista = (config.pestanasInhabilitadas || []).slice();
+    if (visible) {
+        lista = lista.filter(x => x !== id);
+    } else {
+        if (lista.indexOf(id) === -1) lista.push(id);
+    }
+    const ok = await guardarConfig({ pestanasInhabilitadas: lista });
+    if (ok) {
+        showToast(visible
+            ? "Pestaña habilitada: vuelve a ser visible para el Modo Lectura."
+            : "Pestaña inhabilitada: ahora solo la ve el Administrador.", "info");
     }
 }
 
@@ -1232,14 +1468,50 @@ async function publicarTodo() {
 }
 
 /* ==================== PANEL DE CONTROL ==================== */
+// Selector de año: las estadísticas del panel (totales, próximas,
+// distribución por módulo y actividades por mes) se calculan EXCLUSIVAMENTE
+// con las actividades cuyo año (de su fecha inicial) coincide con el año
+// seleccionado. Los datos de otros años no se mezclan en la vista.
+let dashAnio = null; // año seleccionado en el Panel de Control
+
+function anioDeFecha(iso) {
+    const m = String(iso || "").match(/^(\d{4})-/);
+    return m ? parseInt(m[1], 10) : null;
+}
+
+function cambiarAnioDashboard(anio) {
+    dashAnio = parseInt(anio, 10) || new Date().getFullYear();
+    renderDashboard();
+}
+
+function renderSelectorAnio() {
+    const sel = $("dashAnio");
+    if (!sel) return;
+    // Años disponibles: los presentes en los datos + año de la config + actual.
+    const set = {};
+    dbActividades.forEach(a => { const y = anioDeFecha(a.fecha); if (y) set[y] = true; });
+    set[parseInt(config.anio, 10) || new Date().getFullYear()] = true;
+    set[new Date().getFullYear()] = true;
+    const anios = Object.keys(set).map(Number).sort((a, b) => b - a);
+    if (!dashAnio || anios.indexOf(dashAnio) === -1) dashAnio = parseInt(config.anio, 10) || new Date().getFullYear();
+    sel.innerHTML = anios.map(y => '<option value="' + y + '"' + (y === dashAnio ? " selected" : "") + '>' + y + "</option>").join("");
+    const lbl = $("dashAnioEtiqueta");
+    if (lbl) lbl.textContent = String(dashAnio);
+    const lblStat = $("dashAnioStat");
+    if (lblStat) lblStat.textContent = String(dashAnio);
+}
+
 function renderDashboard() {
-    const act = actividadesVisibles();
+    renderSelectorAnio();
+    // Filtrado estricto por año seleccionado: lo registrado en un año no
+    // aparece en los demás (y viceversa).
+    const act = actividadesVisibles().filter(a => anioDeFecha(a.fecha) === dashAnio);
     $("statActividades").textContent = act.length;
     const hoy = hoyISO();
     const en30 = new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
     $("statProximas").textContent = act.filter(a => a.fecha >= hoy && a.fecha <= en30).length;
     $("statDirectorio").textContent = directorioVisible().length;
-    $("statModulos").textContent = Object.values(MODULOS).filter(m => registrosDe(m).length > 0).length;
+    $("statModulos").textContent = Object.values(MODULOS).filter(m => m.coleccion === COLECCIONES.directorio || registrosDe(m).filter(r => anioDeFecha(r.fecha) === dashAnio).length > 0).length;
 
     const proximas = act.filter(a => a.fecha >= hoy).sort((a, b) => String(a.fecha).localeCompare(String(b.fecha))).slice(0, 8);
     $("proximasList").innerHTML = proximas.length ? proximas.map(a => {
@@ -1252,9 +1524,16 @@ function renderDashboard() {
             "</div>";
     }).join("") : '<p class="text-xs text-slate-400 font-semibold p-4 text-center">No hay actividades próximas registradas.</p>';
 
-    const max = Math.max(1, ...Object.values(MODULOS).map(m => registrosDe(m).length));
+    // Distribución por módulo, también filtrada por el año seleccionado.
+    const porModulo = {};
+    Object.values(MODULOS).forEach(m => {
+        porModulo[m.id] = m.coleccion === COLECCIONES.directorio
+            ? registrosDe(m).length
+            : registrosDe(m).filter(r => anioDeFecha(r.fecha) === dashAnio).length;
+    });
+    const max = Math.max(1, ...Object.values(MODULOS).map(m => porModulo[m.id]));
     $("modulosBars").innerHTML = Object.values(MODULOS).map(m => {
-        const n = registrosDe(m).length;
+        const n = porModulo[m.id];
         return '<div><div class="flex justify-between text-[10px] font-bold mb-1"><span class="text-slate-600 truncate">' + esc(m.etiqueta) + '</span><span class="text-mep-navy">' + n + "</span></div>" +
             '<div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden"><div class="h-full rounded-full transition-all duration-700" style="width:' + Math.round(n / max * 100) + "%;background:" + m.color + '"></div></div></div>';
     }).join("");
@@ -1424,12 +1703,103 @@ function campoInput(c, valor) {
         input = "<select " + base + ">" + (c.opciones || []).map(o =>
             '<option value="' + esc(o) + '"' + (String(valor) === String(o) ? " selected" : "") + ">" + (o === "" ? "— Sin especificar —" : esc(o)) + "</option>").join("") + "</select>";
     } else if (c.tipo === "textarea") {
-        input = "<textarea " + base + " rows='3'>" + esc(valor) + "</textarea>";
+        input = "<textarea " + base + " rows='3' maxlength='1500'>" + esc(valor) + "</textarea>";
     } else {
-        const tipo = c.tipo === "email" ? "email" : c.tipo === "date" ? "date" : "text";
-        input = '<input type="' + tipo + '" ' + base + ' value="' + esc(valor) + '">';
+        let tipo = c.tipo === "email" ? "email" : c.tipo === "date" ? "date" : "text";
+        let extra = 'maxlength="300"';
+        if (c.clave === "hora") {
+            // Hora estricta HH:MM (24 h): el control nativo «time» impide
+            // letras y horas imposibles como 25:99.
+            tipo = "time";
+            extra = "";
+        }
+        if (c.clave === "telefono" || c.clave === "extension" || c.clave === "movil" || c.clave === "celular") {
+            // Solo dígitos, espacios, guiones, paréntesis y «+».
+            extra = 'maxlength="30" inputmode="tel" oninput="sanitizarTelefono(this)"';
+        }
+        if (c.clave === "correo") {
+            // Puede contener varios correos separados por espacios, comas o «/».
+            extra = 'maxlength="400"';
+        }
+        if (c.clave === "codigoPresupuestario" || c.clave === "numero") {
+            extra = 'maxlength="30" inputmode="numeric" oninput="sanitizarCodigo(this)"';
+        }
+        input = '<input type="' + tipo + '" ' + base + ' ' + extra + ' value="' + esc(valor) + '">';
     }
     return '<div><label class="block text-xs font-bold text-slate-700 uppercase mb-1">' + esc(c.etiqueta) + (c.requerido ? " *" : "") + "</label>" + input + "</div>";
+}
+
+/* ==================== VALIDACIÓN ESTRICTA DE FORMULARIOS ==================== */
+// Sanitización en vivo de teléfonos, extensiones y móviles: solo dígitos,
+// espacios, guiones, paréntesis y «+».
+function sanitizarTelefono(el) {
+    const limpio = el.value.replace(/[^\d\s()\-+/]/g, "").slice(0, 30);
+    if (el.value !== limpio) el.value = limpio;
+}
+
+// Sanitización de códigos presupuestarios y numeración: dígitos y guiones.
+function sanitizarCodigo(el) {
+    const limpio = el.value.replace(/[^\d\-]/g, "").slice(0, 30);
+    if (el.value !== limpio) el.value = limpio;
+}
+
+// ¿Fecha ISO real del calendario? (impide 2026-02-30, 2026-13-01, etc.)
+function fechaReal(iso) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(iso || ""))) return false;
+    const partes = iso.split("-");
+    const y = parseInt(partes[0], 10), m = parseInt(partes[1], 10), d = parseInt(partes[2], 10);
+    if (m < 1 || m > 12 || d < 1 || d > 31) return false;
+    const dt = new Date(Date.UTC(y, m - 1, d));
+    return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+
+// Hora válida HH:MM (00:00 – 23:59).
+function horaValida(h) {
+    const m = String(h || "").trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return false;
+    return parseInt(m[1], 10) <= 23 && parseInt(m[2], 10) <= 59;
+}
+
+const RE_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+// Valida una lista de correos separados por espacios, comas, «;» o «/».
+function correosValidos(txt) {
+    return String(txt || "").trim().split(/[\s,;/]+/).filter(Boolean).every(c => RE_CORREO.test(c));
+}
+
+// Validación integral de un registro: fechas reales y coherentes, hora
+// estricta, correos válidos, teléfonos sanos, códigos numéricos y textos sin
+// caracteres de control. Devuelve un mensaje legible o null si todo está bien.
+function validarRegistro(cfg, doc) {
+    for (const clave of ["fecha", "fechaFin"]) {
+        if (doc[clave] && !fechaReal(doc[clave])) {
+            return "La fecha " + (clave === "fecha" ? "inicial" : "final") + " no es un día real del calendario.";
+        }
+    }
+    if (doc.fecha && doc.fechaFin && doc.fechaFin < doc.fecha) {
+        return "La fecha final no puede ser anterior a la fecha inicial.";
+    }
+    if ("hora" in doc && doc.hora && !horaValida(doc.hora)) {
+        return "La hora debe tener el formato HH:MM (ej: 08:30) y ser un horario real.";
+    }
+    if ("correo" in doc && doc.correo && !correosValidos(doc.correo)) {
+        return "El correo (o la lista de correos) no es válido (ej: nombre@mep.go.cr).";
+    }
+    for (const clave of ["telefono", "extension", "movil", "celular"]) {
+        if (clave in doc && doc[clave]) {
+            if (/[^\d\s()\-+/]/.test(doc[clave])) return "El campo de teléfono solo admite números, espacios, guiones, paréntesis y «+».";
+            if (doc[clave].replace(/\D/g, "").length > 15) return "El campo de teléfono tiene demasiados dígitos.";
+        }
+    }
+    if (doc.codigoPresupuestario && /[^\d\-]/.test(doc.codigoPresupuestario)) {
+        return "El código presupuestario solo admite números y guiones (ej: 210-573-01-63-2594).";
+    }
+    if (doc.numero && /[^\d\-]/.test(doc.numero)) {
+        return "El campo «Número» solo admite números y guiones.";
+    }
+    if (doc.titulo && doc.titulo.length > 300) return "El título es demasiado extenso (máximo 300 caracteres).";
+    if (doc.titulo && /[\u0000-\u0008\u000B\u000C\u000E-\u001F]/.test(doc.titulo)) return "El título contiene caracteres no permitidos.";
+    return null;
 }
 
 async function guardarEditor(event) {
@@ -1447,6 +1817,16 @@ async function guardarEditor(event) {
         doc[c.clave] = v;
     });
     if (!valido) { showToast("Complete los campos obligatorios (*).", "warning"); return; }
+
+    // Validación estricta por tipo de campo (fechas reales, HH:MM, correos, teléfonos, códigos).
+    const error = validarRegistro(cfg, doc);
+    const cajaError = $("ef-error");
+    if (error) {
+        showToast(error, "warning");
+        if (cajaError) { cajaError.textContent = error; cajaError.classList.remove("hidden"); }
+        return;
+    }
+    if (cajaError) cajaError.classList.add("hidden");
 
     if (cfg === EDITOR_USUARIOS) {
         await guardarUsuarioDesdeEditor(doc);

@@ -1000,7 +1000,117 @@ main button:active { transform: scale(0.97); }
     }
 }
 
+/* ==========================================================================
+   17. VALORES INSTITUCIONALES DINÁMICOS (bento editorial premium)
+   ========================================================================== */
+.valor-card {
+    position: relative;
+    overflow: hidden;
+    background: var(--superficie);
+    border: 1px solid var(--borde);
+    border-radius: var(--radius-lg);
+    padding: 20px 22px 22px;
+    box-shadow: var(--sombra-1);
+    transition: transform .22s cubic-bezier(.4,0,.2,1), box-shadow .22s cubic-bezier(.4,0,.2,1), border-color .22s ease;
+    isolation: isolate;
+    animation: fadeSlideUp .5s cubic-bezier(.4, 0, .2, 1) both;
+}
 
+@media (hover: hover) {
+    .valor-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--sombra-2);
+        border-color: rgba(30, 64, 175, 0.24);
+    }
+}
 
+.valor-card-brillo {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+}
 
+.valor-card-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
 
+.valor-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    border: 1px solid;
+    flex-shrink: 0;
+    background: var(--superficie);
+    box-shadow: 0 6px 14px -8px rgba(10, 25, 47, 0.25);
+}
+.valor-badge svg { width: 20px; height: 20px; }
+
+.valor-card-titulo {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: -0.01em;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.valor-card-num {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: rgba(100, 116, 139, 0.55);
+    flex-shrink: 0;
+}
+
+.valor-card-texto {
+    font-size: 11.5px;
+    line-height: 1.65;
+    color: #64748B;
+    font-weight: 500;
+}
+
+/* Editor dinámico de valores (modal marco filosófico) */
+.mf-valor {
+    background: var(--lienzo);
+    border: 1px solid var(--borde);
+    border-radius: 16px;
+    padding: 12px;
+    display: grid;
+    gap: 10px;
+    animation: fadeSlideUp .3s cubic-bezier(.4, 0, .2, 1) both;
+}
+.mf-valor .campo { background: #fff; }
+
+/* ==========================================================================
+   18. TABLAS EN MÓVIL: TARJETAS CON ETIQUETAS (data-label)
+   Facilita la consulta del directorio y todos los módulos en pantallas
+   pequeñas: cada celda muestra su etiqueta de columna en miniatura.
+   ========================================================================== */
+@media (max-width: 768px) {
+    .tabla tbody td[data-label]::before {
+        content: attr(data-label);
+        display: block;
+        width: 100%;
+        font-size: 8.5px;
+        font-weight: 800;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #94A3B8;
+        margin-bottom: 1px;
+    }
+    .tabla tbody td[data-label] { align-items: flex-start; }
+    .tabla tbody td[data-label]:empty { display: none; }
+    /* Directorio: los enlaces de correo se apilan con mejor legibilidad */
+    .tabla tbody td a[href^="mailto:"] { display: inline-block; }
+}

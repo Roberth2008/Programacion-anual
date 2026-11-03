@@ -183,32 +183,20 @@
                     </div>
 
                     <div class="grid grid-cols-12 gap-4 items-stretch">
-                        <!-- Saludo institucional -->
-                        <div class="card card-hover col-span-12 lg:col-span-7 p-6 flex flex-col">
+                        <!-- Saludo institucional (ancho completo tras retirar Ideas Rectoras) -->
+                        <div class="card card-hover col-span-12 p-6 sm:p-8 flex flex-col">
                             <div class="flex items-start justify-between gap-3 mb-3">
                                 <h3 class="font-display text-base sm:text-lg font-bold text-mep-navy flex items-center gap-2">
                                     <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="message-square-quote" class="w-[18px] h-[18px]"></i></span> Saludo Institucional
                                 </h3>
-                                <button type="button" onclick="abrirEditorPortada()" class="solo-admin text-[11px] font-bold text-mep-blue hover:underline focus:outline-none flex items-center gap-1">
+                                <button type="button" onclick="abrirEditorPortada()" class="solo-admin text-[11px] font-bold text-mep-blue hover:underline focus:outline-none flex items-center gap-1 shrink-0">
                                     <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Editar portada
                                 </button>
                             </div>
-                            <p id="saludoTexto" class="flex-1 text-sm text-slate-600 leading-relaxed whitespace-pre-line min-h-[80px]"></p>
+                            <p id="saludoTexto" class="flex-1 text-sm sm:text-[15px] text-slate-600 leading-relaxed whitespace-pre-line min-h-[80px]"></p>
                             <p id="saludoAutor" class="text-xs font-extrabold text-mep-navy mt-4 text-right flex items-center justify-end gap-1.5">
                                 <span class="w-6 h-0.5 bg-mep-gold rounded-full"></span><span></span>
                             </p>
-                        </div>
-
-                        <!-- Ideas rectoras -->
-                        <div class="card card-hover col-span-12 lg:col-span-5 p-6 flex flex-col">
-                            <div class="flex items-start justify-between gap-3 mb-1">
-                                <h3 class="font-display text-base sm:text-lg font-bold text-mep-navy flex items-center gap-2">
-                                    <span class="icono-tile bg-amber-50 text-mep-gold"><i data-lucide="lightbulb" class="w-[18px] h-[18px]"></i></span> Ideas Rectoras del Año
-                                </h3>
-                                <span class="shrink-0 inline-flex items-center whitespace-nowrap text-[10px] font-extrabold uppercase tracking-widest text-mep-gold bg-amber-50 border border-amber-200/70 rounded-full px-3 py-1.5 mt-1">Año <span class="anio-dinamico">2026</span></span>
-                            </div>
-                            <p class="text-xs text-slate-500 mb-4">Directrices institucionales que orientan la gestión educativa regional.</p>
-                            <div id="ideasGrid" class="flex-1 min-h-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-3 content-start overflow-y-auto overscroll-contain pr-1"></div>
                         </div>
                     </div>
 
@@ -222,7 +210,7 @@
                                     <span class="icono-tile bg-white/10 border border-white/15 text-amber-400"><i data-lucide="target" class="w-[18px] h-[18px]"></i></span>
                                     <p class="text-[11px] font-extrabold uppercase tracking-[0.25em] text-amber-400">Misión</p>
                                 </div>
-                                <p class="text-sm text-blue-100/85 leading-relaxed">&ldquo;El MEP es el ente rector que garantiza a los habitantes del país el derecho fundamental a una educación de calidad, con acceso equitativo e inclusivo, con aprendizajes pertinentes y relevantes, para la formación plena e integral de las personas y la convivencia.&rdquo;</p>
+                                <p id="misionTexto" class="text-sm text-blue-100/85 leading-relaxed"></p>
                                 <p class="text-[10px] font-extrabold uppercase tracking-widest text-blue-200/60 mt-4">Ministerio de Educación Pública</p>
                             </div>
                         </div>
@@ -235,7 +223,7 @@
                                     <span class="icono-tile bg-white/10 border border-white/15 text-amber-400"><i data-lucide="compass" class="w-[18px] h-[18px]"></i></span>
                                     <p class="text-[11px] font-extrabold uppercase tracking-[0.25em] text-amber-400">Visión</p>
                                 </div>
-                                <p class="text-sm text-blue-100/85 leading-relaxed">&ldquo;Ser una institución reconocida a nivel nacional e internacional, como la rectora del sistema educativo costarricense mediante el mejoramiento continuo de la gestión, con estándares modernos de eficacia, eficiencia y transparencia; orientada a la construcción de una sociedad inclusiva e integrada.&rdquo;</p>
+                                <p id="visionTexto" class="text-sm text-blue-100/85 leading-relaxed"></p>
                                 <p class="text-[10px] font-extrabold uppercase tracking-widest text-blue-200/60 mt-4">Gestión <span class="anio-dinamico">2026</span> · DRE Cañas</p>
                             </div>
                         </div>
@@ -245,43 +233,15 @@
                             <span class="icono-tile bg-amber-50 text-mep-gold"><i data-lucide="gem" class="w-[18px] h-[18px]"></i></span>
                             <h3 class="font-display text-base sm:text-lg font-bold text-mep-navy whitespace-nowrap">Valores Institucionales</h3>
                             <span class="flex-1 h-px bg-slate-200"></span>
+                            <button type="button" onclick="abrirEditorMarco()" class="solo-admin text-[11px] font-bold text-mep-blue hover:underline focus:outline-none flex items-center gap-1 shrink-0">
+                                <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Editar marco filosófico
+                            </button>
                         </div>
 
-                        <!-- Compromiso -->
-                        <div class="card card-hover col-span-12 md:col-span-6 xl:col-span-3 p-5 flex flex-col">
-                            <div class="flex items-center gap-2.5 mb-3">
-                                <span class="icono-tile" style="background:#D9770614;color:#D97706"><i data-lucide="handshake" class="w-[18px] h-[18px]"></i></span>
-                                <h4 class="font-display text-sm font-extrabold text-mep-navy">Compromiso</h4>
-                            </div>
-                            <p class="text-[11px] text-slate-500 leading-relaxed flex-1">Es una decisión de vida de aceptación libre y conciencia de dar más de lo mínimo requerido. Con entrega, mística, honestidad y dedicación ante cualquier acción ejecutada a nivel laboral, personal y profesional; para el logro de los objetivos institucionales y el bienestar de la organización.</p>
-                        </div>
-
-                        <!-- Respeto -->
-                        <div class="card card-hover col-span-12 md:col-span-6 xl:col-span-3 p-5 flex flex-col">
-                            <div class="flex items-center gap-2.5 mb-3">
-                                <span class="icono-tile" style="background:#05966914;color:#059669"><i data-lucide="heart-handshake" class="w-[18px] h-[18px]"></i></span>
-                                <h4 class="font-display text-sm font-extrabold text-mep-navy">Respeto</h4>
-                            </div>
-                            <p class="text-[11px] text-slate-500 leading-relaxed flex-1">Cuidar en el trato al otro, el valor y la dignidad que posee como persona humana, el entorno, atendiendo la particularidad sin imponer convicciones o creencias en congruencia con la normativa vigente.</p>
-                        </div>
-
-                        <!-- Transparencia -->
-                        <div class="card card-hover col-span-12 md:col-span-6 xl:col-span-3 p-5 flex flex-col">
-                            <div class="flex items-center gap-2.5 mb-3">
-                                <span class="icono-tile" style="background:#1E40AF14;color:#1E40AF"><i data-lucide="scale" class="w-[18px] h-[18px]"></i></span>
-                                <h4 class="font-display text-sm font-extrabold text-mep-navy">Transparencia</h4>
-                            </div>
-                            <p class="text-[11px] text-slate-500 leading-relaxed flex-1">Conjunto de acciones coherentes con aspectos de la política institucional y la normativa vigente, para el acceso de la ciudadanía a información veraz, comunicándola de forma asertiva, que genere confianza y promueva la imparcialidad. Que dé cuenta de las actuaciones del MEP, de tal forma que permita la evaluación de su gestión.</p>
-                        </div>
-
-                        <!-- Responsabilidad -->
-                        <div class="card card-hover col-span-12 md:col-span-6 xl:col-span-3 p-5 flex flex-col">
-                            <div class="flex items-center gap-2.5 mb-3">
-                                <span class="icono-tile" style="background:#7C3AED14;color:#7C3AED"><i data-lucide="shield-check" class="w-[18px] h-[18px]"></i></span>
-                                <h4 class="font-display text-sm font-extrabold text-mep-navy">Responsabilidad</h4>
-                            </div>
-                            <p class="text-[11px] text-slate-500 leading-relaxed flex-1">Es el cumplimiento continuo, consciente, diligente y oportuno de los deberes y obligaciones inherentes al cargo, según la normativa vigente, que conlleva al funcionario a asumir las consecuencias de sus actuaciones y tiene como finalidad la satisfacción del interés público.</p>
-                        </div>
+                        <!-- Valores dinámicos: el Administrador edita títulos,
+                             agrega nuevos valores o los elimina desde
+                             «Editar marco filosófico»; renderMarco() los puebla. -->
+                        <div id="valoresGrid" class="col-span-12 grid grid-cols-12 gap-4"></div>
                     </div>
 
                     <div class="grid grid-cols-12 gap-4 items-stretch">
@@ -305,7 +265,7 @@
                             </div>
                             <div class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="calendar-check" class="w-5 h-5"></i></div>
                         </div>
-                        <p class="text-[11px] text-slate-400 mt-2 font-medium">Todos los módulos del año</p>
+                        <p class="text-[11px] text-slate-400 mt-2 font-medium">Todos los módulos del año <span id="dashAnioStat">2026</span></p>
                     </div>
                     <div class="col-span-6 lg:col-span-3 rounded-3xl p-5 relative overflow-hidden text-white gradient-esmeralda">
                         <div class="absolute -right-5 -bottom-5 opacity-15"><i data-lucide="clock" class="w-28 h-28"></i></div>
@@ -352,10 +312,18 @@
                     </div>
 
                     <div class="card card-hover col-span-12 p-6">
-                        <h2 class="font-display text-lg font-bold text-mep-navy flex items-center gap-2 mb-1">
-                            <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="bar-chart-3" class="w-[18px] h-[18px]"></i></span> Actividades por mes
-                        </h2>
-                        <p class="text-xs text-slate-500 mb-4">Volumen programado mes a mes del año <span class="anio-dinamico">2026</span>.</p>
+                        <div class="flex flex-wrap items-center justify-between gap-2 mb-1">
+                            <h2 class="font-display text-lg font-bold text-mep-navy flex items-center gap-2">
+                                <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="bar-chart-3" class="w-[18px] h-[18px]"></i></span> Actividades por mes
+                            </h2>
+                            <!-- Selector de año: filtra TODAS las estadísticas del
+                                 panel exclusivamente por el año elegido. -->
+                            <label class="flex items-center gap-2 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                                Año
+                                <select id="dashAnio" onchange="cambiarAnioDashboard(this.value)" class="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-mep-navy outline-none focus:ring-2 focus:ring-mep-blue"></select>
+                            </label>
+                        </div>
+                        <p class="text-xs text-slate-500 mb-4">Volumen programado mes a mes del año <span id="dashAnioEtiqueta">2026</span>. Las estadísticas de este panel corresponden únicamente al año seleccionado.</p>
                         <div id="mesesBars" class="grid grid-cols-6 sm:grid-cols-12 gap-2 items-end"></div>
                     </div>
                 </section>
@@ -421,6 +389,14 @@
                                 <i data-lucide="check-circle-2" class="w-4 h-4"></i> Publicar todas las actividades
                             </button>
                         </div>
+                    </div>
+
+                    <div class="card p-6">
+                        <h2 class="font-display text-lg font-bold text-mep-navy flex items-center gap-2 mb-2">
+                            <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="eye-off" class="w-[18px] h-[18px]"></i></span> Visibilidad de pestañas del menú
+                        </h2>
+                        <p class="text-xs text-slate-500 mb-4">Inhabilite una pestaña para ocultarla por completo al público (Modo Lectura): solo los Administradores podrán verla y usarla. Los cambios se aplican en vivo en todas las pantallas conectadas.</p>
+                        <div id="pestanasConfig" class="grid grid-cols-1 md:grid-cols-2 gap-2.5"></div>
                     </div>
 
                     <div class="card p-6">
@@ -591,12 +567,46 @@
                     <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Firma del saludo</label>
                     <input type="text" id="pcAutor" placeholder="Ej: Nombre completo, Directora Regional de Educación" class="campo">
                 </div>
-                <div>
-                    <label class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Ideas rectoras (una por línea)</label>
-                    <textarea id="pcIdeas" rows="4" class="campo" placeholder="Escriba cada idea rectora en una línea distinta"></textarea>
-                </div>
                 <div class="flex justify-end gap-2 pt-2">
                     <button type="button" onclick="cerrarModal('modalPortada')" class="btn-suave">Cancelar</button>
+                    <button type="submit" class="btn-mep-primary px-6 py-2.5 rounded-2xl font-bold text-sm">Guardar cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ==================== MODAL: MARCO FILOSÓFICO (MISIÓN · VISIÓN · VALORES) ==================== -->
+    <div id="modalMarco" class="fixed inset-0 z-50 hidden p-4 bg-slate-950/60 backdrop-blur-md">
+        <div class="modal-caja w-full max-w-2xl">
+            <div class="modal-cabecera">
+                <h3 class="font-display font-extrabold text-mep-navy text-sm sm:text-base flex items-center gap-2">
+                    <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="gem" class="w-[18px] h-[18px]"></i></span>
+                    Marco filosófico institucional
+                </h3>
+                <button onclick="cerrarModal('modalMarco')" class="modal-cerrar">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            <form class="p-6 space-y-4" onsubmit="guardarMarco(event)">
+                <div>
+                    <label for="mfMision" class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Misión *</label>
+                    <textarea id="mfMision" rows="4" class="campo" required placeholder="Misión institucional del MEP..."></textarea>
+                </div>
+                <div>
+                    <label for="mfVision" class="block text-[10px] font-extrabold text-slate-500 uppercase tracking-wider mb-1.5">Visión *</label>
+                    <textarea id="mfVision" rows="4" class="campo" required placeholder="Visión institucional del MEP..."></textarea>
+                </div>
+                <div class="flex items-center justify-between gap-2 pt-1">
+                    <p class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">Valores institucionales</p>
+                    <button type="button" onclick="agregarValorFila()" class="btn-suave !min-h-0 px-3 py-1.5 text-[11px]">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Agregar valor
+                    </button>
+                </div>
+                <!-- Filas dinámicas: título editable, descripción y eliminación.
+                     El Administrador agrega, renombra o elimina valores. -->
+                <div id="mfValores" class="space-y-3"></div>
+                <div class="flex justify-end gap-2 pt-2">
+                    <button type="button" onclick="cerrarModal('modalMarco')" class="btn-suave">Cancelar</button>
                     <button type="submit" class="btn-mep-primary px-6 py-2.5 rounded-2xl font-bold text-sm">Guardar cambios</button>
                 </div>
             </form>
