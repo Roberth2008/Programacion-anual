@@ -214,7 +214,7 @@ const MODULOS = {
     },
     ferias_festivales: {
         id: "ferias_festivales", etiqueta: "Ferias y Festivales",
-        titulo: "Ferias Regionales y Festivales",
+        titulo: "Ferias Regionales y Festivales",   
         descripcion: "FEA, ferias de ciencias y tecnología, y demás festivales: etapas institucionales, circuitos 01–05 y ejecución regional.",
         icono: "theater", color: "#DC2626", prefijo: "FF",
         coleccion: COLECCIONES.actividades,
@@ -318,29 +318,128 @@ const MODULOS = {
         descripcion: "Telefonía fija, Asesoría Pedagógica, Supervisiones Escolares y Centros Educativos de la DREC y sus circuitos 01–05.",
         icono: "phone", color: "#64748B", prefijo: "DIR",
         coleccion: COLECCIONES.directorio,
-        columnas: [ {campo:"categoria",etiqueta:"Categoría"}, {campo:"circuito",etiqueta:"Circuito"}, {campo:"departamento",etiqueta:"Departamento / Oficina"}, {campo:"funcionario",etiqueta:"Funcionario"}, {campo:"puesto",etiqueta:"Puesto"}, {campo:"telefono",etiqueta:"Teléfono"}, {campo:"extension",etiqueta:"Ext."}, {campo:"movil",etiqueta:"Móvil"}, {campo:"correo",etiqueta:"Correo"} ],
-        filtros: [ {campo:"categoria",etiqueta:"Categoría",opciones:["","Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos"]}, {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
+        // Columnas universales (cuando el filtro de categoría está en «Todos»
+        // o mezcla categorías). Con categoría seleccionada se usan las
+        // columnas específicas de CATEGORIAS_DIRECTORIO.
+        columnas: [ {campo:"categoria",etiqueta:"Categoría"}, {campo:"circuito",etiqueta:"Circuito"}, {campo:"departamento",etiqueta:"Departamento / Institución"}, {campo:"funcionario",etiqueta:"Funcionario / Director"}, {campo:"telefono",etiqueta:"Teléfono"}, {campo:"extension",etiqueta:"Ext."}, {campo:"movil",etiqueta:"Móvil"}, {campo:"correo",etiqueta:"Correo"} ],
+        filtros: [ {campo:"categoria",etiqueta:"Categoría",opciones:["","Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos por Circuitos Escolares"]}, {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
         campos: [
-            { clave:"categoria", etiqueta:"Categoría", tipo:"select", requerido:true,
-              opciones:["Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos"] },
-            { clave:"circuito", etiqueta:"Circuito / Región", tipo:"select",
+            { clave:"categoria", etiqueta:"Categoría / Tipo de registro", tipo:"select", requerido:true,
+              opciones:["Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos por Circuitos Escolares"] },
+            { clave:"circuito", etiqueta:"Circuito / Región", tipo:"select", categorias:["Centros Educativos por Circuitos Escolares"], requerido:true,
               opciones:["","Dirección Regional","Circuito 01 (Cañas)","Circuito 02 (Abangares)","Circuito 03 (Tilarán)","Circuito 04 (Colorado)","Circuito 05 (La Altura)"] },
-            { clave:"departamento", etiqueta:"Departamento / Oficina", tipo:"text", requerido:true },
-            { clave:"funcionario", etiqueta:"Nombre del funcionario / directora o director", tipo:"text", requerido:true },
-            { clave:"puesto", etiqueta:"Puesto", tipo:"text" },
+            { clave:"departamento", etiqueta:"Departamento / Oficina", tipo:"text", requerido:true,
+              categorias:["Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares"] },
+            { clave:"funcionario", etiqueta:"Nombre de funcionario / directora o director", tipo:"text", requerido:true },
+            { clave:"puesto", etiqueta:"Puesto", tipo:"text",
+              categorias:["Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares"] },
             { clave:"telefono", etiqueta:"Teléfono", tipo:"text" },
-            { clave:"extension", etiqueta:"Extensión", tipo:"text" },
-            { clave:"movil", etiqueta:"Móvil / Celular", tipo:"text" },
+            { clave:"extension", etiqueta:"Extensión", tipo:"text", categorias:["Telefonía Fija"] },
+            { clave:"movil", etiqueta:"Móvil / Celular", tipo:"text", categorias:["Centros Educativos por Circuitos Escolares"] },
             { clave:"correo", etiqueta:"Correo(s) electrónico(s)", tipo:"text" },
-            { clave:"numero", etiqueta:"Número (centros educativos)", tipo:"text" },
-            { clave:"codigoPresupuestario", etiqueta:"Código presupuestario", tipo:"text" },
-            { clave:"institucion", etiqueta:"Institución / Centro educativo", tipo:"text" },
-            { clave:"tipoDireccion", etiqueta:"Tipo de dirección", tipo:"select",
+            { clave:"numero", etiqueta:"Número", tipo:"text", categorias:["Centros Educativos por Circuitos Escolares"] },
+            { clave:"codigoPresupuestario", etiqueta:"Código presupuestario", tipo:"text", categorias:["Centros Educativos por Circuitos Escolares"] },
+            { clave:"institucion", etiqueta:"Institución / Centro educativo", tipo:"text", requerido:true, categorias:["Centros Educativos por Circuitos Escolares"] },
+            { clave:"tipoDireccion", etiqueta:"Tipo de dirección", tipo:"select", categorias:["Centros Educativos por Circuitos Escolares"],
               opciones:["","UNIDOCENTE","Dirección 1","Dirección 2","Dirección 3","Dirección 4","PEU","DEGB1","DEGB2","DEGB4","Director CTP","Director Colegio","Preescolar","Preescolar y Primaria","Preescolar, primaria y secundaria","Otra"] },
             { clave:"notas", etiqueta:"Notas / Observaciones", tipo:"textarea" }
         ]
     }
 };
+
+/* ==================== DIRECTORIO: CATEGORÍAS DINÁMICAS ====================
+   Cada categoría define qué campos muestra el formulario de alta/edición y
+   qué columnas usa la tabla (administrativa y pública). El selector de
+   «Categoría / Tipo de registro» re-renderiza el formulario en vivo sin
+   perder lo ya escrito. */
+const CATEGORIAS_DIRECTORIO = {
+    "Telefonía Fija": {
+        campos: ["categoria", "departamento", "funcionario", "telefono", "extension", "correo"],
+        columnas: [
+            {campo:"departamento", etiqueta:"Departamento / Oficina"},
+            {campo:"funcionario", etiqueta:"Funcionario"},
+            {campo:"puesto", etiqueta:"Puesto"},
+            {campo:"telefono", etiqueta:"Teléfono"},
+            {campo:"extension", etiqueta:"Ext."},
+            {campo:"correo", etiqueta:"Correo"}
+        ]
+    },
+    "Asesoría Pedagógica": {
+        campos: ["categoria", "departamento", "funcionario", "telefono", "correo"],
+        columnas: [
+            {campo:"departamento", etiqueta:"Departamento / Oficina"},
+            {campo:"funcionario", etiqueta:"Funcionario"},
+            {campo:"puesto", etiqueta:"Puesto"},
+            {campo:"telefono", etiqueta:"Teléfono"},
+            {campo:"correo", etiqueta:"Correo"}
+        ]
+    },
+    "Supervisiones Escolares": {
+        campos: ["categoria", "departamento", "funcionario", "telefono", "correo"],
+        columnas: [
+            {campo:"departamento", etiqueta:"Departamento / Oficina"},
+            {campo:"funcionario", etiqueta:"Funcionario"},
+            {campo:"telefono", etiqueta:"Teléfono"},
+            {campo:"correo", etiqueta:"Correo"}
+        ]
+    },
+    "Centros Educativos por Circuitos Escolares": {
+        campos: ["categoria", "circuito", "numero", "codigoPresupuestario", "institucion", "tipoDireccion", "funcionario", "telefono", "movil", "correo"],
+        columnas: [
+            {campo:"circuito", etiqueta:"Circuito"},
+            {campo:"numero", etiqueta:"N.º"},
+            {campo:"codigoPresupuestario", etiqueta:"Cód. Presupuestario"},
+            {campo:"institucion", etiqueta:"Institución"},
+            {campo:"tipoDireccion", etiqueta:"Tipo de dirección"},
+            {campo:"funcionario", etiqueta:"Director(a)"},
+            {campo:"telefono", etiqueta:"Teléfono"},
+            {campo:"movil", etiqueta:"Móvil"},
+            {campo:"correo", etiqueta:"Correo"}
+        ]
+    }
+};
+
+// Definiciones de campo del directorio por clave (referencia al catálogo).
+function campoDirectorio(clave) {
+    return MODULOS.directorio.campos.find(c => c.clave === clave) || null;
+}
+
+// Campos (definiciones completas) que el formulario muestra para una categoría.
+// En «Centros Educativos» el campo «funcionario» se etiqueta como Director(a).
+function camposDeCategoria(categoria) {
+    const def = CATEGORIAS_DIRECTORIO[categoria];
+    const claves = def ? def.campos : MODULOS.directorio.campos.map(c => c.clave);
+    return claves.map(clave => {
+        const c = Object.assign({}, campoDirectorio(clave));
+        if (categoria === "Centros Educativos por Circuitos Escolares" && clave === "funcionario") c.etiqueta = "Nombre del director / de la directora";
+        return c;
+    }).filter(Boolean);
+}
+
+// Columnas de la tabla del directorio para la categoría seleccionada
+// (o las universales si el filtro está en «Todos»).
+function columnasDirectorio(categoria) {
+    const def = categoria && CATEGORIAS_DIRECTORIO[categoria];
+    return def ? def.columnas.slice() : MODULOS.directorio.columnas.slice();
+}
+
+// Re-render en vivo de los campos del formulario al cambiar la categoría,
+// conservando lo que ya se escribió en los campos visibles.
+function refrescarCamposDirectorio() {
+    const cont = $("ef-campos-dinamicos");
+    const selCat = $("ef-categoria");
+    if (!cont || !selCat) return;
+    // 1) Conservar los valores ya digitados.
+    const valores = {};
+    cont.querySelectorAll("select[id^='ef-'], input[id^='ef-'], textarea[id^='ef-']").forEach(el => { valores[el.id.slice(3)] = el.value; });
+    // 2) Re-render con los campos de la nueva categoría.
+    const categoria = selCat.value;
+    cont.innerHTML = camposDeCategoria(categoria)
+        .filter(c => c.clave !== "categoria")
+        .map(c => campoInput(c, valores[c.clave] != null ? valores[c.clave] : ""))
+        .join("");
+    crearIconos();
+}
 
 const EDITOR_USUARIOS = {
     id: "usuarios", titulo: "Usuario administrador",
@@ -1153,6 +1252,7 @@ function valorCelda(r, campo) {
     if (campo === "categoria") {
         return '<span class="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase bg-slate-100 text-slate-600 rounded-full px-2 py-0.5">' + esc(v) + "</span>";
     }
+    if (campo === "departamento") return esc(r.institucion && !v ? r.institucion : v); // universal: centros educativos
     return esc(v);
 }
 
@@ -1165,7 +1265,11 @@ function renderTabla(mod) {
     const lista = listaFiltrada(mod);
     if (contador) contador.textContent = lista.length + (lista.length === 1 ? " registro" : " registros");
 
-    let cols = mod.columnas.slice();
+    // Directorio: las columnas se adaptan a la categoría seleccionada en el
+    // filtro (columnas específicas) o usan las universales si está en «Todos».
+    let cols = mod.coleccion === COLECCIONES.directorio
+        ? columnasDirectorio((filtrosState[mod.id] || {}).categoria || "")
+        : mod.columnas.slice();
     if (mod.coleccion !== COLECCIONES.directorio) cols = cols.concat([]); // estado/acciones abajo
     let head = '<tr class="bg-slate-100 text-slate-700 font-extrabold uppercase tracking-wider border-b border-slate-200">' +
         cols.map(c => '<th class="p-3">' + esc(c.etiqueta) + "</th>").join("");
@@ -1662,11 +1766,25 @@ function abrirEditor(modId, id, prefillFecha) {
     $("editorTitulo").textContent = (id ? "Editar: " : "Nuevo registro · ") + (cfg.titulo || cfg.etiqueta);
 
     let html = "";
-    cfg.campos.forEach(c => {
-        let valor = registro ? (registro[c.clave] == null ? "" : registro[c.clave]) : "";
-        if (!registro && c.clave === "fecha" && editorPrefillFecha) valor = editorPrefillFecha;
-        html += campoInput(c, valor);
-    });
+    if (cfg.coleccion === COLECCIONES.directorio) {
+        // DIRECTORIO: selector de categoría + campos dinámicos según la
+        // categoría elegida (despliega/oculta en vivo, sin recargar el modal).
+        const catInicial = (registro && registro.categoria) || "Telefonía Fija";
+        const campoCat = Object.assign({}, campoDirectorio("categoria"));
+        campoCat.etiqueta = "Categoría / Tipo de registro *";
+        html += campoInput(campoCat, catInicial).replace('id="ef-categoria"', 'id="ef-categoria" onchange="refrescarCamposDirectorio()"');
+        html += '<div id="ef-campos-dinamicos" class="space-y-4">' +
+            camposDeCategoria(catInicial).filter(c => c.clave !== "categoria").map(c => {
+                let valor = registro ? (registro[c.clave] == null ? "" : registro[c.clave]) : "";
+                return campoInput(c, valor);
+            }).join("") + "</div>";
+    } else {
+        cfg.campos.forEach(c => {
+            let valor = registro ? (registro[c.clave] == null ? "" : registro[c.clave]) : "";
+            if (!registro && c.clave === "fecha" && editorPrefillFecha) valor = editorPrefillFecha;
+            html += campoInput(c, valor);
+        });
+    }
     // Usuarios: contraseña inicial al crear (no se guarda en Firestore)
     if (cfg === EDITOR_USUARIOS) {
         if (!editorId) {
@@ -1809,10 +1927,17 @@ async function guardarEditor(event) {
     if (!cfg) return;
     const doc = {};
     let valido = true;
+    // Directorio: los obligatorios se evalúan SOLO sobre los campos visibles
+    // de la categoría elegida (los campos ocultos van vacíos al documento).
+    const esDirectorio = cfg.coleccion === COLECCIONES.directorio;
+    const clavesActivas = esDirectorio
+        ? camposDeCategoria(($("ef-categoria") || {}).value || "").map(c => c.clave)
+        : null;
     cfg.campos.forEach(c => {
         const el = $("ef-" + c.clave);
         const v = el ? el.value.trim() : "";
-        if (c.requerido && !v) { valido = false; el.classList.add("border-red-400", "ring-1", "ring-red-300"); }
+        const obligatorio = c.requerido && (!clavesActivas || clavesActivas.indexOf(c.clave) !== -1);
+        if (obligatorio && !v) { valido = false; if (el) el.classList.add("border-red-400", "ring-1", "ring-red-300"); }
         else if (el) el.classList.remove("border-red-400");
         doc[c.clave] = v;
     });
@@ -1886,8 +2011,14 @@ function verDetalle(modId, id) {
     if (!cfg) return;
     const r = registroDe(cfg, id);
     if (!r) { showToast("Registro no encontrado.", "warning"); return; }
-    $("detalleTitulo").textContent = r.titulo || r.funcionario || "Detalle";
-    $("detalleCuerpo").innerHTML = cfg.campos.map(c => {
+    $("detalleTitulo").textContent = r.titulo || r.funcionario || (r.institucion || r.departamento) || "Detalle";
+    // Directorio: el detalle muestra únicamente los campos de la categoría
+    // del registro (además de la categoría misma y las notas).
+    const esDir = modId === "directorio";
+    const clavesDetalle = esDir
+        ? camposDeCategoria(r.categoria || "Telefonía Fija").map(c => c.clave).concat(["notas"])
+        : null;
+    $("detalleCuerpo").innerHTML = cfg.campos.filter(c => !clavesDetalle || clavesDetalle.indexOf(c.clave) !== -1).map(c => {
         const v = r[c.clave];
         if (v == null || v === "") return "";
         let valor = esc(v);
@@ -2325,10 +2456,17 @@ function exportarModulo(modId) {
     const mod = MODULOS[modId];
     if (!mod) return;
     const lista = listaFiltrada(mod);
-    const encabezados = mod.columnas.map(c => c.etiqueta).concat(esAdmin() && mod.coleccion === COLECCIONES.actividades ? ["Estado"] : []);
+    // Directorio: exporta las columnas de la categoría seleccionada en el
+    // filtro (o las universales si está en «Todos»).
+    const columnas = mod.coleccion === COLECCIONES.directorio
+        ? columnasDirectorio((filtrosState[mod.id] || {}).categoria || "")
+        : mod.columnas;
+    const encabezados = columnas.map(c => c.etiqueta).concat(esAdmin() && mod.coleccion === COLECCIONES.actividades ? ["Estado"] : []);
     const filas = lista.map(r => {
-        const fila = mod.columnas.map(c => {
-            const v = r[c.campo];
+        const fila = columnas.map(c => {
+            let v = r[c.campo];
+            // Universal: los centros educativos aportan su institución.
+            if (c.campo === "departamento" && !v) v = r.institucion;
             if (v == null) return "";
             if (c.campo === "fecha" || c.campo === "fechaFin") return fmtFecha(v);
             return String(v);
@@ -2378,3 +2516,4 @@ window.addEventListener("DOMContentLoaded", () => {
         if (e.key === "Escape") document.body.classList.remove("sidebar-open");
     });
 });
+
