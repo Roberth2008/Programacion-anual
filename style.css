@@ -1114,3 +1114,70 @@ main button:active { transform: scale(0.97); }
     /* Directorio: los enlaces de correo se apilan con mejor legibilidad */
     .tabla tbody td a[href^="mailto:"] { display: inline-block; }
 }
+
+/* ==========================================================================
+   19. SELECCIÓN MÚLTIPLE Y OPERACIONES POR LOTES EN TABLAS
+   Checkbox maestro (cabecera), checkbox por fila y barra flotante de
+   acciones masivas. La selección respeta los filtros activos.
+   ========================================================================== */
+.check-maestro, .check-fila {
+    accent-color: var(--azul);
+    width: 1.15rem;
+    height: 1.15rem;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+.check-maestro:indeterminate { accent-color: var(--dorado); }
+.celda-seleccion { white-space: nowrap; }
+
+/* Barra flotante de acciones por lotes (aparece solo con selección activa) */
+.barra-seleccion {
+    position: fixed;
+    bottom: calc(18px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 68;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: min(94vw, 760px);
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--borde);
+    border-radius: 20px;
+    padding: 10px 14px;
+    box-shadow: 0 24px 48px -16px rgba(10, 25, 47, 0.35), 0 8px 20px -10px rgba(10, 25, 47, 0.25);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    animation: sheetIn .28s cubic-bezier(.32, 1.2, .4, 1) both;
+}
+
+/* En móvil (tablas como tarjetas): el checkbox de selección se ubica en la
+   esquina superior derecha de cada tarjeta para una experiencia táctil fluida. */
+@media (max-width: 768px) {
+    .tabla tbody tr { position: relative; }
+    .tabla tbody td.celda-seleccion {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        margin: 0;
+        padding: 0 !important;
+        z-index: 2;
+        min-height: 0;
+        align-items: center;
+    }
+    .tabla tbody td.celda-seleccion::before { display: none; }
+    .check-maestro, .check-fila { width: 1.35rem; height: 1.35rem; }
+    .barra-seleccion {
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        max-width: calc(100vw - 20px);
+        padding: 8px 10px;
+        gap: 6px;
+    }
+    .barra-seleccion .chip { font-size: 10px; }
+    .barra-seleccion button { min-height: 38px; font-size: 11px; padding: 6px 10px; }
+}
+
+/* Resaltado sutil de filas seleccionadas */
+.tabla tbody tr:has(td.celda-seleccion input:checked) { background: rgba(30, 64, 175, 0.045); }

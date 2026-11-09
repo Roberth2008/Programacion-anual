@@ -185,6 +185,274 @@ let calDiaSel = null;         // ISO "YYYY-MM-DD"
 
 let filtrosState = {};         // { modulo: { campo: valor } }
 
+/* ==================== SELECCIÓN MÚLTIPLE Y OPERACIONES POR LOTES ====================
+   Selección de registros en las tablas de datos (módulos de programación,
+   Directorio y usuarios autorizados en Configuración). La selección respeta
+   SIEMPRE los filtros activos: el checkbox maestro marca/desmarca únicamente
+   los registros visibles (filtrados) de la tabla actual. */
+let seleccion = { modulo: null, ids: [] }; // selección activa (un módulo a la vez)
+
+function seleccionDeModulo(modId) {
+    if (seleccion.modulo !== modId) return [];
+    return seleccion.ids;
+}
+function estaSeleccionado(modId, id) {
+    return seleccion.modulo === modId && seleccion.ids.indexOf(String(id)) !== -1;
+}
+// Alterna la selección de un registro individual (checkbox de fila).
+function alternarSeleccion(modId, id, checkbox) {
+    if (seleccion.modulo !== modId) seleccion = { modulo: modId, ids: [] };
+    const clave = String(id);
+    const i = seleccion.ids.indexOf(clave);
+    if (checkbox && checkbox.checked) { if (i === -1) seleccion.ids.push(clave); }
+    else if (i !== -1) seleccion.ids.splice(i, 1);
+    if (!seleccion.ids.length) seleccion.modulo = modId;
+    sincronizarCheckMaestro(modId);
+    actualizarBarraSeleccion();
+}
+// Checkbox maestro: marca/desmarca TODOS los registros visibles (filtrados).
+function alternarSeleccionTodos(modId, marcado) {
+    const ids = idsVisiblesDeTabla(modId);
+    if (marcado) seleccion = { modulo: modId, ids: ids.map(String) };
+    else seleccion = { modulo: null, ids: [] };
+    sincronizarCheckMaestro(modId);
+    actualizarBarraSeleccion();
+    if (modId === "usuarios") renderConfiguracion();
+    else if (MODULOS[modId]) renderTabla(MODULOS[modId]);
+}
+function limpiarSeleccion() {
+    seleccion = { modulo: null, ids: [] };
+    actualizarBarraSeleccion();
+}
+// Registros visibles (respetando filtros) de un módulo o de la tabla de usuarios.
+function idsVisiblesDeTabla(modId) {
+    if (modId === "usuarios") return dbUsuarios.map(u => String(u.uid));
+    const mod = MODULOS[modId];
+    if (!mod) return [];
+    return listaFiltrada(mod).map(r => String(r.id));
+}
+// Sincroniza el estado visual (marcado / indeterminado) del checkbox maestro.
+function sincronizarCheckMaestro(modId) {
+    const cb = $("check-maestro-" + modId);
+    if (!cb) return;
+    const sel = seleccionDeModulo(modId);
+    const ids = idsVisiblesDeTabla(modId);
+    cb.checked = ids.length > 0 && ids.every(id => sel.indexOf(String(id)) !== -1);
+    cb.indeterminate = !cb.checked && ids.some(id => sel.indexOf(String(id)) !== -1);
+}
+
+// Barra flotante de acciones por lotes (contador + eliminación masiva).
+function actualizarBarraSeleccion() {
+    const barra = $("barraSeleccion");
+    if (!barra) return;
+    const n = seleccion.ids.length;
+    if (!esAdmin() || !seleccion.modulo || n === 0) {
+        barra.classList.add("hidden");
+        barra.innerHTML = "";
+        return;
+    }
+    const esUsuarios = seleccion.modulo === "usuarios";
+    const cfg = esUsuarios ? { titulo: "Usuarios autorizados" } : MODULOS[seleccion.modulo];
+    if (!cfg) { barra.classList.add("hidden"); return; }
+    barra.innerHTML =
+        '<span class="chip chip-rol !text-[11px]">' + n + (n === 1 ? " registro seleccionado" : " registros seleccionados") + '</span>' +
+        '<span class="text-[11px] font-extrabold text-slate-500 uppercase tracking-wider hidden sm:inline">· ' + esc(cfg.titulo || cfg.etiqueta || "") + '</span>' +
+        '<span class="flex-1"></span>' +
+        // Cambio 2026: la barra muestra ÚNICAMENTE el botón de eliminación de
+        // los registros seleccionados. Los botones «Eliminar todos» y
+        // «Limpiar selección» fueron retirados de la interfaz.
+        '<button type="button" onclick="eliminarSeleccionados()" class="btn-mep-danger px-4 py-2 rounded-2xl font-bold text-xs flex items-center gap-1.5">' +
+            '<i data-lucide="trash-2" class="w-4 h-4"></i> Eliminar seleccionados</button>';
+    barra.classList.remove("hidden");
+    crearIconos();
+}
+
+// Eliminación en lote: LocalStorage (Modo Demo) o Firestore (writeBatch por
+// bloques de 400 borrados, el límite seguro de una transacción por lotes).
+async function eliminarRegistrosLote(coleccion, ids) {
+    if (!ids || !ids.length) return true;
+    if (MODO_DEMO) {
+        if (coleccion === COLECCIONES.actividades) dbActividades = dbActividades.filter(a => ids.indexOf(String(a.id)) === -1);
+        if (coleccion === COLECCIONES.directorio) dbDirectorio = dbDirectorio.filter(d => ids.indexOf(String(d.id)) === -1);
+        if (coleccion === COLECCIONES.usuarios) dbUsuarios = dbUsuarios.filter(u => ids.indexOf(String(u.uid)) === -1);
+        persistirDemo();
+        refrescarTodo();
+        return true;
+    }
+    let ok = true;
+    for (let i = 0; i < ids.length; i += 400) {
+        try {
+            const batch = firebaseDB.batch();
+            ids.slice(i, i + 400).forEach(id => batch.delete(firebaseDB.collection(coleccion).doc(String(id))));
+            await batch.commit();
+        } catch (e) {
+            console.error("Error en borrado por lotes:", e);
+            showToast("No se pudo eliminar el lote (" + (e.code || e.message) + ").", "danger");
+            ok = false;
+            break;
+        }
+    }
+    return ok;
+}
+
+// «Eliminar seleccionados»: borrado masivo de los registros marcados.
+async function eliminarSeleccionados() {
+    if (!esAdmin()) return;
+    const modId = seleccion.modulo;
+    const ids = seleccion.ids.slice();
+    if (!modId || !ids.length) { showToast("No hay registros seleccionados.", "warning"); return; }
+    if (modId === "usuarios") {
+        // Nunca se elimina la cuenta propia del administrador en sesión.
+        const propios = ids.filter(id => currentUser && String(id) === String(currentUser.uid));
+        const objetivo = ids.filter(id => !propios.length || propios.indexOf(id) === -1);
+        if (!objetivo.length) { showToast("Acción bloqueada: no puede eliminar su propia cuenta.", "danger"); return; }
+        if (!confirm("¿Eliminar " + objetivo.length + (objetivo.length === 1 ? " usuario" : " usuarios") + " del sistema?\n\n(Las cuentas permanecen en Firebase Authentication; solo se retira su autorización. Esta acción no se puede deshacer.)")) return;
+        limpiarSeleccion();
+        const ok = await eliminarRegistrosLote(COLECCIONES.usuarios, objetivo);
+        if (ok) showToast(objetivo.length + (objetivo.length === 1 ? " usuario eliminado" : " usuarios eliminados") + " del sistema.", "info");
+        renderConfiguracion();
+        return;
+    }
+    const cfg = MODULOS[modId];
+    if (!cfg) return;
+    if (!confirm("¿Eliminar definitivamente los " + ids.length + (ids.length === 1 ? " registro seleccionado" : " registros seleccionados") + " de «" + cfg.titulo + "»?\n\nEsta acción no se puede deshacer.")) return;
+    limpiarSeleccion();
+    const ok = await eliminarRegistrosLote(cfg.coleccion, ids);
+    if (ok) showToast(ids.length + (ids.length === 1 ? " registro eliminado" : " registros eliminados") + ".", "info");
+}
+
+// «Eliminar todos»: borrado masivo de TODOS los registros del módulo actual,
+// con confirmación estricta de seguridad (doble confirmación).
+async function eliminarTodosDelModulo(modId) {
+    if (!esAdmin()) return;
+    const cfg = MODULOS[modId];
+    if (!cfg) return;
+    let ids;
+    if (cfg.coleccion === COLECCIONES.directorio) ids = dbDirectorio.map(r => String(r.id));
+    else ids = dbActividades.filter(a => a.modulo === modId).map(r => String(r.id));
+    if (!ids.length) { showToast("El módulo «" + cfg.titulo + "» no tiene registros.", "info"); return; }
+    // Confirmación estricta: dos diálogos consecutivos con texto explícito.
+    if (!confirm("⚠️ ADVERTENCIA: está a punto de eliminar TODOS los registros (" + ids.length + ") del módulo «" + cfg.titulo + "».\n\nLos registros previos, el Directorio Telefónico DIRECA y las demás secciones NO se modifican. ¿Desea continuar?")) return;
+    if (!confirm("Confirme por segunda vez: ¿ELIMINAR DEFINITIVAMENTE los " + ids.length + " registros de «" + cfg.titulo + "»? Esta acción NO se puede deshacer.")) return;
+    limpiarSeleccion();
+    const ok = await eliminarRegistrosLote(cfg.coleccion, ids);
+    if (ok) showToast("Eliminados " + ids.length + " registros de «" + cfg.titulo + "».", "info");
+}
+
+/* ==================== DIRECTORIO TELEFÓNICO DIRECA (DATOS OFICIALES) ====================
+   Fuente: «DIRECTORIO TELEFÓNICO DIRECA» (documento institucional).
+   Cada entrada es [oficina, extensión]. Los registros se siembran de forma
+   NO destructiva (solo se agregan los que aún no existen, sin sobreescribir
+   datos previos del directorio). */
+const OFICINAS_DIRECA = [
+    ["Plataforma de Servicios (recepción)", "3000"],
+    ["Oficiales de Seguridad", "3001"],
+    ["Educación Abierta", "3002"],
+    // EXCLUSIÓN OBLIGATORIA: Nidia Briceño Jiménez / Extensión 3003 NO debe
+    // aparecer en ninguna opción desplegable ni en la interfaz. No se incluye
+    // aquí y además registroDIRECAExcluido() la filtra siempre que exista.
+    ["Of. Archivo", "3004"],
+    ["Of. Archivo", "3005"],
+    ["Contador de Juntas", "3006"],
+    ["Coordinador de Juntas", "3007"],
+    ["Secretaria de DSAF", "3008"],
+    ["Jefatura DSAF", "3009"],
+    ["Asesoría de capacitación", "3010"],
+    ["Director Regional", "3011"],
+    ["Secretaría de Dirección", "3012"],
+    ["Asesoría Legal", "3013"],
+    ["Asesoría de Educación Musical", "3014"],
+    ["Asesoría de Orientación", "3015"],
+    ["Asesoría de EPJA.", "3016"],
+    ["Asesoría de Artes Plásticas", "3017"],
+    ["Jefatura DAP", "3018"],
+    ["Secretaría DAP", "3019"],
+    ["Psicología", "3020"],
+    ["Trabajo Social", "3021"],
+    ["Área Educativa 1", "3022"],
+    ["Área Educativa 2", "3023"],
+    ["Asesoría de Educación Física", "3024"],
+    ["Asesoría de Inglés", "3025"],
+    ["Asesoría de Educación Preescolar", "3026"],
+    ["Programa Vivamos la Guanacastequidad", "3027"],
+    ["Asesoría de Evaluación", "3028"],
+    ["Asesoría de Ciencias", "3029"],
+    ["Asesoría de Español", "3030"],
+    ["Asesoría de Matemática", "3031"],
+    ["Asesoría de Educación Religiosa", "3032"],
+    ["Asesoría de Estudios Sociales", "3033"],
+    ["Asesoría de Cívica", "3034"],
+    ["Asesoría de Educación Especial", "3035"],
+    ["Oficina de Informática", "3036"],
+    ["Comedor", "3037"]
+];
+// Opciones del desplegable de oficinas + entrada manual («__OTRA__»).
+const OPCIONES_OFICINAS_DIRECA = OFICINAS_DIRECA.map(o => o[0]).concat(["__OTRA__"]);
+function extensionDeOficina(oficina) {
+    const e = OFICINAS_DIRECA.find(o => o[0] === oficina);
+    return e ? e[1] : "";
+}
+
+/* Oficinas de supervisión escolar por circuito (categoría «Circuitos»). */
+const SUPERVISIONES_CIRCUITOS = [
+    ["Supervisión circuito 01", "2669-2611"],
+    ["Supervisión circuito 02", "2662-0685"],
+    ["Supervisión circuito 03", "2695-5509"],
+    ["Supervisión circuito 04", "2668-6836"],
+    ["Supervisión circuito 05", "2100 5138"]
+];
+const OPCIONES_SUPERVISIONES = SUPERVISIONES_CIRCUITOS.map(o => o[0]);
+function telefonoDeSupervision(oficina) {
+    const e = SUPERVISIONES_CIRCUITOS.find(o => o[0] === oficina);
+    return e ? e[1] : "";
+}
+
+/* Registros precargados (siembra no destructiva por id de documento). */
+const REGISTROS_DIRECA = OFICINAS_DIRECA.map(o => ({
+    id: "DIRECA-OF-" + o[1],
+    categoria: "Directorio Telefónico DIRECA",
+    oficina: o[0],
+    extension: o[1]
+}));
+const REGISTROS_SUPERVISIONES = SUPERVISIONES_CIRCUITOS.map(o => ({
+    id: "DIRECA-SUP-" + o[0].replace(/\D/g, ""),
+    categoria: "Circuitos",
+    oficinaSupervision: o[0],
+    telefono: o[1]
+}));
+
+/* EXCLUSIÓN OBLIGATORIA: la extensión 3003 / Nidia Briceño Jiménez jamás se
+   muestra en la interfaz (ni en Modo Lectura ni al Administrador). */
+function registroDIRECAExcluido(r) {
+    if (!r) return false;
+    if (String(r.extension || "").replace(/\D/g, "") === "3003") return true;
+    return normalize(r.oficina || r.departamento || r.funcionario || "") === "nidia briceno jimenez";
+}
+
+/* Siembra idempotente y NO destructiva: agrega únicamente los registros del
+   directorio DIRECA que aún no existan (por id), conservando íntegramente los
+   registros previos. En modo demo se guardan en LocalStorage; en producción
+   los escribe en Firestore solo un Administrador (reglas: allow write: esAdmin). */
+async function sincronizarDirectorioDIRECA() {
+    const faltantes = REGISTROS_DIRECA.concat(REGISTROS_SUPERVISIONES)
+        .filter(nuevo => !dbDirectorio.some(r => String(r.id) === String(nuevo.id)));
+    if (!faltantes.length) return;
+    if (MODO_DEMO) {
+        dbDirectorio = dbDirectorio.concat(faltantes.map(r => Object.assign({}, r)));
+        persistirDemo();
+        refrescarTodo();
+        return;
+    }
+    if (!esAdmin() || !firebaseDB) return;
+    for (const r of faltantes) {
+        try {
+            await firebaseDB.collection(COLECCIONES.directorio).doc(r.id).set(Object.assign({}, r), { merge: true });
+        } catch (e) {
+            console.warn("No se pudo sembrar el registro DIRECA " + r.id + ":", e);
+        }
+    }
+}
+
 /* ==================== CATÁLOGO DE MÓDULOS ==================== */
 const F = {
     titulo:  { clave: "titulo", etiqueta: "Título / Actividad", tipo: "text", requerido: true },
@@ -321,11 +589,11 @@ const MODULOS = {
         // Columnas universales (cuando el filtro de categoría está en «Todos»
         // o mezcla categorías). Con categoría seleccionada se usan las
         // columnas específicas de CATEGORIAS_DIRECTORIO.
-        columnas: [ {campo:"categoria",etiqueta:"Categoría"}, {campo:"circuito",etiqueta:"Circuito"}, {campo:"departamento",etiqueta:"Departamento / Institución"}, {campo:"funcionario",etiqueta:"Funcionario / Director"}, {campo:"telefono",etiqueta:"Teléfono"}, {campo:"extension",etiqueta:"Ext."}, {campo:"movil",etiqueta:"Móvil"}, {campo:"correo",etiqueta:"Correo"} ],
-        filtros: [ {campo:"categoria",etiqueta:"Categoría",opciones:["","Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos por Circuitos Escolares"]}, {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
+        columnas: [ {campo:"categoria",etiqueta:"Categoría"}, {campo:"circuito",etiqueta:"Circuito"}, {campo:"departamento",etiqueta:"Departamento / Institución"}, {campo:"oficina",etiqueta:"Oficina"}, {campo:"funcionario",etiqueta:"Funcionario / Director"}, {campo:"telefono",etiqueta:"Teléfono"}, {campo:"extension",etiqueta:"Ext."}, {campo:"movil",etiqueta:"Móvil"}, {campo:"correo",etiqueta:"Correo"} ],
+        filtros: [ {campo:"categoria",etiqueta:"Categoría",opciones:["","Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos por Circuitos Escolares","Directorio Telefónico DIRECA","Circuitos"]}, {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
         campos: [
             { clave:"categoria", etiqueta:"Categoría / Tipo de registro", tipo:"select", requerido:true,
-              opciones:["Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos por Circuitos Escolares"] },
+              opciones:["Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos por Circuitos Escolares","Directorio Telefónico DIRECA","Circuitos"] },
             { clave:"circuito", etiqueta:"Circuito / Región", tipo:"select", categorias:["Centros Educativos por Circuitos Escolares"], requerido:true,
               opciones:["","Dirección Regional","Circuito 01 (Cañas)","Circuito 02 (Abangares)","Circuito 03 (Tilarán)","Circuito 04 (Colorado)","Circuito 05 (La Altura)"] },
             { clave:"departamento", etiqueta:"Departamento / Oficina", tipo:"text", requerido:true,
@@ -334,7 +602,11 @@ const MODULOS = {
             { clave:"puesto", etiqueta:"Puesto", tipo:"text",
               categorias:["Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares"] },
             { clave:"telefono", etiqueta:"Teléfono", tipo:"text" },
-            { clave:"extension", etiqueta:"Extensión", tipo:"text", categorias:["Telefonía Fija"] },
+            { clave:"extension", etiqueta:"Extensión", tipo:"text", categorias:["Telefonía Fija","Directorio Telefónico DIRECA"] },
+            { clave:"oficina", etiqueta:"Oficina", tipo:"select", requerido:true,
+              categorias:["Directorio Telefónico DIRECA"], opciones: OPCIONES_OFICINAS_DIRECA },
+            { clave:"oficinaSupervision", etiqueta:"Oficina de supervisión", tipo:"select", requerido:true,
+              categorias:["Circuitos"], opciones: OPCIONES_SUPERVISIONES },
             { clave:"movil", etiqueta:"Móvil / Celular", tipo:"text", categorias:["Centros Educativos por Circuitos Escolares"] },
             { clave:"correo", etiqueta:"Correo(s) electrónico(s)", tipo:"text" },
             { clave:"numero", etiqueta:"Número", tipo:"text", categorias:["Centros Educativos por Circuitos Escolares"] },
@@ -384,10 +656,9 @@ const CATEGORIAS_DIRECTORIO = {
         ]
     },
     "Centros Educativos por Circuitos Escolares": {
-        campos: ["categoria", "circuito", "numero", "codigoPresupuestario", "institucion", "tipoDireccion", "funcionario", "telefono", "movil", "correo"],
+        campos: ["categoria", "circuito", "institucion", "telefono", "codigoPresupuestario",  "tipoDireccion", "funcionario",  "movil", "correo"],
         columnas: [
             {campo:"circuito", etiqueta:"Circuito"},
-            {campo:"numero", etiqueta:"N.º"},
             {campo:"codigoPresupuestario", etiqueta:"Cód. Presupuestario"},
             {campo:"institucion", etiqueta:"Institución"},
             {campo:"tipoDireccion", etiqueta:"Tipo de dirección"},
@@ -395,6 +666,30 @@ const CATEGORIAS_DIRECTORIO = {
             {campo:"telefono", etiqueta:"Teléfono"},
             {campo:"movil", etiqueta:"Móvil"},
             {campo:"correo", etiqueta:"Correo"}
+        ]
+    },
+    // ==================== DIRECTORIO TELEFÓNICO DIRECA ====================
+    // Campos: «Oficina» (desplegable con autocompletado de la extensión y
+    // opción de oficina manual) y «# de Extensión» (editable a mano).
+    "Directorio Telefónico DIRECA": {
+        campos: ["categoria", "oficina", "extension", "funcionario", "correo", "notas"],
+        columnas: [
+            {campo:"oficina", etiqueta:"Oficina"},
+            {campo:"extension", etiqueta:"# de Extensión"},
+            {campo:"funcionario", etiqueta:"Funcionario"},
+            {campo:"correo", etiqueta:"Correo"}
+        ]
+    },
+    // ==================== CIRCUITOS (OFICINAS DE SUPERVISIÓN) ====================
+    // Campos: «Oficina de supervisión» (autocompleta el teléfono), «Teléfono»,
+    // «Supervisor» y «Correo electrónico».
+    "Circuitos": {
+        campos: ["categoria", "oficinaSupervision", "telefono", "funcionario", "correo", "notas"],
+        columnas: [
+            {campo:"oficinaSupervision", etiqueta:"Oficina de supervisión"},
+            {campo:"telefono", etiqueta:"Teléfono"},
+            {campo:"funcionario", etiqueta:"Supervisor"},
+            {campo:"correo", etiqueta:"Correo electrónico"}
         ]
     }
 };
@@ -412,6 +707,9 @@ function camposDeCategoria(categoria) {
     return claves.map(clave => {
         const c = Object.assign({}, campoDirectorio(clave));
         if (categoria === "Centros Educativos por Circuitos Escolares" && clave === "funcionario") c.etiqueta = "Nombre del director / de la directora";
+        if (categoria === "Circuitos" && clave === "funcionario") c.etiqueta = "Supervisor";
+        if (categoria === "Circuitos" && clave === "correo") c.etiqueta = "Correo electrónico";
+        if (categoria === "Directorio Telefónico DIRECA" && clave === "extension") c.etiqueta = "# de Extensión";
         return c;
     }).filter(Boolean);
 }
@@ -438,7 +736,63 @@ function refrescarCamposDirectorio() {
         .filter(c => c.clave !== "categoria")
         .map(c => campoInput(c, valores[c.clave] != null ? valores[c.clave] : ""))
         .join("");
+    activarAutocompletadoDirectorio(categoria);
     crearIconos();
+}
+
+/* ==================== AUTOCOMPLETADO DIRECTORIO DIRECA / CIRCUITOS ====================
+   · Oficina (DIRECA): al elegirla en el desplegable se autocompleta su «# de
+     Extensión». La extensión SIEMPRE queda editable a mano (correcciones).
+   · Oficina manual: la opción «Otra oficina (escribir manualmente)» despliega
+     un campo de texto libre para digitar una oficina no listada.
+   · Oficina de supervisión (Circuitos): al elegirla se autocompleta su
+     «Teléfono», que permanece editable a mano. */
+function activarAutocompletadoDirectorio(categoria) {
+    const selOf = $("ef-oficina");
+    if (selOf && categoria === "Directorio Telefónico DIRECA") {
+        selOf.addEventListener("change", () => {
+            const ext = $("ef-extension");
+            if (selOf.value === "__OTRA__") {
+                mostrarOficinaManual(true);
+                if (ext) ext.value = "";
+            } else {
+                mostrarOficinaManual(false);
+                const auto = extensionDeOficina(selOf.value);
+                if (ext && auto) ext.value = auto; // editable manualmente tras el autocompletado
+            }
+        });
+        if (selOf.value === "__OTRA__") mostrarOficinaManual(true, true);
+    }
+    const selSup = $("ef-oficinaSupervision");
+    if (selSup && categoria === "Circuitos") {
+        selSup.addEventListener("change", () => {
+            const tel = $("ef-telefono");
+            const auto = telefonoDeSupervision(selSup.value);
+            if (tel && auto) tel.value = auto; // editable manualmente tras el autocompletado
+        });
+    }
+}
+
+// Campo de texto libre para registrar una oficina fuera de la lista DIRECA.
+function mostrarOficinaManual(mostrar, conservarValor) {
+    const wrap = $("ef-oficinaManualWrap");
+    if (!mostrar) {
+        if (wrap) wrap.classList.add("hidden");
+        return;
+    }
+    if (!wrap) {
+        const sel = $("ef-oficina");
+        if (!sel) return;
+        const nuevo = document.createElement("div");
+        nuevo.id = "ef-oficinaManualWrap";
+        nuevo.innerHTML = '<label class="block text-xs font-bold text-slate-700 uppercase mb-1">Nombre de la oficina (manual) *</label>' +
+            '<input type="text" id="ef-oficinaManual" maxlength="300" placeholder="Escriba el nombre de la oficina" ' +
+            'class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:ring-2 focus:ring-mep-blue focus:bg-white outline-none">';
+        sel.closest("div").after(nuevo);
+    } else {
+        wrap.classList.remove("hidden");
+        if (!conservarValor) { const inp = wrap.querySelector("input"); if (inp) inp.value = ""; }
+    }
 }
 
 const EDITOR_USUARIOS = {
@@ -541,9 +895,11 @@ function actividadesVisibles() {
     return dbActividades.filter(a => a.estado === "publicada");
 }
 function directorioVisible() {
-    if (esAdmin()) return dbDirectorio;
+    // EXCLUSIÓN OBLIGATORIA: la extensión 3003 / Nidia Briceño Jiménez se
+    // filtra SIEMPRE (admin y Modo Lectura); jamás aparece en la interfaz.
+    if (esAdmin()) return dbDirectorio.filter(d => !registroDIRECAExcluido(d));
     if (config.publicado === false) return [];
-    return dbDirectorio;
+    return dbDirectorio.filter(d => !registroDIRECAExcluido(d));
 }
 function registrosDe(modulo) {
     if (modulo.coleccion === COLECCIONES.directorio) return directorioVisible();
@@ -792,6 +1148,10 @@ function postLogin(silencioso) {
     } else {
         escucharDatos();
     }
+    // Siembra no destructiva del Directorio Telefónico DIRECA y de los
+    // Circuitos: agrega solo lo que falte (en producción lo escribe un
+    // Administrador; en demo se guarda en LocalStorage).
+    sincronizarDirectorioDIRECA();
     switchTab("inicio");
     crearIconos();
     showToast(esAdmin()
@@ -1061,6 +1421,12 @@ function sembrarDatosDemo() {
         { id: "DEMO-D10", departamento: "Asesoría Circuitual 04", funcionario: "Lic. Nombre Apellido X", puesto: "Asesor(a) Supervisor(a)", telefono: "2695-5163", extension: "204", correo: "circuito04.canas@mep.go.cr", circuito: "Circuito 04 (Colorado)" }
     ];
     dbDirectorio.forEach(d => { if (!d.categoria) d.categoria = "Telefonía Fija"; });
+    // Directorio Telefónico DIRECA + Circuitos: se AGREGAN a los registros
+    // previos (siembra no destructiva, sin sobreescribir datos existentes).
+    dbDirectorio = dbDirectorio.concat(
+        REGISTROS_DIRECA.map(r => Object.assign({}, r)),
+        REGISTROS_SUPERVISIONES.map(r => Object.assign({}, r))
+    );
     config = {
         anio: 2026,
         version: "Vs.001",
@@ -1164,7 +1530,15 @@ function construirSecciones() {
             '<div class="flex items-center gap-2 shrink-0 self-start md:self-auto">' +
                 '<span id="contador-' + m.id + '" class="chip" style="background:var(--lienzo);color:#64748B;border:1px solid var(--borde);text-transform:none;letter-spacing:0">0 registros</span>' +
                 '<button onclick="abrirEditor(\'' + m.id + '\')" class="solo-admin btn-mep-primary px-4 py-2 rounded-2xl font-bold text-xs flex items-center gap-1.5"><i data-lucide="plus" class="w-4 h-4"></i> Nuevo</button>' +
-                '<button onclick="exportarModulo(\'' + m.id + '\')" class="btn-suave btn-suave-acento"><i data-lucide="download" class="w-4 h-4"></i> Excel</button>' +
+                // Cambio 2026: exportación con opciones. Se puede exportar a Excel
+                // la lista completa visible (respetando los filtros activos) o
+                // únicamente los registros seleccionados (solo Administradores).
+                '<select onchange="exportarModuloOpcion(this, \'' + m.id + '\')" title="Exportar a Excel" ' +
+                    'class="text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-mep-blue" style="min-height:40px">' +
+                    '<option value="">Exportar Excel…</option>' +
+                    '<option value="todos">Excel · Registros visibles (según filtros)</option>' +
+                    (esAdmin() ? '<option value="seleccion">Excel · Solo los seleccionados</option>' : "") +
+                '</select>' +
             '</div>' +
         '</div>' +
         '<div id="filtros-' + m.id + '" class="card p-4 flex flex-wrap gap-2 items-center"></div>' +
@@ -1220,10 +1594,24 @@ function renderFiltros(mod) {
             set.sort((a, b) => String(a).localeCompare(String(b)));
             opciones = [""].concat(set);
         }
+        // Cambio 2026 (Directorio): el filtro de categoría ya NO ofrece la
+        // opción «Todos». La vista del directorio telefónico debe consultarse
+        // SIEMPRE por categoría, de modo que la tabla muestre únicamente las
+        // columnas que esa categoría utiliza (sin campos vacíos). Si no hay
+        // categoría activa, se selecciona automáticamente la primera.
+        const esFiltroCategoriaDirectorio = mod.id === "directorio" && f.campo === "categoria";
+        if (esFiltroCategoriaDirectorio) {
+            opciones = opciones.filter(o => o !== "");
+            filtrosState[mod.id] = filtrosState[mod.id] || {};
+            if (!activos[f.campo] || opciones.indexOf(activos[f.campo]) === -1) {
+                activos[f.campo] = opciones[0] || "";
+                filtrosState[mod.id][f.campo] = activos[f.campo];
+            }
+        }
         html += '<select onchange="aplicarFiltro(\'' + mod.id + '\',\'' + f.campo + '\', this.value)" ' +
             'class="text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-mep-blue">' +
             opciones.map(o => '<option value="' + esc(o) + '"' + ((activos[f.campo] || "") === o ? " selected" : "") + '>' +
-                (o === "" ? esc(f.etiqueta + ": Todos") : esc(o)) + '</option>').join("") + "</select>";
+                (o === "" && !esFiltroCategoriaDirectorio ? esc(f.etiqueta + ": Todos") : esc(o)) + '</option>').join("") + "</select>";
     });
     cont.innerHTML = (html || '<p class="text-[11px] text-slate-400 font-medium">Sin filtros para este módulo.</p>');
 }
@@ -1253,6 +1641,7 @@ function valorCelda(r, campo) {
         return '<span class="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase bg-slate-100 text-slate-600 rounded-full px-2 py-0.5">' + esc(v) + "</span>";
     }
     if (campo === "departamento") return esc(r.institucion && !v ? r.institucion : v); // universal: centros educativos
+    if (campo === "oficina") return esc(v || r.oficinaSupervision || ""); // universal: DIRECA / Circuitos
     return esc(v);
 }
 
@@ -1271,8 +1660,14 @@ function renderTabla(mod) {
         ? columnasDirectorio((filtrosState[mod.id] || {}).categoria || "")
         : mod.columnas.slice();
     if (mod.coleccion !== COLECCIONES.directorio) cols = cols.concat([]); // estado/acciones abajo
-    let head = '<tr class="bg-slate-100 text-slate-700 font-extrabold uppercase tracking-wider border-b border-slate-200">' +
-        cols.map(c => '<th class="p-3">' + esc(c.etiqueta) + "</th>").join("");
+    let head = '<tr class="bg-slate-100 text-slate-700 font-extrabold uppercase tracking-wider border-b border-slate-200">';
+    if (esAdmin()) {
+        // Columna inicial: checkbox maestro «Seleccionar todos» (respeta los
+        // filtros activos: marca únicamente los registros visibles).
+        head += '<th class="p-3 w-10 text-center" title="Seleccionar todos los registros visibles">' +
+            '<input type="checkbox" id="check-maestro-' + esc(mod.id) + '" class="check-maestro" onchange="alternarSeleccionTodos(\'' + esc(mod.id) + '\', this.checked)" aria-label="Seleccionar todos los registros visibles"></th>';
+    }
+    head += cols.map(c => '<th class="p-3">' + esc(c.etiqueta) + "</th>").join("");
     if (esAdmin()) {
         if (mod.coleccion === COLECCIONES.actividades) head += '<th class="p-3">Estado</th>';
         head += '<th class="p-3 text-center">Acciones</th>';
@@ -1281,12 +1676,19 @@ function renderTabla(mod) {
     thead.innerHTML = head;
 
     if (lista.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="' + (cols.length + (esAdmin() ? 2 : 0)) + '" class="p-8 text-center text-slate-400 font-semibold">No hay registros para mostrar.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="' + (cols.length + (esAdmin() ? 3 : 0)) + '" class="p-8 text-center text-slate-400 font-semibold">No hay registros para mostrar.</td></tr>';
+        sincronizarCheckMaestro(mod.id);
+        actualizarBarraSeleccion();
         return;
     }
 
     tbody.innerHTML = lista.map(r => {
         let fila = "<tr class='hover:bg-slate-50/80 transition'>";
+        if (esAdmin()) {
+            fila += '<td class="p-3 align-top text-center celda-seleccion" data-label="Selección">' +
+                '<input type="checkbox" class="check-fila"' + (estaSeleccionado(mod.id, r.id) ? " checked" : "") +
+                ' onchange="alternarSeleccion(\'' + esc(mod.id) + '\',\'' + esc(r.id) + '\', this)" aria-label="Seleccionar registro"></td>';
+        }
         cols.forEach(c => { fila += '<td class="p-3 align-top" data-label="' + esc(c.etiqueta) + '">' + valorCelda(r, c.campo) + "</td>"; });
         if (esAdmin()) {
             if (mod.coleccion === COLECCIONES.actividades) {
@@ -1304,6 +1706,8 @@ function renderTabla(mod) {
         }
         return fila + "</tr>";
     }).join("");
+    sincronizarCheckMaestro(mod.id);
+    actualizarBarraSeleccion();
     crearIconos();
 }
 
@@ -1811,6 +2215,7 @@ function abrirEditor(modId, id, prefillFecha) {
         '<button type="button" onclick="cerrarModal(\'modalEditor\')" class="btn-suave">Cancelar</button>' +
         '<button type="submit" id="btnGuardarEditor" class="btn-mep-primary px-6 py-2.5 rounded-2xl font-bold text-sm">Guardar</button></div>';
     $("editorForm").innerHTML = html;
+    if (cfg.coleccion === COLECCIONES.directorio) activarAutocompletadoDirectorio($("ef-categoria").value);
     abrirModal("modalEditor");
 }
 
@@ -1818,8 +2223,13 @@ function campoInput(c, valor) {
     const base = 'id="ef-' + esc(c.clave) + '" class="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 text-sm font-medium focus:ring-2 focus:ring-mep-blue focus:bg-white outline-none"';
     let input;
     if (c.tipo === "select") {
-        input = "<select " + base + ">" + (c.opciones || []).map(o =>
-            '<option value="' + esc(o) + '"' + (String(valor) === String(o) ? " selected" : "") + ">" + (o === "" ? "— Sin especificar —" : esc(o)) + "</option>").join("") + "</select>";
+        // Si el registro guarda un valor fuera de la lista (p. ej. una oficina
+        // registrada manualmente), se muestra como opción seleccionada extra.
+        const opciones = (c.opciones || []).slice();
+        if (valor !== "" && valor != null && opciones.indexOf(String(valor)) === -1) opciones.push(String(valor));
+        input = "<select " + base + ">" + opciones.map(o =>
+            '<option value="' + esc(o) + '"' + (String(valor) === String(o) ? " selected" : "") + ">" +
+            (o === "" ? "— Sin especificar —" : o === "__OTRA__" ? "Otra oficina (escribir manualmente)" : esc(o)) + "</option>").join("") + "</select>";
     } else if (c.tipo === "textarea") {
         input = "<textarea " + base + " rows='3' maxlength='1500'>" + esc(valor) + "</textarea>";
     } else {
@@ -1942,6 +2352,19 @@ async function guardarEditor(event) {
         doc[c.clave] = v;
     });
     if (!valido) { showToast("Complete los campos obligatorios (*).", "warning"); return; }
+
+    // Directorio DIRECA: la opción «__OTRA__» se sustituye por el nombre de
+    // oficina digitado manualmente en el campo desplegable adyacente.
+    if (esDirectorio && doc.oficina === "__OTRA__") {
+        const inp = $("ef-oficinaManual");
+        const manual = inp ? inp.value.trim() : "";
+        if (!manual) {
+            showToast("Escriba el nombre de la oficina (campo manual).", "warning");
+            if (inp) inp.classList.add("border-red-400", "ring-1", "ring-red-300");
+            return;
+        }
+        doc.oficina = manual;
+    }
 
     // Validación estricta por tipo de campo (fechas reales, HH:MM, correos, teléfonos, códigos).
     const error = validarRegistro(cfg, doc);
@@ -2352,7 +2775,9 @@ function renderConfiguracion() {
     const body = $("tablaUsuariosBody");
     if (!body) return;
     if (dbUsuarios.length === 0) {
-        body.innerHTML = '<tr><td colspan="7" class="p-6 text-center text-slate-400 font-semibold">Aún no hay administradores registrados. Use «Registrar usuario» para crear la primera cuenta de Administrador.</td></tr>';
+        body.innerHTML = '<tr><td colspan="8" class="p-6 text-center text-slate-400 font-semibold">Aún no hay administradores registrados. Use «Registrar usuario» para crear la primera cuenta de Administrador.</td></tr>';
+        sincronizarCheckMaestro("usuarios");
+        actualizarBarraSeleccion();
         return;
     }
     body.innerHTML = dbUsuarios.slice().sort((a, b) => {
@@ -2379,6 +2804,9 @@ function renderConfiguracion() {
         const btnReset =
             '<button onclick="restablecerContrasenaUsuario(\'' + esc(u.uid) + '\')" class="accion-btn accion-ver" title="Enviar enlace para restablecer la contraseña"><i data-lucide="key-round" class="w-4 h-4"></i></button>';
         return "<tr class='hover:bg-slate-50/80'>" +
+            "<td class='p-3 text-center align-top celda-seleccion'>" +
+                "<input type='checkbox' class='check-fila'" + (estaSeleccionado("usuarios", u.uid) ? " checked" : "") +
+                " onchange=\"alternarSeleccion('usuarios','" + esc(u.uid) + "', this)\" aria-label='Seleccionar usuario'" + (propio ? " disabled title='No puede eliminar su propia cuenta'" : "") + "></td>" +
             "<td class='p-3 font-bold text-mep-navy'>" + esc(u.nombre || "—") +
             (propio ? ' <span class="text-[9px] text-white bg-mep-blue font-extrabold uppercase rounded-full px-1.5 py-0.5 align-middle">(usted)</span>' : "") +
             "</td>" +
@@ -2391,6 +2819,8 @@ function renderConfiguracion() {
             "<td class='p-3 text-center'><span class='" + (activo ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700") + " border text-[10px] font-extrabold uppercase rounded-full px-2 py-0.5'>" + (propio ? "Activo (usted)" : (activo ? "Activo" : "Inactivo")) + "</span></td>" +
             "<td class='p-3 text-center whitespace-nowrap'>" + btnReset + " " + btnActivar + " " + btnEliminar + "</td></tr>";
     }).join("");
+    sincronizarCheckMaestro("usuarios");
+    actualizarBarraSeleccion();
     crearIconos();
 }
 
@@ -2452,12 +2882,30 @@ function exportarExcel(filas, encabezados, nombreArchivo, nombreHoja) {
     showToast("Archivo «" + nombreArchivo + "» generado.", "success");
 }
 
-function exportarModulo(modId) {
+// Despachador del selector de exportación de cada módulo.
+// "todos"      → exporta los registros visibles (respetando los filtros).
+// "seleccion"  → exporta únicamente los registros marcados con checkbox
+//                (disponible solo para Administradores, en todas las
+//                pestañas de módulos, incluido el Directorio).
+function exportarModuloOpcion(sel, modId) {
+    const modo = sel.value;
+    sel.selectedIndex = 0; // vuelve a la opción guía tras cada exportación
+    if (modo === "seleccion") exportarModulo(modId, true);
+    else if (modo === "todos") exportarModulo(modId, false);
+}
+
+function exportarModulo(modId, soloSeleccionados) {
     const mod = MODULOS[modId];
     if (!mod) return;
-    const lista = listaFiltrada(mod);
+    let lista = listaFiltrada(mod);
+    if (soloSeleccionados) {
+        if (!esAdmin()) { showToast("La exportación de seleccionados requiere sesión de Administrador.", "warning"); return; }
+        lista = lista.filter(r => estaSeleccionado(mod.id, r.id));
+        if (!lista.length) { showToast("No hay registros seleccionados para exportar.", "warning"); return; }
+    }
     // Directorio: exporta las columnas de la categoría seleccionada en el
-    // filtro (o las universales si está en «Todos»).
+    // filtro (la categoría es obligatoria desde el cambio 2026, por lo que
+    // siempre se usan las columnas específicas de esa categoría).
     const columnas = mod.coleccion === COLECCIONES.directorio
         ? columnasDirectorio((filtrosState[mod.id] || {}).categoria || "")
         : mod.columnas;
@@ -2467,6 +2915,8 @@ function exportarModulo(modId) {
             let v = r[c.campo];
             // Universal: los centros educativos aportan su institución.
             if (c.campo === "departamento" && !v) v = r.institucion;
+            // Universal: los Circuitos aportan su oficina de supervisión.
+            if (c.campo === "oficina" && !v) v = r.oficinaSupervision;
             if (v == null) return "";
             if (c.campo === "fecha" || c.campo === "fechaFin") return fmtFecha(v);
             return String(v);
@@ -2474,7 +2924,9 @@ function exportarModulo(modId) {
         if (esAdmin() && mod.coleccion === COLECCIONES.actividades) fila.push(r.estado === "borrador" ? "Borrador" : "Publicada");
         return fila;
     });
-    exportarExcel(filas, encabezados, "DREC_" + config.anio + "_" + mod.id + ".xlsx", mod.titulo);
+    exportarExcel(filas, encabezados,
+        "DREC_" + config.anio + "_" + mod.id + (soloSeleccionados ? "_seleccion" : "") + ".xlsx",
+        mod.titulo);
 }
 
 function exportarCalendario() {
@@ -2516,4 +2968,3 @@ window.addEventListener("DOMContentLoaded", () => {
         if (e.key === "Escape") document.body.classList.remove("sidebar-open");
     });
 });
-

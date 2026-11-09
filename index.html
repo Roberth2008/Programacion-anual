@@ -419,6 +419,7 @@
                             <table class="tabla">
                                 <thead>
                                     <tr>
+                                        <th class="p-3 w-10 text-center" title="Seleccionar todos los usuarios visibles"><input type="checkbox" id="check-maestro-usuarios" class="check-maestro" onchange="alternarSeleccionTodos('usuarios', this.checked)" aria-label="Seleccionar todos los usuarios"></th>
                                         <th class="p-3">Nombre</th>
                                         <th class="p-3">Correo</th>
                                         <th class="p-3">UID</th>
@@ -612,6 +613,9 @@
             </form>
         </div>
     </div>
+
+    <!-- Barra flotante de acciones por lotes (selección múltiple en tablas) -->
+    <div id="barraSeleccion" class="barra-seleccion hidden"></div>
 
     <!-- Toasts -->
     <div id="toastContainer" class="fixed bottom-4 left-4 z-[70] space-y-2 w-[calc(100%-2rem)] max-w-sm pointer-events-none"></div>
