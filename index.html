@@ -365,6 +365,48 @@
                 <!-- Módulos y vista de Comisiones M.2 generados por script.js. Directorio se agrupa en GENERAL mediante la navegación dinámica. -->
                 <div id="contenedorModulos"></div>
 
+                <!-- ==================== VISTA: REGISTRO DE OFERENTES ==================== -->
+                <section id="view-oferentes" class="vista hidden space-y-4">
+                    <div class="card drec-enlace-card">
+                        <div class="drec-enlace-cabecera">
+                            <span class="icono-tile bg-blue-50 text-mep-blue"><i data-lucide="clipboard-list"></i></span>
+                            <div>
+                                <p class="drec-kicker">DRE CAÑAS · MEP</p>
+                                <h2 class="font-display text-xl sm:text-2xl font-extrabold text-mep-navy">Registro de Oferentes</h2>
+                                <p class="text-sm text-slate-500 mt-1">Acceso al formulario oficial para el registro de personas oferentes.</p>
+                            </div>
+                        </div>
+                        <div id="oferentesPublico" class="drec-enlace-contenido"></div>
+                        <div class="solo-admin drec-enlace-editor">
+                            <h3><i data-lucide="settings-2"></i> Configurar sección</h3>
+                            <label>Breve descripción<textarea id="oferentesTexto" rows="3" placeholder="Escriba una breve indicación para las personas oferentes."></textarea></label>
+                            <label>Enlace del formulario<input id="oferentesUrl" type="url" placeholder="https://..."></label>
+                            <button class="btn-mep-primary" onclick="guardarEnlaceInstitucional('oferentes')"><i data-lucide="save"></i> Guardar cambios</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ==================== VISTA: ENCUESTA DE SATISFACCIÓN ==================== -->
+                <section id="view-satisfaccion" class="vista hidden space-y-4">
+                    <div class="card drec-enlace-card">
+                        <div class="drec-enlace-cabecera">
+                            <span class="icono-tile bg-emerald-50 text-emerald-700"><i data-lucide="message-square-heart"></i></span>
+                            <div>
+                                <p class="drec-kicker">MEJORA CONTINUA · DRE CAÑAS</p>
+                                <h2 class="font-display text-xl sm:text-2xl font-extrabold text-mep-navy">Encuesta de Satisfacción del Servicio</h2>
+                                <p class="text-sm text-slate-500 mt-1">Su opinión nos ayuda a fortalecer la calidad de la atención brindada.</p>
+                            </div>
+                        </div>
+                        <div id="satisfaccionPublico" class="drec-enlace-contenido"></div>
+                        <div class="solo-admin drec-enlace-editor">
+                            <h3><i data-lucide="settings-2"></i> Configurar sección</h3>
+                            <label>Breve descripción<textarea id="satisfaccionTexto" rows="3" placeholder="Explique brevemente el propósito de la encuesta."></textarea></label>
+                            <label>Enlace de la encuesta<input id="satisfaccionUrl" type="url" placeholder="https://..."></label>
+                            <button class="btn-mep-primary" onclick="guardarEnlaceInstitucional('satisfaccion')"><i data-lucide="save"></i> Guardar cambios</button>
+                        </div>
+                    </div>
+                </section>
+
                 <!-- ==================== VISTA: CONFIGURACIÓN (solo administrador) ==================== -->
                 <section id="view-configuracion" class="vista hidden space-y-4 solo-admin">
                     <div class="card p-6">

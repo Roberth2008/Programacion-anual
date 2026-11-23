@@ -61,6 +61,10 @@ let config = {
     vision: MARCO_DEFAULT.vision,
     valores: Object.assign({}, MARCO_DEFAULT.valores),
     valoresLista: null,          // lista dinámica de valores [{titulo, texto, icono}] (migración automática)
+    oferentesTexto: "Complete el formulario de registro para manifestar su interés en participar en los procesos de nombramiento de la Dirección Regional de Educación Cañas. Antes de enviarlo, verifique que la información proporcionada esté actualizada.",
+    oferentesUrl: "",
+    satisfaccionTexto: "Le invitamos a compartir su experiencia con el servicio recibido. Sus respuestas serán de gran utilidad para identificar oportunidades de mejora y continuar fortaleciendo la atención a la comunidad educativa.",
+    satisfaccionUrl: "",
     pestanasInhabilitadas: []   // ids de pestañas ocultas para el Modo Lectura
 };
 
@@ -2339,11 +2343,71 @@ function refrescarTodo() {
     if (calDiaSel) renderCalDetalle();
     Object.values(MODULOS).forEach(m => renderTabla(m));
     renderComisiones();
+    renderEnlacesInstitucionales();
     renderConfiguracion();
     renderPestanasConfig();
     const banner = $("bannerPublicacion");
     if (banner) banner.classList.toggle("hidden", config.publicado !== false);
     crearIconos();
+}
+
+/* ==================== ENLACES INSTITUCIONALES CON CÓDIGO QR ==================== */
+function urlInstitucionalSegura(valor) {
+    const raw = String(valor || "").trim();
+    if (!raw) return "";
+    try {
+        const u = new URL(raw);
+        return (u.protocol === "https:" || u.protocol === "http:") ? u.href : "";
+    } catch (_) { return ""; }
+}
+
+function renderEnlacePublico(tipo) {
+    const url = urlInstitucionalSegura(config[tipo + "Url"]);
+    const texto = String(config[tipo + "Texto"] || "").trim();
+    const cont = $(tipo + "Publico");
+    if (!cont) return;
+    const tituloAccion = tipo === "oferentes" ? "Ingresar al registro" : "Completar encuesta";
+    if (!url) {
+        cont.innerHTML = '<p class="drec-enlace-descripcion">' + esc(texto) + '</p>' +
+            '<div class="drec-qr-vacio"><i data-lucide="qr-code"></i><strong>Enlace pendiente de configuración</strong><span>El personal administrador habilitará aquí el código QR y el acceso correspondiente.</span></div>';
+    } else {
+        const qr = "https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data=" + encodeURIComponent(url);
+        cont.innerHTML = '<p class="drec-enlace-descripcion">' + esc(texto) + '</p>' +
+            '<div class="drec-acceso-grid"><div class="drec-qr-marco"><img src="' + qr + '" alt="Código QR para acceder" loading="lazy"></div>' +
+            '<div class="drec-acceso-info"><span class="drec-acceso-etiqueta">ACCESO DIGITAL</span><h3>Escanee el código QR</h3>' +
+            '<p>Utilice la cámara de su dispositivo para abrir el formulario. También puede ingresar mediante el botón.</p>' +
+            '<a class="drec-link-destacado" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' +
+            '<i data-lucide="external-link"></i> ' + tituloAccion + '</a>' +
+            '<a class="drec-link-texto" href="' + esc(url) + '" target="_blank" rel="noopener noreferrer">' + esc(url) + '</a></div></div>';
+    }
+    crearIconos();
+}
+
+function renderEnlacesInstitucionales() {
+    ["oferentes", "satisfaccion"].forEach(tipo => {
+        renderEnlacePublico(tipo);
+        const texto = $(tipo + "Texto"), url = $(tipo + "Url");
+        if (texto && document.activeElement !== texto) texto.value = config[tipo + "Texto"] || "";
+        if (url && document.activeElement !== url) url.value = config[tipo + "Url"] || "";
+    });
+}
+
+function guardarEnlaceInstitucional(tipo) {
+    if (!esAdmin()) return;
+    if (tipo !== "oferentes" && tipo !== "satisfaccion") return;
+    const texto = ($(tipo + "Texto")?.value || "").trim();
+    const urlOriginal = ($(tipo + "Url")?.value || "").trim();
+    const url = urlInstitucionalSegura(urlOriginal);
+    if (urlOriginal && !url) {
+        showToast("Ingrese un enlace válido que comience con https:// o http://.", "danger");
+        return;
+    }
+    if (!texto) {
+        showToast("Agregue una breve descripción antes de guardar.", "danger");
+        return;
+    }
+    guardarConfig({ [tipo + "Texto"]: texto, [tipo + "Url"]: url })
+        .then(ok => { if (ok) showToast("La sección se actualizó correctamente.", "success"); });
 }
 
 /* ==================== VISIBILIDAD DE PESTAÑAS ==================== */
@@ -2380,6 +2444,8 @@ function navCompleta() {
     const directorio = MODULOS.directorio;
     if (directorio) items.push({ id: directorio.id, etiqueta: directorio.etiqueta, icono: directorio.icono });
     items.push({ id: "comisiones", etiqueta: "Comisiones", icono: "users-round" });
+    items.push({ id: "oferentes", etiqueta: "Registro de Oferentes", icono: "clipboard-list" });
+    items.push({ id: "satisfaccion", etiqueta: "Satisfacción del Servicio", icono: "message-square-heart" });
     Object.values(MODULOS).filter(m => m.id !== "directorio").forEach(m => items.push({ id: m.id, etiqueta: m.etiqueta, icono: m.icono }));
     items.push({ id: "configuracion", etiqueta: "Configuración", icono: "settings", soloAdmin: true });
     return items.filter(v => (!v.soloAdmin || esAdmin()) && pestanaHabilitada(v.id));
@@ -2392,7 +2458,7 @@ function construirNav() {
     let grupo = "";
     let html = "";
     items.forEach(v => {
-        const g = (v.id === "inicio" || v.id === "dashboard" || v.id === "calendario" || v.id === "directorio" || v.id === "comisiones")
+        const g = (v.id === "inicio" || v.id === "dashboard" || v.id === "calendario" || v.id === "directorio" || v.id === "comisiones" || v.id === "oferentes" || v.id === "satisfaccion")
             ? "General"
             : (v.id === "configuracion" ? "Administración" : "Programación");
         if (g !== grupo) { grupo = g; html += '<p class="nav-grupo">' + g + "</p>"; }
@@ -2450,7 +2516,7 @@ function switchTab(tabId) {
     if (!item) return;
     if (!pestanaHabilitada(tabId)) return;
     tabActiva = tabId;
-    const ids = ["inicio", "dashboard", "calendario"].concat(Object.keys(MODULOS), ["comisiones", "configuracion"]);
+    const ids = ["inicio", "dashboard", "calendario"].concat(Object.keys(MODULOS), ["comisiones", "oferentes", "satisfaccion", "configuracion"]);
     ids.forEach(id => {
         const v = $("view-" + id);
         const t = $("tab-" + id);

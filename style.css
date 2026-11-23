@@ -1552,398 +1552,232 @@ main button:active { transform: scale(0.97); }
 #btnExportarAnual:hover{filter:brightness(1.08);transform:translateY(-1px)}
 #btnExportarAnual:focus-visible{outline:3px solid rgba(217,119,6,.8);outline-offset:3px}
 @media(max-width:520px){#btnExportarAnual{width:100%}}
+/* ======================================================================
+   25. RESPONSIVE UNIVERSAL — escritorio, laptop, tablet y móvil
+   Capa final de adaptación: conserva la identidad visual y la lógica
+   existentes; evita desbordamientos y reorganiza componentes por espacio.
+   ====================================================================== */
 
+/* Base fluida y prevención de desbordamientos */
+html { width: 100%; min-width: 320px; overflow-x: clip; }
+body { width: 100%; min-width: 320px; max-width: 100%; overflow-x: clip; }
+#appShell, .app-shell, .app-columna, #appMain, .app-main,
+.vista, .card, .modal-caja, .comisiones-layout,
+.comisiones-panel, .comisiones-contenido { min-width: 0; }
+.app-main { width: 100%; }
+button, input, select, textarea { max-width: 100%; }
+input, select, textarea { min-width: 0; }
+pre, code, td, th, p, h1, h2, h3, h4, label, a, span { overflow-wrap: anywhere; }
+img, video, canvas, iframe { max-width: 100%; }
 
-/* ==========================================================================
-   25. RESPONSIVE GLOBAL · TELÉFONOS, TABLETAS, LAPTOPS Y PANTALLAS GRANDES
-   Capa de adaptación añadida sin modificar la lógica ni los datos del sistema.
-   ========================================================================== */
-
-/* Evita desbordamientos por elementos internos y adapta el lienzo al viewport. */
-html {
-    width: 100%;
-    min-width: 320px;
-    overflow-x: clip;
-}
-body {
-    width: 100%;
-    min-width: 320px;
-    max-width: 100%;
-    overflow-x: clip;
-}
-button, input, select, textarea {
-    max-width: 100%;
-}
-input, select, textarea {
-    font-size: max(16px, 1em);
-}
-.app-shell, .app-columna, .app-main, .vista,
-.card, .mesh-hero, .comisiones-layout, .comisiones-contenido {
-    min-width: 0;
-    max-width: 100%;
-}
-.app-main {
-    width: 100%;
-    padding-left: clamp(12px, 2.5vw, 36px);
-    padding-right: clamp(12px, 2.5vw, 36px);
-}
-.app-header {
-    padding-left: clamp(12px, 2.5vw, 32px);
-    padding-right: clamp(12px, 2.5vw, 32px);
-}
-img, video, canvas, iframe {
-    max-width: 100%;
+/* Pantallas amplias: aprovecha el espacio sin estirar demasiado el contenido */
+@media (min-width: 1600px) {
+    :root { --sidebar-w: 292px; --header-h: 78px; }
+    .app-main { max-width: 1500px; padding-left: 44px; padding-right: 44px; }
 }
 
-/* Grillas de Tailwind y grillas propias: las columnas pueden encogerse. */
-.grid {
-    min-width: 0;
-}
-.grid > *, [class*="col-span-"] {
-    min-width: 0;
-}
-[class*="grid-cols-"] {
-    min-width: 0;
-}
-p, h1, h2, h3, h4, label, td, th, a, button {
-    overflow-wrap: anywhere;
-}
-.nav-item-label, .header-titulo, .header-acciones {
-    min-width: 0;
+/* Laptop y tablet horizontal */
+@media (min-width: 769px) and (max-width: 1199px) {
+    :root { --sidebar-w: 248px; }
+    .sidebar-brand { padding-left: 14px; padding-right: 14px; }
+    .sidebar-nav { padding-left: 9px; padding-right: 9px; }
+    .nav-item { gap: 8px; padding-left: 9px; padding-right: 9px; font-size: 12px; }
+    .app-main { padding-left: clamp(16px, 2.2vw, 26px); padding-right: clamp(16px, 2.2vw, 26px); }
+    .app-header { padding-left: 22px; padding-right: 22px; }
 }
 
-/* Las tablas conservan sus columnas legibles y permiten desplazamiento lateral. */
-.tabla-contenedor, .table-wrap, .tabla-wrapper,
-.overflow-x-auto, .tabla-scroll {
-    max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-table.tabla, .tabla {
-    max-width: 100%;
-}
-.tabla th, .tabla td {
-    overflow-wrap: anywhere;
-}
-
-/* Formularios: los controles no fuerzan el ancho del modal o de la tarjeta. */
-.campo, .login-input, input, select, textarea {
-    min-width: 0;
-}
-form, .form-grid, .formulario-grid {
-    min-width: 0;
-}
-.modal, [id^="modal"] > div, .modal-contenido {
-    max-width: calc(100vw - 24px);
-}
-textarea {
-    resize: vertical;
-}
-
-/* Tablet horizontal y laptops pequeñas. */
-@media (min-width: 769px) and (max-width: 1200px) {
-    :root {
-        --sidebar-w: 248px;
-    }
-    .app-main {
-        max-width: 100%;
-        padding-left: 22px;
-        padding-right: 22px;
-    }
-    .sidebar-brand {
-        padding-left: 14px;
-        padding-right: 14px;
-    }
-    .nav-item {
-        gap: 9px;
-        padding-left: 10px;
-        padding-right: 10px;
-    }
-}
-
-/* Tablets y teléfonos: navegación lateral en modo drawer. */
+/* Tablet y teléfonos: navegación lateral tipo drawer */
 @media (max-width: 1023px) {
-    .app-columna {
-        margin-left: 0 !important;
-        width: 100%;
-    }
-    .app-header {
-        min-height: 64px;
-    }
-    .sidebar {
-        width: min(300px, 88vw);
-        max-width: 88vw;
-        padding-bottom: env(safe-area-inset-bottom);
-    }
-    .sidebar-overlay {
-        cursor: pointer;
-    }
-    body.sidebar-open {
-        overflow: hidden;
-        touch-action: none;
-    }
-    body.sidebar-open .sidebar {
-        overscroll-behavior: contain;
-    }
+    .app-columna { margin-left: 0 !important; width: 100%; }
+    .sidebar { width: min(310px, 88vw); max-width: 88vw; }
+    .sidebar-overlay { cursor: pointer; }
+    body.sidebar-open { overflow: hidden; touch-action: none; }
+    body.sidebar-open .sidebar { height: 100dvh; height: 100vh; }
 }
 
-/* Teléfonos grandes y tablets verticales. */
+/* Tablet vertical */
+@media (max-width: 900px) {
+    .app-main { padding: 20px 18px 8px; }
+    .app-header { gap: 10px; padding: 10px 18px; }
+    .header-acciones { gap: 6px; }
+    .chip { font-size: 9px; padding: 5px 8px; }
+    .grid.grid-cols-12 > [class*="col-span-"] { min-width: 0; }
+}
+
+/* Móvil */
 @media (max-width: 768px) {
-    :root {
-        --header-h: 62px;
-        --radio-xl: 20px;
-        --radio-lg: 17px;
-    }
-    .app-main {
-        padding: 16px 14px calc(18px + env(safe-area-inset-bottom));
-    }
+    :root { --header-h: 62px; --tacto: 44px; }
+    .app-shell:not(.hidden) { display: flex; min-height: 100vh; min-height: 100dvh; }
+    .app-columna { min-height: 100vh; min-height: 100dvh; }
     .app-header {
+        min-height: var(--header-h);
+        padding: 8px 12px;
         gap: 9px;
-        padding: 9px 12px;
+        flex-wrap: nowrap;
     }
-    .header-titulo h2 {
-        font-size: clamp(14px, 3.5vw, 18px);
-        line-height: 1.25;
+    .hamburger { width: 42px; height: 42px; border-radius: 12px; }
+    .header-titulo { flex: 1 1 auto; }
+    .header-titulo h2 { font-size: clamp(14px, 3.8vw, 18px); }
+    .header-titulo p { font-size: 9px; letter-spacing: .045em; }
+    .header-acciones { flex: 0 1 auto; min-width: 0; gap: 5px; }
+    #firebaseStatus { max-width: 92px; overflow: hidden; text-overflow: ellipsis; }
+    #roleBadge { display: none !important; }
+    #btnHeaderLogin { min-height: 40px; padding: 8px 10px !important; font-size: 10px !important; white-space: nowrap; }
+    #btnHeaderLogin svg { width: 14px; height: 14px; }
+    .user-chip { gap: 5px; padding: 4px; }
+    .user-chip #userName { display: none; }
+    .user-avatar { width: 30px; height: 30px; }
+    .user-salir { width: 30px; height: 30px; }
+    .app-main { padding: 15px 12px 8px; }
+    .app-footer { padding: 15px 12px calc(15px + env(safe-area-inset-bottom)); font-size: 10px; }
+
+    /* Rejillas Tailwind de 12 columnas: una columna en móvil salvo tarjetas */
+    .grid.grid-cols-12 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 12px !important; }
+    .grid.grid-cols-12 > [class*="col-span-"] { grid-column: 1 / -1 !important; }
+    #view-dashboard.grid.grid-cols-12 > .card,
+    #view-dashboard.grid.grid-cols-12 > [class*="gradient-"] { grid-column: span 1 !important; }
+    .grid.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .mesh-hero { border-radius: 22px !important; padding: 23px 19px !important; }
+    .mesh-hero h2 { font-size: clamp(25px, 7vw, 34px) !important; line-height: 1.13; }
+    .mesh-hero p { max-width: 100%; }
+    .card { border-radius: 18px; }
+    .card.p-6 { padding: 17px !important; }
+    .card.p-5 { padding: 15px !important; }
+
+    /* Formularios y controles táctiles */
+    input:not([type="checkbox"]):not([type="radio"]), select, textarea {
+        max-width: 100%; font-size: 16px;
     }
-    .header-titulo p {
-        font-size: 9px;
-        letter-spacing: .04em;
+    button { touch-action: manipulation; }
+    .btn-mep-primary, .btn-mep-danger, .btn-suave { min-height: 42px; }
+
+    /* Tablas convertidas a tarjetas por las reglas existentes, con ajuste */
+    .tabla tbody tr { margin-bottom: 11px; border-radius: 15px; }
+    .tabla tbody td { min-width: 0; padding: 9px 10px !important; }
+    .tabla tbody td[data-label] { display: flex; gap: 8px; }
+    .tabla tbody td[data-label]::before { flex: 0 0 34%; max-width: 34%; }
+    .tabla tbody td:last-child { flex-wrap: wrap; }
+    .tabla .accion-btn, .tabla button { min-width: 36px; min-height: 36px; }
+
+    /* Modales ocupan el área visible y permiten desplazamiento interno */
+    .modal-caja {
+        width: min(100% - 16px, 680px) !important;
+        max-width: calc(100vw - 16px) !important;
+        max-height: calc(100dvh - 16px) !important;
+        overflow: auto;
+        margin: 8px auto;
+        border-radius: 20px !important;
     }
-    .header-acciones {
-        gap: 5px;
-    }
-    .header-acciones .chip-demo,
-    .header-acciones .chip-vivo,
-    #firebaseStatus {
-        font-size: 9px;
-        padding: 4px 7px;
-    }
-    #roleBadge {
-        display: none !important;
-    }
-    #btnHeaderLogin {
-        min-height: 40px;
-        padding: 8px 10px;
-        font-size: 11px;
-        white-space: nowrap;
-    }
-    .user-chip {
-        gap: 5px;
-        padding: 4px;
-    }
-    #userName {
-        max-width: 74px;
-        font-size: 10px;
-    }
-    .mesh-hero {
-        padding: clamp(20px, 5vw, 30px) !important;
-        border-radius: 22px !important;
-    }
-    .mesh-hero h2 {
-        font-size: clamp(25px, 6vw, 36px);
-        line-height: 1.12;
-    }
-    .mesh-hero p {
-        overflow-wrap: anywhere;
-    }
-    .card {
-        border-radius: 19px;
-    }
-    .card, .comisiones-panel, .comision-formulario {
-        padding: clamp(14px, 3.5vw, 22px);
-    }
-    .grid.grid-cols-12 {
-        gap: 12px;
-    }
-    .barra-seleccion {
-        bottom: calc(10px + env(safe-area-inset-bottom));
-        max-width: calc(100vw - 20px);
-    }
-    .barra-sel-acciones {
-        flex-wrap: wrap;
-    }
+    .modal-cabecera { position: sticky; top: 0; z-index: 2; }
+    .barra-seleccion { bottom: calc(10px + env(safe-area-inset-bottom)); }
+
+    /* Elementos extensos y paneles */
+    .comisiones-layout { grid-template-columns: minmax(0, 1fr) !important; }
+    .comision-campos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
-/* Móviles compactos: 320–480 px. */
+/* Móviles estrechos */
 @media (max-width: 480px) {
-    .app-main {
-        padding: 12px 10px calc(16px + env(safe-area-inset-bottom));
-    }
-    .app-header {
-        min-height: 58px;
-        padding: 8px 9px;
-        gap: 7px;
-    }
-    .hamburger {
-        width: 40px;
-        height: 40px;
-        min-width: 40px;
-        border-radius: 12px;
-    }
-    .header-titulo p {
-        display: none;
-    }
-    .header-acciones {
-        gap: 4px;
-    }
-    #firebaseStatus {
-        display: none !important;
-    }
-    #btnHeaderLogin {
-        min-height: 38px;
-        padding: 7px 9px;
-        font-size: 10px;
-        gap: 4px;
-    }
-    #btnHeaderLogin svg {
-        width: 14px;
-        height: 14px;
-    }
-    .user-avatar {
-        width: 27px;
-        height: 27px;
-    }
-    #userName {
-        display: none;
-    }
-    .user-salir {
-        width: 30px;
-        height: 30px;
-    }
-    .mesh-hero {
-        padding: 19px 16px !important;
-        border-radius: 18px !important;
-    }
-    .mesh-hero h2 {
-        font-size: clamp(23px, 7vw, 30px);
-    }
-    .mesh-hero p {
-        font-size: 12px;
-        line-height: 1.55;
-    }
-    .hero-pill {
-        max-width: 100%;
-        white-space: normal;
-    }
-    .card {
-        padding: 15px !important;
-        border-radius: 17px;
-    }
-    .grid.grid-cols-12 {
-        gap: 10px;
-    }
-    /* Las tarjetas de estadísticas dejan de quedar demasiado estrechas. */
-    #view-dashboard .col-span-6 {
-        grid-column: span 12 / span 12;
-    }
-    /* Portada: accesos a módulos en una columna cuando el teléfono es angosto. */
-    #portadaModulos {
-        grid-template-columns: minmax(0, 1fr) !important;
-    }
-    /* Botones y acciones largos se acomodan verticalmente. */
-    .barra-sel-acciones,
-    .acciones-tabla,
-    .grupo-acciones {
-        width: 100%;
-    }
-    .barra-sel-acciones > button,
-    .barra-sel-acciones .btn-mep-danger {
-        flex: 1 1 100%;
-        justify-content: center;
-    }
-    .login-screen {
-        align-items: flex-start;
-        padding: max(16px, env(safe-area-inset-top)) 12px
-                 max(16px, env(safe-area-inset-bottom));
-    }
-    .login-card {
-        margin: auto 0;
-        padding: 22px 18px !important;
-        border-radius: 22px;
-    }
-    .login-card h1 {
-        font-size: 22px;
-    }
-    .sidebar-brand {
-        padding: 15px 14px 12px;
-    }
-    .sidebar-nav {
-        padding: 12px 9px;
-    }
-    .sidebar-foot {
-        padding-left: 12px;
-        padding-right: 12px;
-    }
-    .comision-encabezado {
-        align-items: flex-start !important;
-        padding: 14px !important;
-    }
-    #view-comisiones .comision-seccion-titulo {
-        align-items: flex-start;
-        flex-wrap: wrap;
-        padding: 13px;
-    }
+    .app-header { padding-left: 9px; padding-right: 9px; gap: 7px; }
+    .hamburger { width: 39px; height: 39px; }
+    .header-titulo p { display: none; }
+    #firebaseStatus { display: none !important; }
+    #btnHeaderLogin { padding: 7px 9px !important; font-size: 9px !important; gap: 4px !important; }
+    .app-main { padding: 12px 9px 6px; }
+    .mesh-hero { padding: 20px 16px !important; border-radius: 18px !important; }
+    .mesh-hero h2 { font-size: clamp(23px, 7.2vw, 30px) !important; }
+    .mesh-hero p { font-size: 12px !important; line-height: 1.6; }
+    .hero-pill { font-size: 9px; }
+    .grid.grid-cols-12 { gap: 10px !important; }
+    .grid.grid-cols-2 { grid-template-columns: minmax(0, 1fr) !important; }
+    #view-dashboard.grid.grid-cols-12 > .card,
+    #view-dashboard.grid.grid-cols-12 > [class*="gradient-"] { grid-column: 1 / -1 !important; }
+    .sidebar { width: min(300px, 90vw); max-width: 90vw; }
+    .sidebar-brand { padding: 15px 14px 12px; }
+    .sidebar-foot { padding-left: 12px; padding-right: 12px; }
+    .modal-caja { width: calc(100vw - 12px) !important; max-width: calc(100vw - 12px) !important; max-height: calc(100dvh - 12px) !important; margin: 6px auto; }
+    .modal-cabecera { padding: 15px !important; }
+    .comision-campos { grid-template-columns: minmax(0, 1fr) !important; }
+    .comision-encabezado { align-items: flex-start !important; padding: 14px !important; }
+    .comision-seccion-titulo { padding: 13px !important; }
+    .comision-formulario { padding: 14px !important; }
+    .comisiones-panel { padding: 14px !important; }
+    .comisiones-segmentos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .comision-tabla tr.comision-miembro-fila { grid-template-columns: minmax(0, 1fr) !important; }
+    .comision-tabla td[data-label] { grid-column: 1 / -1 !important; }
+    .barra-seleccion { width: calc(100vw - 12px) !important; padding: 10px !important; }
+    .barra-sel-acciones { flex-wrap: wrap; }
+    .barra-sel-acciones button { flex: 1 1 100%; justify-content: center; }
 }
 
-/* Pantallas muy estrechas (320–360 px). */
+/* Dispositivos muy pequeños (320–360 px) */
 @media (max-width: 360px) {
-    .app-main {
-        padding-left: 8px;
-        padding-right: 8px;
-    }
-    .header-titulo h2 {
-        font-size: 13px;
-    }
-    #btnHeaderLogin {
-        font-size: 9px;
-        padding-left: 7px;
-        padding-right: 7px;
-    }
-    .nav-item {
-        font-size: 12px;
-    }
-    .mesh-hero {
-        padding: 16px 13px !important;
-    }
-    .mesh-hero h2 {
-        font-size: 23px;
-    }
+    html, body { min-width: 320px; }
+    .app-main { padding-left: 7px; padding-right: 7px; }
+    .app-header { padding-left: 7px; padding-right: 7px; }
+    .header-titulo h2 { font-size: 13px; }
+    #btnHeaderLogin { font-size: 0 !important; width: 39px; justify-content: center; padding: 8px !important; }
+    #btnHeaderLogin svg { width: 17px; height: 17px; }
+    .mesh-hero { padding: 17px 13px !important; }
+    .mesh-hero h2 { font-size: 23px !important; }
+    .sidebar { width: 92vw; max-width: 92vw; }
+    .nav-item { font-size: 12px; }
+    .tabla tbody td { padding: 8px !important; font-size: 11px; }
 }
 
-/* Orientación horizontal en móviles: aprovecha el ancho y evita cortar el login. */
-@media (max-width: 900px) and (orientation: landscape) {
-    .login-screen {
-        align-items: flex-start;
-        padding-top: 12px;
-        padding-bottom: 12px;
-    }
-    .login-card {
-        margin: 0 auto;
-    }
-    .sidebar {
-        overflow-y: auto;
-    }
+/* Móvil en horizontal: evita que login y diálogos queden cortados */
+@media (max-height: 520px) and (orientation: landscape) {
+    .login-screen { align-items: flex-start; padding-top: 12px; padding-bottom: 12px; }
+    .login-card { margin: 8px auto; padding: 18px !important; }
+    .modal-caja { max-height: calc(100dvh - 12px) !important; }
+    .sidebar { overflow-y: auto; }
+    .sidebar-nav { min-height: 0; }
 }
 
-/* Accesibilidad: respeta usuarios que reducen las animaciones. */
+/* Accesibilidad: respeta la preferencia de movimiento del dispositivo */
 @media (prefers-reduced-motion: reduce) {
-    html {
-        scroll-behavior: auto;
-    }
-    *, *::before, *::after {
-        animation-duration: .01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: .01ms !important;
-    }
+    html { scroll-behavior: auto !important; }
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
 
-/* Evita que los componentes flotantes queden fuera de pantalla. */
-@supports (height: 100dvh) {
-    .app-shell:not(.hidden),
-    .app-columna {
-        min-height: 100dvh;
-    }
-    .sidebar {
-        height: 100dvh;
-    }
+
+/* ==================== SECCIONES DE ACCESO INSTITUCIONAL ==================== */
+.drec-enlace-card { padding: clamp(18px, 3vw, 34px); overflow: hidden; }
+.drec-enlace-cabecera { display:flex; align-items:flex-start; gap:16px; padding-bottom:22px; border-bottom:1px solid var(--borde); }
+.drec-enlace-cabecera .icono-tile { width:48px; height:48px; flex:0 0 48px; display:grid; place-items:center; border-radius:15px; }
+.drec-enlace-cabecera .icono-tile svg { width:23px; height:23px; }
+.drec-kicker { color:#64748b; font-size:10px; font-weight:800; letter-spacing:.16em; margin-bottom:5px; }
+.drec-enlace-contenido { padding:24px 0 8px; }
+.drec-enlace-descripcion { max-width:850px; margin:0 auto 24px; color:#475569; font-size:14px; line-height:1.8; text-align:center; }
+.drec-acceso-grid { display:grid; grid-template-columns:minmax(190px,260px) minmax(0,1fr); gap:clamp(22px,5vw,54px); align-items:center; max-width:760px; margin:0 auto; padding:24px; border:1px solid #e2e8f0; border-radius:22px; background:linear-gradient(145deg,#f8fafc,#fff); }
+.drec-qr-marco { display:grid; place-items:center; background:#fff; padding:12px; border:1px solid #e2e8f0; border-radius:18px; box-shadow:0 8px 28px rgba(15,23,42,.07); }
+.drec-qr-marco img { display:block; width:100%; max-width:230px; aspect-ratio:1; object-fit:contain; }
+.drec-acceso-etiqueta { color:#64748b; font-size:10px; font-weight:800; letter-spacing:.16em; }
+.drec-acceso-info h3 { color:#172554; font-size:20px; font-weight:800; margin:7px 0; }
+.drec-acceso-info p { color:#64748b; font-size:13px; line-height:1.7; margin-bottom:18px; }
+.drec-link-destacado { display:inline-flex; align-items:center; justify-content:center; gap:9px; padding:12px 18px; border-radius:12px; background:#1e3a8a; color:white !important; font-size:13px; font-weight:800; text-decoration:none !important; transition:transform .2s,background .2s; }
+.drec-link-destacado:hover { background:#1e40af; transform:translateY(-2px); }
+.drec-link-destacado svg { width:16px; height:16px; }
+.drec-link-texto { display:block; margin-top:12px; color:#2563eb !important; font-size:11px; line-height:1.5; overflow-wrap:anywhere; text-decoration:underline !important; }
+.drec-qr-vacio { display:flex; flex-direction:column; align-items:center; gap:8px; padding:34px 18px; border:1px dashed #cbd5e1; border-radius:18px; background:#f8fafc; color:#64748b; text-align:center; }
+.drec-qr-vacio svg { width:32px; height:32px; color:#94a3b8; }
+.drec-qr-vacio strong { color:#334155; font-size:14px; }
+.drec-qr-vacio span { max-width:440px; font-size:12px; line-height:1.6; }
+.drec-enlace-editor { margin-top:22px; padding:20px; border:1px solid #bfdbfe; border-radius:16px; background:#eff6ff; }
+.drec-enlace-editor h3 { display:flex; align-items:center; gap:8px; margin-bottom:14px; color:#1e3a8a; font-size:13px; font-weight:800; }
+.drec-enlace-editor h3 svg { width:16px; height:16px; }
+.drec-enlace-editor label { display:block; margin:12px 0; color:#334155; font-size:12px; font-weight:700; }
+.drec-enlace-editor input,.drec-enlace-editor textarea { display:block; width:100%; margin-top:6px; padding:11px 12px; border:1px solid #cbd5e1; border-radius:10px; background:#fff; color:#0f172a; font:inherit; font-weight:500; outline:none; }
+.drec-enlace-editor input:focus,.drec-enlace-editor textarea:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.12); }
+.drec-enlace-editor .btn-mep-primary { display:inline-flex; align-items:center; gap:8px; margin-top:5px; }
+.drec-enlace-editor .btn-mep-primary svg { width:15px; height:15px; }
+@media(max-width:640px) {
+ .drec-enlace-cabecera { gap:11px; }
+ .drec-enlace-cabecera .icono-tile { width:42px; height:42px; flex-basis:42px; }
+ .drec-acceso-grid { grid-template-columns:1fr; padding:16px; gap:20px; }
+ .drec-qr-marco { width:min(100%,250px); margin:auto; }
+ .drec-qr-marco img { max-width:220px; }
+ .drec-acceso-info { text-align:center; }
+ .drec-link-destacado { width:100%; }
+ .drec-enlace-editor { padding:15px; }
 }
