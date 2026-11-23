@@ -1944,3 +1944,140 @@ button, a, select { touch-action: manipulation; }
 @media (hover: none) {
   .card-hover:hover, .nav-item:hover, .drec-link-destacado:hover { transform: none; }
 }
+
+/* ======================================================================
+   RESPONSIVE 2026 · AJUSTE FINAL MULTIDISPOSITIVO
+   Reglas de cierre para evitar desbordamientos en móviles, mejorar el uso
+   táctil y equilibrar la composición en tabletas, portátiles y monitores.
+   No modifica datos, Firebase ni la lógica de navegación.
+   ====================================================================== */
+
+/* El contenido nunca debe imponer el ancho de la pantalla. */
+*, *::before, *::after { min-width: 0; }
+html, body { max-width: 100%; overflow-x: clip; }
+#appShell, .app-shell, .app-columna, #appMain, .app-main,
+.vista, .vista > *, .card, .card > *, .comisiones-panel,
+.comisiones-contenido, .drec-enlace-card { min-width: 0; }
+.app-main { width: 100%; max-width: 1600px; }
+.vista { width: 100%; }
+
+/* Imágenes, textos largos y controles flexibles. */
+img, svg, canvas, iframe, video { max-width: 100%; }
+input, select, textarea { min-width: 0; max-width: 100%; }
+textarea { resize: vertical; }
+button, .btn-mep-primary, .btn-mep-danger, .btn-suave,
+.drec-link-destacado { max-width: 100%; white-space: normal; }
+pre, code, a, p, td, th, label, .nav-item-label { overflow-wrap: anywhere; }
+
+/* Escritorio amplio: limitar líneas excesivamente largas. */
+@media (min-width: 1440px) {
+    .app-main { max-width: 1600px; padding-left: clamp(34px, 3vw, 64px); padding-right: clamp(34px, 3vw, 64px); }
+    .drec-acceso-grid { max-width: 900px; }
+}
+
+/* Portátiles y tabletas horizontales. */
+@media (min-width: 769px) and (max-width: 1180px) {
+    :root { --sidebar-w: 248px; }
+    .app-main { padding-left: clamp(16px, 2.2vw, 26px); padding-right: clamp(16px, 2.2vw, 26px); }
+    .app-header { padding-left: clamp(16px, 2.2vw, 26px); padding-right: clamp(16px, 2.2vw, 26px); }
+    .header-acciones { gap: 6px; }
+    .chip { letter-spacing: .025em; }
+    .card { min-width: 0; }
+    .drec-acceso-grid { grid-template-columns: minmax(170px, 220px) minmax(0, 1fr); gap: 24px; }
+}
+
+/* Tablet vertical y dispositivos táctiles grandes. */
+@media (min-width: 481px) and (max-width: 900px) {
+    .app-main { padding: 18px clamp(14px, 2.5vw, 24px) 12px; }
+    .app-header { min-height: 66px; padding-inline: 16px; }
+    .grid.grid-cols-12 { gap: 13px !important; }
+    .mesh-hero { padding: clamp(22px, 4vw, 34px) !important; }
+    .drec-acceso-grid { grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); padding: 20px; gap: 20px; }
+    .drec-qr-marco img { max-width: 200px; }
+}
+
+/* Móviles: tarjetas y formularios a una sola columna cuando el espacio es limitado. */
+@media (max-width: 768px) {
+    .app-main { padding: 14px 12px calc(14px + env(safe-area-inset-bottom)); }
+    .app-header { max-width: 100%; }
+    .header-titulo { flex: 1 1 0; }
+    .header-acciones { flex: 0 0 auto; }
+    .grid.grid-cols-12 { grid-template-columns: minmax(0, 1fr) !important; }
+    .grid.grid-cols-12 > *,
+    .grid.grid-cols-12 > [class*="col-span-"] { grid-column: 1 / -1 !important; }
+    .grid.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .form-grid, .comision-campos { grid-template-columns: minmax(0, 1fr) !important; }
+
+    /* Las tablas se convierten en fichas sin conservar un ancho mínimo de escritorio. */
+    .tabla, table.tabla { width: 100% !important; min-width: 0 !important; max-width: 100%; }
+    .overflow-x-auto { max-width: 100%; }
+    .tabla tbody, .tabla tbody tr, .tabla tbody td { min-width: 0 !important; max-width: 100%; }
+    .tabla tbody td { overflow-wrap: anywhere; }
+    .tabla tbody td[data-label]::before { overflow-wrap: normal; }
+    #view-comisiones .comision-tabla { min-width: 0 !important; }
+
+    /* Calendario adaptable: conserva los siete días sin forzar el viewport. */
+    .calendario-grid, .calendar-grid { min-width: 0 !important; width: 100%; }
+    .cal-dia, .calendario-dia { min-width: 0; }
+
+    /* Paneles, filtros y barras de acciones. */
+    .barra-seleccion { max-width: calc(100vw - 16px); }
+    .barra-sel-info { min-width: 0; }
+    .barra-sel-acciones { min-width: 0; }
+    .filtros-grid, .filtros-container { grid-template-columns: minmax(0, 1fr) !important; }
+    .drec-enlace-card { padding: clamp(14px, 4vw, 20px); }
+}
+
+/* Teléfonos compactos y estándar. */
+@media (max-width: 520px) {
+    .app-main { padding-inline: 9px; }
+    .app-header { padding-inline: 8px; gap: 7px; }
+    .header-titulo h2 { font-size: clamp(12px, 3.8vw, 16px) !important; }
+    .header-acciones { gap: 4px; }
+    #btnHeaderLogin { min-width: 38px; min-height: 38px; }
+    .user-chip { min-height: 38px; }
+    .mesh-hero { padding: 19px 15px !important; }
+    .card { border-radius: 17px; }
+    .grid.grid-cols-2 { grid-template-columns: minmax(0, 1fr) !important; }
+    .drec-enlace-cabecera { flex-wrap: wrap; }
+    .drec-enlace-cabecera > div { min-width: 0; }
+    .drec-acceso-grid { grid-template-columns: minmax(0, 1fr); padding: 14px; gap: 16px; }
+    .drec-qr-marco { width: min(100%, 230px); margin-inline: auto; }
+    .drec-qr-marco img { width: 100%; max-width: 200px; }
+    .drec-acceso-info { text-align: center; }
+    .drec-link-destacado { width: 100%; }
+    .modal-caja { width: calc(100vw - 12px) !important; max-width: calc(100vw - 12px) !important; }
+}
+
+/* Pantallas muy estrechas: 320–375 px. */
+@media (max-width: 375px) {
+    .app-main { padding-inline: 7px; }
+    .app-header { padding-inline: 7px; gap: 5px; }
+    .hamburger { width: 37px; height: 37px; }
+    .header-titulo h2 { font-size: 12px !important; }
+    #btnHeaderLogin { width: 36px; min-width: 36px; padding: 7px !important; }
+    .mesh-hero { padding: 16px 12px !important; }
+    .mesh-hero h2 { font-size: 22px !important; }
+    .tabla tbody td { font-size: 11px; }
+    .drec-explicacion-marco { padding: 15px 13px; }
+    .drec-explicacion-cuerpo { font-size: 12px; line-height: 1.7; }
+}
+
+/* Móvil horizontal: priorizar área útil vertical y scroll interno. */
+@media (max-height: 540px) and (orientation: landscape) {
+    .app-header { position: relative; }
+    .sidebar { height: 100dvh; overflow-y: auto; }
+    .sidebar-nav { min-height: 0; overflow-y: auto; }
+    .login-screen { align-items: flex-start; overflow-y: auto; }
+    .login-card { margin-block: 10px; }
+    .modal-caja { max-height: calc(100dvh - 12px) !important; overflow-y: auto; }
+}
+
+/* Accesibilidad: no depender del hover y respetar movimiento reducido. */
+@media (hover: none) {
+    .nav-item:hover, .card-hover:hover, .drec-link-destacado:hover { transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto !important; }
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
