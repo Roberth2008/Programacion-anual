@@ -4056,21 +4056,71 @@ async function eliminarUsuario(uid) {
 
 /* ==================== EXPORTACIÓN A EXCEL ==================== */
 function exportarExcel(filas, encabezados, nombreArchivo, nombreHoja) {
-    if (!window.XLSX) { showToast("La librería de Excel no está cargada.", "danger"); return; }
-    if (!filas.length) { showToast("No hay datos para exportar.", "warning"); return; }
-    const aoa = [encabezados].concat(filas);
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    // Estilo del encabezado: azul MEP, texto blanco en negrita
-    for (let c = 0; c < encabezados.length; c++) {
-        const addr = XLSX.utils.encode_cell({ r: 0, c: c });
-        if (!ws[addr]) ws[addr] = { v: "", t: "s" };
-        ws[addr].s = { fill: { fgColor: { rgb: "0B3C8C" } }, font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 }, alignment: { horizontal: "center", vertical: "center" } };
+    if (!window.XLSX || !XLSX.utils || !XLSX.writeFile) { showToast("La librería de Excel no está cargada.", "danger"); return; }
+    if (!filas || !filas.length) { showToast("No hay datos para exportar.", "warning"); return; }
+    try {
+        const wb = XLSX.utils.book_new();
+        const titulo = String(nombreHoja || "DREC").toUpperCase();
+        const aoa = [
+            [EXC_TITULO_INSTITUCIONAL],
+            [titulo + " · AÑO " + (config.anio || new Date().getFullYear())],
+            ["Generado el " + new Date().toLocaleString("es-CR") + " · " + filas.length + " registros"],
+            encabezados
+        ].concat(filas);
+        const ws = XLSX.utils.aoa_to_sheet(aoa);
+        const n = encabezados.length;
+        const borde = { style: "thin", color: { rgb: "DCE4EF" } };
+        const base = (bg, color, bold, align) => ({
+            fill: { patternType: "solid", fgColor: { rgb: bg } },
+            font: { name: "Aptos", sz: 10, bold: !!bold, color: { rgb: color } },
+            alignment: { vertical: "center", horizontal: align || "left", wrapText: true },
+            border: { top: borde, bottom: borde, left: borde, right: borde }
+        });
+        // Portada institucional compacta y jerarquía visual clara.
+        [0,1,2].forEach(r => {
+            for (let c=0;c<n;c++) {
+                const cell = ws[XLSX.utils.encode_cell({r,c})] || (ws[XLSX.utils.encode_cell({r,c})]={v:"",t:"s"});
+                cell.s = base("0A192F", "FFFFFF", r !== 2, "center");
+                if (r===0) cell.s.font.sz=13;
+                if (r===1) cell.s.font.sz=11;
+                if (r===2) { cell.s.font.sz=9; cell.s.font.italic=true; cell.s.font.color={rgb:"CBD5E1"}; }
+            }
+        });
+        for (let c=0;c<n;c++) {
+            const cell=ws[XLSX.utils.encode_cell({r:3,c})];
+            if(cell) cell.s=base("1E40AF","FFFFFF",true,"center");
+        }
+        for (let r=4;r<aoa.length;r++) {
+            const row=aoa[r] || [];
+            for(let c=0;c<n;c++) {
+                const cell=ws[XLSX.utils.encode_cell({r,c})];
+                if(!cell) continue;
+                cell.s=base((r-4)%2 ? "F1F5F9":"FFFFFF","1E293B",false,"left");
+                if(typeof cell.v === "number") cell.s.alignment.horizontal="center";
+            }
+        }
+        ws["!merges"]=[
+            {s:{r:0,c:0},e:{r:0,c:n-1}},
+            {s:{r:1,c:0},e:{r:1,c:n-1}},
+            {s:{r:2,c:0},e:{r:2,c:n-1}}
+        ];
+        ws["!cols"]=encabezados.map((e,c)=>{
+            const max=Math.max(String(e||"").length,...filas.map(f=>String((f||[])[c] == null ? "" : (f||[])[c]).split("\n").reduce((m,x)=>Math.max(m,x.length),0)));
+            return {wch:Math.max(13,Math.min(48,Math.ceil(max*1.08)+3))};
+        });
+        ws["!rows"]=[{hpt:27},{hpt:23},{hpt:19},{hpt:32},...filas.map(()=>({hpt:30}))];
+        ws["!freeze"]={xSplit:0,ySplit:4,topLeftCell:"A5",activePane:"bottomLeft",state:"frozen"};
+        ws["!autofilter"]={ref:XLSX.utils.encode_range({s:{r:3,c:0},e:{r:aoa.length-1,c:n-1}})};
+        ws["!pageSetup"]={orientation:n>5?"landscape":"portrait",fitToWidth:1,fitToHeight:0,paperSize:9};
+        ws["!sheetPr"]={pageSetUpPr:{fitToPage:true,autoPageBreaks:false}};
+        XLSX.utils.book_append_sheet(wb,ws,(nombreHoja||"DREC").slice(0,31));
+        wb.Props={Title:titulo,Subject:"Exportación institucional DRE Cañas · MEP",Author:"Dirección Regional de Educación Cañas",CreatedDate:new Date()};
+        XLSX.writeFile(wb,nombreArchivo,{compression:true});
+        showToast("Excel generado correctamente: " + filas.length + " registros.","success");
+    } catch(e) {
+        console.error("Error exportando Excel:",e);
+        showToast("No se pudo generar el Excel: "+(e && e.message ? e.message:e),"danger");
     }
-    ws["!cols"] = encabezados.map(e => ({ wch: Math.max(12, Math.min(42, e.length + 6)) }));
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, (nombreHoja || "DREC").slice(0, 31));
-    XLSX.writeFile(wb, nombreArchivo);
-    showToast("Archivo «" + nombreArchivo + "» generado.", "success");
 }
 
 // Despachador del selector de exportación de cada módulo.
@@ -4230,6 +4280,19 @@ function exHoja(n, anchosFijos) {
         const filas = [];
         for (let i = 0; i < h.r; i++) filas.push(h.alturas[i] ? { hpt: h.alturas[i] } : {});
         h.ws["!rows"] = filas;
+        // Navegación cómoda en Excel: encabezados congelados, filtros y página imprimible.
+        let filaEncabezado = -1;
+        for (let rr = 0; rr < h.r; rr++) {
+            const celda = h.ws[XLSX.utils.encode_cell({ r: rr, c: 0 })];
+            if (celda && celda.s && celda.s.fill && celda.s.fill.fgColor && celda.s.fill.fgColor.rgb === EXC.azul) { filaEncabezado = rr; break; }
+        }
+        if (filaEncabezado >= 0 && h.r > filaEncabezado + 1) {
+            h.ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: filaEncabezado, c: 0 }, e: { r: h.r - 1, c: h.n - 1 } }) };
+            h.ws["!freeze"] = { xSplit: 0, ySplit: filaEncabezado + 1, topLeftCell: "A" + (filaEncabezado + 2), activePane: "bottomLeft", state: "frozen" };
+        }
+        h.ws["!pageSetup"] = { orientation: h.n > 5 ? "landscape" : "portrait", fitToWidth: 1, fitToHeight: 0, paperSize: 9 };
+        h.ws["!sheetPr"] = { pageSetUpPr: { fitToPage: true, autoPageBreaks: false } };
+        h.ws["!views"] = [{ showGridLines: false, zoomScale: 90 }];
         XLSX.utils.book_append_sheet(wb, h.ws, exNombreHoja(nombre));
     };
     return h;
@@ -4472,6 +4535,7 @@ function exportarProgramacionAnual() {
         const de = id => delAnio.filter(a => a.modulo === id);
         const ordenadas = id => de(id).sort(exOrdenFecha);
         const wb = XLSX.utils.book_new();
+        wb.Props = { Title: "Programación Anual DREC " + anio, Subject: "Documento institucional · DRE Cañas · MEP", Author: "Dirección Regional de Educación Cañas", CreatedDate: new Date() };
 
         const conteos = Object.values(MODULOS).filter(m => m.coleccion === COLECCIONES.actividades)
             .map(m => ({ titulo: m.titulo, cantidad: de(m.id).length }));
