@@ -1945,505 +1945,217 @@ button, a, select { touch-action: manipulation; }
   .card-hover:hover, .nav-item:hover, .drec-link-destacado:hover { transform: none; }
 }
 
-/* ======================================================================
-   RESPONSIVE 2026 · AJUSTE FINAL MULTIDISPOSITIVO
-   Reglas de cierre para evitar desbordamientos en móviles, mejorar el uso
-   táctil y equilibrar la composición en tabletas, portátiles y monitores.
-   No modifica datos, Firebase ni la lógica de navegación.
-   ====================================================================== */
+/* =====================================================================
+   RESPONSIVE VISUAL SEGURO · DRE CAÑAS
+   Este bloque modifica únicamente presentación y distribución visual.
+   No altera IDs, eventos, datos, Firebase ni lógica de los módulos.
+   ===================================================================== */
 
-/* El contenido nunca debe imponer el ancho de la pantalla. */
-*, *::before, *::after { min-width: 0; }
-html, body { max-width: 100%; overflow-x: clip; }
-#appShell, .app-shell, .app-columna, #appMain, .app-main,
-.vista, .vista > *, .card, .card > *, .comisiones-panel,
-.comisiones-contenido, .drec-enlace-card { min-width: 0; }
-.app-main { width: 100%; max-width: 1600px; }
-.vista { width: 100%; }
-
-/* Imágenes, textos largos y controles flexibles. */
-img, svg, canvas, iframe, video { max-width: 100%; }
-input, select, textarea { min-width: 0; max-width: 100%; }
-textarea { resize: vertical; }
-button, .btn-mep-primary, .btn-mep-danger, .btn-suave,
-.drec-link-destacado { max-width: 100%; white-space: normal; }
-pre, code, a, p, td, th, label, .nav-item-label { overflow-wrap: anywhere; }
-
-/* Escritorio amplio: limitar líneas excesivamente largas. */
-@media (min-width: 1440px) {
-    .app-main { max-width: 1600px; padding-left: clamp(34px, 3vw, 64px); padding-right: clamp(34px, 3vw, 64px); }
-    .drec-acceso-grid { max-width: 900px; }
+/* Evitar que el ancho intrínseco de un hijo ensanche toda la aplicación. */
+.app-shell,
+.app-columna,
+.app-main,
+.vista,
+.vista > *,
+.card,
+.card > *,
+.header-titulo,
+.header-acciones {
+    min-width: 0;
 }
 
-/* Portátiles y tabletas horizontales. */
-@media (min-width: 769px) and (max-width: 1180px) {
-    :root { --sidebar-w: 248px; }
-    .app-main { padding-left: clamp(16px, 2.2vw, 26px); padding-right: clamp(16px, 2.2vw, 26px); }
-    .app-header { padding-left: clamp(16px, 2.2vw, 26px); padding-right: clamp(16px, 2.2vw, 26px); }
-    .header-acciones { gap: 6px; }
-    .chip { letter-spacing: .025em; }
-    .card { min-width: 0; }
-    .drec-acceso-grid { grid-template-columns: minmax(170px, 220px) minmax(0, 1fr); gap: 24px; }
-}
+img, svg, video, canvas { max-width: 100%; }
+input, select, textarea { max-width: 100%; }
 
-/* Tablet vertical y dispositivos táctiles grandes. */
-@media (min-width: 481px) and (max-width: 900px) {
-    .app-main { padding: 18px clamp(14px, 2.5vw, 24px) 12px; }
-    .app-header { min-height: 66px; padding-inline: 16px; }
-    .grid.grid-cols-12 { gap: 13px !important; }
-    .mesh-hero { padding: clamp(22px, 4vw, 34px) !important; }
-    .drec-acceso-grid { grid-template-columns: minmax(150px, 210px) minmax(0, 1fr); padding: 20px; gap: 20px; }
-    .drec-qr-marco img { max-width: 200px; }
-}
-
-/* Móviles: tarjetas y formularios a una sola columna cuando el espacio es limitado. */
-@media (max-width: 768px) {
-    .app-main { padding: 14px 12px calc(14px + env(safe-area-inset-bottom)); }
-    .app-header { max-width: 100%; }
-    .header-titulo { flex: 1 1 0; }
-    .header-acciones { flex: 0 0 auto; }
-    .grid.grid-cols-12 { grid-template-columns: minmax(0, 1fr) !important; }
-    .grid.grid-cols-12 > *,
-    .grid.grid-cols-12 > [class*="col-span-"] { grid-column: 1 / -1 !important; }
-    .grid.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .form-grid, .comision-campos { grid-template-columns: minmax(0, 1fr) !important; }
-
-    /* Las tablas se convierten en fichas sin conservar un ancho mínimo de escritorio. */
-    .tabla, table.tabla { width: 100% !important; min-width: 0 !important; max-width: 100%; }
-    .overflow-x-auto { max-width: 100%; }
-    .tabla tbody, .tabla tbody tr, .tabla tbody td { min-width: 0 !important; max-width: 100%; }
-    .tabla tbody td { overflow-wrap: anywhere; }
-    .tabla tbody td[data-label]::before { overflow-wrap: normal; }
-    #view-comisiones .comision-tabla { min-width: 0 !important; }
-
-    /* Calendario adaptable: conserva los siete días sin forzar el viewport. */
-    .calendario-grid, .calendar-grid { min-width: 0 !important; width: 100%; }
-    .cal-dia, .calendario-dia { min-width: 0; }
-
-    /* Paneles, filtros y barras de acciones. */
-    .barra-seleccion { max-width: calc(100vw - 16px); }
-    .barra-sel-info { min-width: 0; }
-    .barra-sel-acciones { min-width: 0; }
-    .filtros-grid, .filtros-container { grid-template-columns: minmax(0, 1fr) !important; }
-    .drec-enlace-card { padding: clamp(14px, 4vw, 20px); }
-}
-
-/* Teléfonos compactos y estándar. */
-@media (max-width: 520px) {
-    .app-main { padding-inline: 9px; }
-    .app-header { padding-inline: 8px; gap: 7px; }
-    .header-titulo h2 { font-size: clamp(12px, 3.8vw, 16px) !important; }
-    .header-acciones { gap: 4px; }
-    #btnHeaderLogin { min-width: 38px; min-height: 38px; }
-    .user-chip { min-height: 38px; }
-    .mesh-hero { padding: 19px 15px !important; }
-    .card { border-radius: 17px; }
-    .grid.grid-cols-2 { grid-template-columns: minmax(0, 1fr) !important; }
-    .drec-enlace-cabecera { flex-wrap: wrap; }
-    .drec-enlace-cabecera > div { min-width: 0; }
-    .drec-acceso-grid { grid-template-columns: minmax(0, 1fr); padding: 14px; gap: 16px; }
-    .drec-qr-marco { width: min(100%, 230px); margin-inline: auto; }
-    .drec-qr-marco img { width: 100%; max-width: 200px; }
-    .drec-acceso-info { text-align: center; }
-    .drec-link-destacado { width: 100%; }
-    .modal-caja { width: calc(100vw - 12px) !important; max-width: calc(100vw - 12px) !important; }
-}
-
-/* Pantallas muy estrechas: 320–375 px. */
-@media (max-width: 375px) {
-    .app-main { padding-inline: 7px; }
-    .app-header { padding-inline: 7px; gap: 5px; }
-    .hamburger { width: 37px; height: 37px; }
-    .header-titulo h2 { font-size: 12px !important; }
-    #btnHeaderLogin { width: 36px; min-width: 36px; padding: 7px !important; }
-    .mesh-hero { padding: 16px 12px !important; }
-    .mesh-hero h2 { font-size: 22px !important; }
-    .tabla tbody td { font-size: 11px; }
-    .drec-explicacion-marco { padding: 15px 13px; }
-    .drec-explicacion-cuerpo { font-size: 12px; line-height: 1.7; }
-}
-
-/* Móvil horizontal: priorizar área útil vertical y scroll interno. */
-@media (max-height: 540px) and (orientation: landscape) {
-    .app-header { position: relative; }
-    .sidebar { height: 100dvh; overflow-y: auto; }
-    .sidebar-nav { min-height: 0; overflow-y: auto; }
-    .login-screen { align-items: flex-start; overflow-y: auto; }
-    .login-card { margin-block: 10px; }
-    .modal-caja { max-height: calc(100dvh - 12px) !important; overflow-y: auto; }
-}
-
-/* Accesibilidad: no depender del hover y respetar movimiento reducido. */
-@media (hover: none) {
-    .nav-item:hover, .card-hover:hover, .drec-link-destacado:hover { transform: none; }
-}
-@media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto !important; }
-    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-}
-
-/* ======================================================================
-   AJUSTE FINAL MULTIDISPOSITIVO · 320 px hasta pantallas ultrawide
-   Capa de compatibilidad: prioriza reflujo, legibilidad y ausencia de
-   desbordamiento horizontal sin modificar la lógica ni los componentes.
-   ====================================================================== */
-:root {
-    --drec-gutter: clamp(8px, 2.2vw, 36px);
-    --drec-space: clamp(10px, 1.5vw, 20px);
-}
-
-html, body {
-    width: 100%;
+/* Tablas: el contenedor controla el desplazamiento, nunca la página completa. */
+.vista .overflow-x-auto {
     max-width: 100%;
     min-width: 0;
-}
-
-body, #appShell, .app-columna, #appMain, .vista,
-.card, .modal-caja, .sidebar, .app-header {
-    min-width: 0;
-}
-
-#appMain {
-    width: 100%;
-    max-width: min(100%, 1600px);
-    padding-inline: var(--drec-gutter);
-}
-
-/* Evita que palabras largas, enlaces o valores extensos rompan el diseño. */
-#appMain :where(p, h1, h2, h3, h4, label, a, button, td, th, span) {
-    overflow-wrap: anywhere;
-}
-#appMain :where(img, svg, video, canvas) {
-    max-width: 100%;
-}
-#appMain :where(input, select, textarea) {
-    max-width: 100%;
-    min-width: 0;
-}
-
-/* Contenedores flexibles y rejillas con columnas que pueden encogerse. */
-#appMain .grid:not(.calendario-grid):not(.calendar-grid) {
-    min-width: 0;
-}
-#appMain .grid > *,
-#appMain .flex > * {
-    min-width: 0;
-}
-#appMain .grid.grid-cols-12 {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-}
-
-/* Tablas: el desplazamiento, cuando sea necesario, queda dentro del módulo. */
-#appMain :where(.overflow-x-auto, .tabla-contenedor, .table-responsive, .tabla-wrapper) {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    overflow-x: auto;
     overscroll-behavior-inline: contain;
     -webkit-overflow-scrolling: touch;
 }
-#appMain table {
+.vista .tabla,
+.vista table.tabla {
     max-width: 100%;
 }
-#appMain :where(th, td) {
-    overflow-wrap: anywhere;
-}
 
-/* Formularios y acciones: controles cómodos para tacto y teclado. */
-#appMain :where(button, [role="button"], input, select) {
-    touch-action: manipulation;
-}
-#appMain :where(input, select, textarea) {
-    font-size: max(16px, 1em);
-}
-#appMain :where(.form-grid, .comision-campos, .filtros-grid, .filtros-container) {
-    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
-}
-#appMain :where(.barra-acciones, .acciones, .flex.items-center.justify-between) {
-    flex-wrap: wrap;
-}
-
-/* Diálogos y paneles flotantes dentro del área visible. */
-:where(.modal, [role="dialog"], .modal-overlay) {
-    max-width: 100vw;
-}
-.modal-caja {
-    width: min( min(920px, calc(100vw - 24px)), 100% ) !important;
-    max-height: calc(100dvh - 24px);
-    overflow: auto;
-    overscroll-behavior: contain;
-}
-
-/* Portátiles compactos y tablets horizontales. */
-@media (min-width: 769px) and (max-width: 1199px) {
-    :root { --sidebar-w: 248px; }
-    #appMain { padding: 20px clamp(14px, 2vw, 24px); }
-    .app-header { padding-inline: clamp(14px, 2vw, 24px); }
-    #appMain .grid.grid-cols-12 { gap: 14px !important; }
-}
-
-/* Tablets verticales y móviles grandes. */
-@media (max-width: 768px) {
-    #appMain { padding: 14px clamp(10px, 2.5vw, 18px) calc(18px + env(safe-area-inset-bottom)); }
-    .app-header {
-        flex-wrap: wrap;
-        gap: 8px;
-        padding: 9px clamp(9px, 2vw, 16px);
-    }
-    .header-titulo { flex: 1 1 150px; }
-    .header-acciones { max-width: 100%; flex-wrap: wrap; justify-content: flex-end; }
-    .header-acciones .chip { max-width: 100%; }
-    #appMain .grid.grid-cols-12 { grid-template-columns: minmax(0, 1fr) !important; }
-    #appMain .grid.grid-cols-12 > * { grid-column: 1 / -1 !important; }
-    #appMain .grid.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    #appMain :where(.form-grid, .comision-campos, .filtros-grid, .filtros-container) {
-        grid-template-columns: minmax(0, 1fr) !important;
-    }
-    .modal-caja { width: calc(100vw - 20px) !important; max-height: calc(100dvh - 20px); }
-}
-
-/* Móviles: simplifica cabecera y asegura lectura sin zoom horizontal. */
-@media (max-width: 520px) {
-    #appMain { padding-inline: 9px; }
-    .app-header { align-items: center; }
-    .header-titulo { flex-basis: 120px; }
-    .header-titulo p { font-size: 9px !important; }
-    .header-acciones { gap: 5px; }
-    .header-acciones .chip { display: none; }
-    #btnHeaderLogin { min-width: 42px; min-height: 42px; justify-content: center; padding-inline: 9px !important; }
-    #btnHeaderLogin i { flex: 0 0 auto; }
-    .user-chip { max-width: min(48vw, 190px); }
-    .user-chip #userName { max-width: 90px; }
-    #appMain .grid.grid-cols-2 { grid-template-columns: minmax(0, 1fr) !important; }
-    #appMain .mesh-hero { padding: clamp(16px, 5vw, 22px) !important; }
-    #appMain :where(.card, .mesh-hero) { border-radius: 18px; }
-    #appMain :where(button, .btn-mep-primary, .btn-mep-secondary) { min-height: 40px; }
-    .modal-caja { width: calc(100vw - 12px) !important; max-height: calc(100dvh - 12px); }
-}
-
-/* Dispositivos muy estrechos (320–360 px). */
-@media (max-width: 360px) {
-    #appMain { padding-inline: 7px; }
-    .app-header { gap: 5px; padding-inline: 7px; }
-    .hamburger { width: 38px; height: 38px; }
-    .header-titulo h2 { font-size: 12px !important; }
-    .header-titulo p { display: none; }
-    .user-chip #userName { display: none; }
-    #appMain :where(.card, .drec-enlace-card) { padding: 13px !important; }
-    #appMain .mesh-hero h2 { font-size: clamp(20px, 7vw, 25px) !important; }
-}
-
-/* Monitores grandes y ultrawide: evita líneas excesivamente largas. */
-@media (min-width: 1600px) {
-    #appMain { max-width: 1680px; padding-inline: clamp(32px, 3vw, 56px); }
-    .app-header { padding-inline: clamp(28px, 3vw, 56px); }
-}
-
-/* Pantalla baja en orientación horizontal: prioriza el espacio disponible. */
-@media (max-height: 520px) and (orientation: landscape) {
-    .app-header { position: relative; }
-    .sidebar { height: 100dvh; overflow-y: auto; }
-    .sidebar-nav { min-height: 0; }
-    .modal-caja { max-height: calc(100dvh - 10px); }
-}
-
-/* Respeta preferencias de accesibilidad del sistema operativo. */
-@media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto !important; }
-    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
-}
-
-/* ======================================================================
-   RESPONSIVE REAL PARA MÓDULOS DE PROGRAMACIÓN · CORRECCIÓN DEFINITIVA
-   Prioriza el ancho real del viewport móvil y evita que textos/controles
-   con ancho intrínseco (especialmente Exportar Excel) expandan las tarjetas.
-   ====================================================================== */
-html, body {
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-}
-#appShell, .app-shell, .app-columna, #appMain, .app-main,
-#contenedorModulos, #contenedorModulos > section,
-#contenedorModulos > section > *,
-#contenedorModulos .card,
-#contenedorModulos .card > *,
-#contenedorModulos .card > * > * {
-    box-sizing: border-box;
-    min-width: 0;
-    max-width: 100%;
-}
-#appMain { width: 100%; }
-#contenedorModulos { width: 100%; }
-#contenedorModulos > section[id^="view-"] { width: 100%; }
-#contenedorModulos > section[id^="view-"] > .card:first-child {
-    width: 100%;
-    min-width: 0;
-}
-#contenedorModulos > section[id^="view-"] > .card:first-child > div:first-child {
-    min-width: 0;
-    flex: 1 1 260px;
-}
-#contenedorModulos > section[id^="view-"] > .card:first-child > div:first-child > div {
-    min-width: 0;
-    flex: 1 1 auto;
-}
-#contenedorModulos > section[id^="view-"] > .card:first-child h2,
-#contenedorModulos > section[id^="view-"] > .card:first-child p {
-    max-width: 100%;
-    overflow-wrap: anywhere;
-}
-#contenedorModulos > section[id^="view-"] > .card:first-child > div:last-child {
-    min-width: 0;
-    max-width: 100%;
-}
-#contenedorModulos .card select,
-#contenedorModulos .card input,
-#contenedorModulos .card button { min-width: 0; max-width: 100%; }
-#contenedorModulos .overflow-x-auto {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-#contenedorModulos table.tabla { width: 100%; }
-
-@media (max-width: 768px) {
-    #appMain { padding: 12px 12px calc(18px + env(safe-area-inset-bottom)) !important; }
-    #contenedorModulos { display: block; width: 100%; }
-    #contenedorModulos > section[id^="view-"] {
-        display: flex;
-        flex-direction: column;
-        gap: 12px !important;
+/* Encabezado generado dinámicamente para cada módulo. */
+@media (max-width: 767px) {
+    .vista[id^="view-"] > .card:first-child {
         width: 100%;
-    }
-    #contenedorModulos > section[id^="view-"] > .card:first-child {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: stretch !important;
-        gap: 14px !important;
         padding: 16px !important;
-        width: 100%;
-        overflow: hidden;
-    }
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:first-child {
-        display: flex;
-        align-items: flex-start;
-        width: 100%;
-        gap: 11px;
-        flex: 0 1 auto;
-    }
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:first-child .icono-tile {
-        flex: 0 0 42px;
-        width: 42px;
-        height: 42px;
-    }
-    #contenedorModulos > section[id^="view-"] > .card:first-child h2 {
-        font-size: clamp(15px, 4.2vw, 19px) !important;
-        line-height: 1.3;
-    }
-    #contenedorModulos > section[id^="view-"] > .card:first-child p {
-        font-size: 12px !important;
-        line-height: 1.55;
-    }
-    /* Contador, botón Nuevo y selector Excel: se apilan, nunca se desbordan. */
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:last-child {
-        display: grid !important;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 14px !important;
         align-items: stretch !important;
-        gap: 8px !important;
+    }
+
+    .vista[id^="view-"] > .card:first-child > .flex.items-start {
         width: 100%;
-        flex: 0 1 auto;
+        min-width: 0;
+        align-items: flex-start;
+        gap: 11px !important;
     }
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:last-child > .chip {
-        grid-column: 1 / -1;
-        justify-self: start;
-        width: max-content;
-        max-width: 100%;
+
+    .vista[id^="view-"] > .card:first-child > .flex.items-start > div {
+        min-width: 0;
+        flex: 1 1 0%;
     }
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:last-child > button,
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:last-child > select {
-        width: 100% !important;
-        min-width: 0 !important;
-        max-width: 100% !important;
-        min-height: 44px;
-        font-size: 12px !important;
-        white-space: normal;
+
+    .vista[id^="view-"] > .card:first-child h2 {
+        font-size: clamp(15px, 4.2vw, 19px) !important;
+        line-height: 1.3 !important;
         overflow-wrap: anywhere;
     }
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:last-child > select {
-        grid-column: 1 / -1;
-        padding: 10px 30px 10px 12px !important;
+
+    .vista[id^="view-"] > .card:first-child p {
+        font-size: 12px !important;
+        line-height: 1.55 !important;
+        overflow-wrap: anywhere;
+    }
+
+    /* Contador, botón Nuevo y selector Excel: se acomodan en filas. */
+    .vista[id^="view-"] > .card:first-child > .flex.items-center.gap-2 {
+        width: 100%;
+        max-width: 100%;
+        min-width: 0;
+        flex: 1 1 auto;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 8px !important;
+    }
+
+    .vista[id^="view-"] > .card:first-child > .flex.items-center.gap-2 > .chip {
+        flex: 0 0 auto;
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .vista[id^="view-"] > .card:first-child > .flex.items-center.gap-2 > button {
+        flex: 1 1 125px;
+        min-width: 0;
+        min-height: 44px;
+        white-space: normal;
+    }
+
+    .vista[id^="view-"] > .card:first-child > .flex.items-center.gap-2 > select {
+        display: block;
+        flex: 1 1 100%;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        min-height: 44px !important;
+        padding: 10px 12px !important;
+        white-space: normal;
         text-overflow: ellipsis;
     }
-    /* Filtros: controles a ancho completo y con etiqueta legible. */
-    #contenedorModulos > section[id^="view-"] > #filtros-\:not([id]) { display:none; }
-    #contenedorModulos > section[id^="view-"] > .card:has(select[id]) { min-width: 0; }
-    #contenedorModulos > section[id^="view-"] > .card.flex.flex-wrap {
-        display: flex;
-        flex-direction: column;
-        align-items: stretch !important;
+
+    /* Filtros de todos los módulos: una o dos columnas según el espacio. */
+    .vista[id^="view-"] > [id^="filtros-"] {
+        width: 100%;
+        min-width: 0;
+        padding: 12px !important;
+        display: grid !important;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
         gap: 9px !important;
-        padding: 13px !important;
+        align-items: end;
+    }
+
+    .vista[id^="view-"] > [id^="filtros-"] > * {
+        min-width: 0;
+        max-width: 100%;
         width: 100%;
     }
-    #contenedorModulos > section[id^="view-"] > .card.flex.flex-wrap select {
-        width: 100% !important;
-        min-height: 44px;
-        font-size: 13px !important;
-    }
-    /* El ancho de la tabla queda contenido en su propio scroller. */
-    #contenedorModulos .card.overflow-hidden { width: 100%; min-width: 0; }
-    #contenedorModulos .overflow-x-auto { width: 100%; min-width: 0; }
-    #contenedorModulos table.tabla {
+
+    /* La tabla vuelve a caber en el ancho del teléfono. El desplazamiento
+       horizontal queda reservado para tablas especiales no convertibles. */
+    .vista[id^="view-"] .tabla,
+    .vista[id^="view-"] table.tabla {
         width: 100% !important;
         min-width: 0 !important;
-        max-width: 100% !important;
         table-layout: fixed;
     }
-    #contenedorModulos table.tabla th,
-    #contenedorModulos table.tabla td {
-        min-width: 0 !important;
-        max-width: 100%;
+
+    .vista[id^="view-"] .tabla tbody td {
+        min-width: 0;
         overflow-wrap: anywhere;
         word-break: normal;
     }
-    #contenedorModulos table.tabla tbody tr:has(td[colspan]) td {
-        display: block !important;
-        width: 100% !important;
-        padding: 24px 12px !important;
-        text-align: center;
-        white-space: normal;
+
+    .vista[id^="view-"] .tabla tbody td::before {
+        min-width: 0;
+        overflow-wrap: anywhere;
+    }
+
+    .vista[id^="view-"] .tabla button,
+    .vista[id^="view-"] .tabla .accion-btn {
+        flex-shrink: 0;
+    }
+
+    .vista[id^="view-"] > .card.overflow-hidden {
+        width: 100%;
+        min-width: 0;
     }
 }
 
-@media (max-width: 520px) {
-    #appMain { padding-inline: 10px !important; }
-    #contenedorModulos > section[id^="view-"] > .card:first-child { padding: 14px !important; }
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:last-child {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    }
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:last-child > button {
-        padding-inline: 10px !important;
-        justify-content: center;
-    }
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:last-child > select {
-        font-size: 11px !important;
-    }
-    #contenedorModulos > section[id^="view-"] > .card.flex.flex-wrap { padding: 11px !important; }
-    #contenedorModulos table.tabla { font-size: 11px; }
-}
+/* Teléfonos compactos (320–380 px). */
+@media (max-width: 380px) {
+    .app-main { padding-left: 10px !important; padding-right: 10px !important; }
+    .app-header { gap: 7px !important; padding-left: 9px !important; padding-right: 9px !important; }
+    .hamburger { flex: 0 0 40px; width: 40px; height: 40px; }
+    .header-titulo h2 { font-size: 13px !important; }
+    .header-titulo p { display: none; }
 
-@media (max-width: 360px) {
-    #appMain { padding-inline: 8px !important; }
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:last-child {
-        grid-template-columns: minmax(0, 1fr);
+    .vista[id^="view-"] > .card:first-child { padding: 13px !important; }
+    .vista[id^="view-"] > .card:first-child > .flex.items-start .icono-tile {
+        width: 42px !important;
+        height: 42px !important;
+        flex: 0 0 42px;
     }
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:last-child > .chip,
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:last-child > button,
-    #contenedorModulos > section[id^="view-"] > .card:first-child > div:last-child > select {
-        grid-column: 1;
+    .vista[id^="view-"] > .card:first-child > .flex.items-center.gap-2 > button {
+        flex-basis: 100%;
         width: 100%;
     }
+    .vista[id^="view-"] > .card:first-child > .flex.items-center.gap-2 > select {
+        font-size: 13px !important;
+    }
+}
+
+/* Tablets y teléfonos grandes: mantener densidad sin desbordar. */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .vista[id^="view-"] > .card:first-child { flex-wrap: wrap; }
+    .vista[id^="view-"] > .card:first-child > .flex.items-center.gap-2 {
+        min-width: 0;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+    .vista[id^="view-"] > .card:first-child > .flex.items-center.gap-2 > select {
+        min-width: 170px;
+        max-width: 240px;
+    }
+}
+
+/* Modales: el contenido se adapta al alto y ancho disponible. */
+@media (max-width: 640px) {
+    .modal-caja {
+        width: min(100%, calc(100vw - 20px)) !important;
+        max-width: calc(100vw - 20px) !important;
+        max-height: calc(100dvh - 24px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+    .modal-caja form,
+    .modal-caja > div:not(.modal-cabecera) { min-width: 0; }
+    .modal-caja .p-6 { padding: 16px !important; }
+}
+
+/* No forzar anchuras globales en móviles; conservar los estilos de escritorio. */
+@media (max-width: 767px) {
+    html, body { max-width: 100%; }
+    body { overflow-x: hidden; }
+    .app-columna, .app-main { width: 100%; }
+    .app-footer { overflow-wrap: anywhere; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .vista, .vista * { scroll-behavior: auto !important; }
 }
