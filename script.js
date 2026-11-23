@@ -377,12 +377,58 @@ function telefonoDeSupervision(oficina) {
     return e ? e[1] : "";
 }
 
+/* ==================== CONTACTOS DRE CAÑAS PARA LA CATEGORÍA
+   «DIRECTORIO TELEFÓNICO DIRECA» ====================
+   Telefonía Fija + Asesoría Pedagógica: funcionario y correos por extensión.
+   No incluye números de teléfono fijo ni móvil (solo la extensión). La oficina
+   canónica ya existe en OFICINAS_DIRECA («Secretaría de Dirección»,
+   «Jefatura DSAF», «Área Educativa 1», etc.). */
+const DIRECA_CONTACTOS = {
+    "3011": { funcionario: "Wilmer Alvarado Fonseca", correo: "dre.canas@mep.go.cr, wilmer.alvarado.fonseca@mep.go.cr" },
+    "3012": { funcionario: "Kattia Fernández Robleto", correo: "dre.canas@mep.go.cr, kattia.fernandez.robleto@mep.go.cr" },
+    "3013": { funcionario: "Amira Berger Vega", correo: "amira.berger.vega@mep.go.cr" },
+    "3000": { funcionario: "Andrea Morales Castillo", correo: "plataformadeservicios.canas@mep.go.cr, andrea.morales.castillo@mep.go.cr" },
+    "3009": { funcionario: "Ileana Marchena Vega", correo: "ileana.marchena.vega@mep.go.cr" },
+    "3008": { funcionario: "Shirley Fernández Cabezas", correo: "serviciosadmfinan.canas@mep.go.cr, shirley.fernandez.cabezas@mep.go.cr" },
+    "3006": { funcionario: "Ana Lidieth Rojas Castro", correo: "juntas.canas@mep.go.cr, ana.rojas.castro@mep.go.cr" },
+    "3007": { funcionario: "Grettel Atencio Reyes", correo: "grettel.atencio.reyes@mep.go.cr" },
+    "3036": { funcionario: "Jorge Solano González", correo: "jorge.solano.gonzalez@mep.go.cr" },
+    "3002": { funcionario: "Jacqueline Chevez Gutiérrez, Enid Mora Madríz", correo: "educacionabierta.drecanas@mep.go.cr, jacqueline.chevez.gutierrez@mep.go.cr, enid.mora.madriz@mep.go.cr" },
+    "3001": { funcionario: "Carlos Alberto Vega Rodríguez, Roberto Calvo Chaves, Jonathan Zamora Varela", correo: "carlos.vega.rodriguez@mep.go.cr, roberto.calvo.chaves@mep.go.cr, jonathan.zamora.varela@mep.go.cr" },
+    "3018": { funcionario: "Olga Cristina Badilla Huertas", correo: "apedagogica.canas@mep.go.cr, olga.badilla.huertas@mep.go.cr" },
+    "3019": { funcionario: "Mariangel Cerdas Alvarado", correo: "apedagogica.canas@mep.go.cr, mariangel.cerdas.alvarado@mep.go.cr" },
+    "3023": { funcionario: "Marilyn Vargas Soto", correo: "marilyn.vargas.soto@mep.go.cr" },
+    "3022": { funcionario: "Cynthia María Robledo Mendoza", correo: "cynthia.robledo.mendoza@mep.go.cr" },
+    "3020": { funcionario: "Ana Mariela Amador Moya", correo: "ana.amador.moya@mep.go.cr" },
+    "3021": { funcionario: "Miriam Betancourt Tijerino", correo: "miriam.betancour.tijerino@mep.go.cr" },
+    "3017": { funcionario: "Jessica Nayiba López Céspedes", correo: "nayiba.lopez.cespedes@mep.go.cr" },
+    "3016": { funcionario: "Bettina María Moreno Arrieta", correo: "bettina.moreno.arrieta@mep.go.cr" },
+    "3015": { funcionario: "José Roberto Delgado Bonilla", correo: "jose.delgado.bonilla@mep.go.cr" },
+    "3014": { funcionario: "Karol Cabalceta Mejías", correo: "karol.cabalceta.mejias@mep.go.cr" },
+    "3030": { funcionario: "Cynthia Marcela Porras Arias", correo: "cynthia.porras.arias@mep.go.cr" },
+    "3031": { funcionario: "Laura Patricia Briceño Cabezas", correo: "laura.briceno.cabezas@mep.go.cr" },
+    "3028": { funcionario: "Jennifer Alvarado Mata", correo: "jennifer.alvarado.mata@mep.go.cr" },
+    "3029": { funcionario: "Edwin Alonso Amador Campos", correo: "alonso.amador.campos@mep.go.cr" },
+    "3024": { funcionario: "Daniel Emilio Silva Cantillo", correo: "daniel.silva.cantillo@mep.go.cr" },
+    "3026": { funcionario: "Maureen Cristina Cambronero Arrieta", correo: "maureen.cambronero.arrieta@mep.go.cr" },
+    "3025": { funcionario: "Henry Enríquez Baltodano", correo: "henry.enriquez.baltodano@mep.go.cr" },
+    "3034": { funcionario: "María Gabriela Monge Delgado", correo: "maria.monge.delgado@mep.go.cr" },
+    "3033": { funcionario: "Samuel Antonio Acuna León", correo: "samuel.acuna.leon@mep.go.cr" },
+    "3032": { funcionario: "José Mario Cortes Matarrita", correo: "jose.cortes.matarrita@mep.go.cr" },
+    "3035": { funcionario: "Ana Maricel Brenes Quesada", correo: "ana.brenes.quesada@mep.go.cr" },
+    "3010": { funcionario: "Meysbol Torres Herrera", correo: "meysbol.torres.herrera@mep.go.cr" }
+};
+// Extensión 3027 (Coordinación Vivamos la Guanacastequidad): sin funcionario
+// ni correo; se deja la extensión únicamente. (Sin entrada aquí.)
+
 /* Registros precargados (siembra no destructiva por id de documento). */
 const REGISTROS_DIRECA = OFICINAS_DIRECA.map(o => ({
     id: "DIRECA-OF-" + o[1],
     categoria: "Directorio Telefónico DIRECA",
     oficina: o[0],
-    extension: o[1]
+    extension: o[1],
+    funcionario: (DIRECA_CONTACTOS[o[1]] || {}).funcionario || "",
+    correo: (DIRECA_CONTACTOS[o[1]] || {}).correo || ""
 }));
 const REGISTROS_SUPERVISIONES = SUPERVISIONES_CIRCUITOS.map(o => ({
     id: "DIRECA-SUP-" + o[0].replace(/\D/g, ""),
@@ -399,27 +445,261 @@ function registroDIRECAExcluido(r) {
     return normalize(r.oficina || r.departamento || r.funcionario || "") === "nidia briceno jimenez";
 }
 
-/* Siembra idempotente y NO destructiva: agrega únicamente los registros del
-   directorio DIRECA que aún no existan (por id), conservando íntegramente los
-   registros previos. En modo demo se guardan en LocalStorage; en producción
-   los escribe en Firestore solo un Administrador (reglas: allow write: esAdmin). */
+/* ==================== DIRECTORIO DREC: SUPERVISIONES ESCOLARES Y
+   CENTROS EDUCATIVOS POR CIRCUITOS ====================
+   Nota: los datos de «Telefonía Fija» y «Asesoría Pedagógica» de la DRE Cañas
+   se siembran ahora bajo la categoría «Directorio Telefónico DIRECA»
+   (ver DIRECA_CONTACTOS más abajo) para que se muestren en ese filtro,
+   sin repetirlos aquí. Reglas: SIN números de teléfono fijo ni móvil; SÍ se
+   incluye «extension» cuando existe. Siembra no destructiva y sin duplicados
+   (ver duplicadoDirectario()). Fuente: Directorio Telefónico DRE Cañas (MEP). */
+const REGISTROS_DIRECTORIO_DREC = [
+    /* ---------- Supervisiones Escolares (sin teléfono ni extensión) ---------- */
+    { id: "DREC-SUP-01A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 01", funcionario: "Yesenia De Los Ángeles Ruiz Matarrita", correo: "yesenia.ruiz.matarrita@mep.go.cr" },
+    { id: "DREC-SUP-01B", categoria: "Supervisiones Escolares", departamento: "Asistente de Supervisión Educativa 01", funcionario: "Annia Guiselle Ávila Arias", correo: "annia.avila.arias@mep.go.cr" },
+    { id: "DREC-SUP-02A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 02", funcionario: "Gricelda Vargas Segura", correo: "gricelda.vargas.segura@mep.go.cr" },
+    { id: "DREC-SUP-02B", categoria: "Supervisiones Escolares", departamento: "Asistente de Supervisión Educativa 02", funcionario: "Nora Graciela Herrera Venegas", correo: "nora.herrera.venegas@mep.go.cr" },
+    { id: "DREC-SUP-03A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 03", funcionario: "Haydee Solórzano Miranda", correo: "haydee.solorzano.miranda@mep.go.cr" },
+    { id: "DREC-SUP-03B", categoria: "Supervisiones Escolares", departamento: "Asistente de Supervisión Educativa 03", funcionario: "Dayhala Marchena Mora", correo: "dayhala.marchena.mora@mep.go.cr" },
+    { id: "DREC-SUP-04A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 04", funcionario: "Ana Yancy Morales Murillo", correo: "ana.morales.murillo@mep.go.cr" },
+    { id: "DREC-SUP-04B", categoria: "Supervisiones Escolares", departamento: "Asistente de Supervisión Educativa 04", funcionario: "Edwards Gerardo Rodríguez Calderón", correo: "edward.rodriguez.calderon@mep.go.cr" },
+    { id: "DREC-SUP-05A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 05", funcionario: "Adriana Álvarez Murillo", correo: "adriana.alvarez.murillo@mep.go.cr" },
+    { id: "DREC-SUP-05B", categoria: "Supervisiones Escolares", departamento: "Asistente de Supervisión Educativa 05", funcionario: "Ángelica María Quesada Barrantes", correo: "angelica.quesada.barrantes@mep.go.cr" },
+    /* ---------- Centros Educativos por Circuitos Escolares ---------- */
+    /* Circuito 01 (Cañas) */
+    { id: "DREC-CE-2594", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2594", institucion: "Escuela Agua Caliente", tipoDireccion: "UNIDOCENTE", funcionario: "Monge Sánchez Leonor", correo: "leonor.monge.sanchez@mep.go.cr, esc.aguacaliente@mep.go.cr" },
+    { id: "DREC-CE-2609", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2609", institucion: "Escuela Cedros", tipoDireccion: "UNIDOCENTE", funcionario: "Marín Arguedas Dagoberto Vicente", correo: "dagoberto.marin.arguedas@mep.go.cr, esc.cedros@mep.go.cr" },
+    { id: "DREC-CE-2619", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2619", institucion: "Escuela Paso Lajas", tipoDireccion: "UNIDOCENTE", funcionario: "Medrano Quiroz Eneida", correo: "eneida.medrano.quiroz@mep.go.cr, esc.pasolajas@mep.go.cr" },
+    { id: "DREC-CE-2642", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2642", institucion: "Escuela El Vergel", tipoDireccion: "UNIDOCENTE", funcionario: "Quirós Céspedes Rosemery", correo: "rosemery.quiros.cespedes@mep.go.cr, esc.elvergel@mep.go.cr" },
+    { id: "DREC-CE-2647", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2647", institucion: "Escuela Higuerón", tipoDireccion: "UNIDOCENTE", funcionario: "Abreu Coronado Carmen Marta", correo: "carmen.abreu.coronado@mep.go.cr, esc.higueron@mep.go.cr" },
+    { id: "DREC-CE-2679", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2679", institucion: "Escuela San Isidro", tipoDireccion: "UNIDOCENTE", funcionario: "Rojas Castellón Rocio", correo: "rocio.rijas.castellón@mep.go.cr, esc.sanisidro.canas@mep.go.cr" },
+    { id: "DREC-CE-2681", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2681", institucion: "Escuela San Juan", tipoDireccion: "UNIDOCENTE", funcionario: "Majano Moreno Walter Alan", correo: "allan.majano.moreno@mep.go.cr, esc.sanjuandecanas@mep.go.cr" },
+    { id: "DREC-CE-2686", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2686", institucion: "Escuela Sandial", tipoDireccion: "UNIDOCENTE", funcionario: "López Núñez Dinia María", correo: "dinia.lopez.nunez@mep.go.cr, esc.sandial@mep.go.cr" },
+    { id: "DREC-CE-2696", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2696", institucion: "Escuela Buenos Aires", tipoDireccion: "UNIDOCENTE", funcionario: "Méndez Lezama Zulma", correo: "zulma.mendez.lezama@mep.go.cr, esc.buenosaires.canas@mep.go.cr" },
+    { id: "DREC-CE-2597", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2597", institucion: "Escuela Río Corobicí", tipoDireccion: "Dirección 1", funcionario: "Russell William Ruiz Ramírez", correo: "russell.ruiz.ramirez@mep.go.cr, esc.riocorobici@mep.go.cr" },
+    { id: "DREC-CE-2618", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2618", institucion: "Escuela IDA San Luis", tipoDireccion: "Dirección 1", funcionario: "Miranda Cárdenas Adriana", correo: "adriana.miranda.cardenas@mep.go.cr, esc.ida.sanluis@mep.go.cr" },
+    { id: "DREC-CE-2623", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2623", institucion: "Escuela Corobicí Palmira", tipoDireccion: "Dirección 1", funcionario: "Guadamuz Guevara Luis Fernando", correo: "luis.guadamuz.guevara@mep.go.cr, esc.corobici@mep.go.cr" },
+    { id: "DREC-CE-2638", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2638", institucion: "Escuela Jerónimo Fernández", tipoDireccion: "Dirección 1", funcionario: "Duarte Guadamuz Ligia", correo: "ligia.duarte.guadmuz@mep.go.cr, esc.jeronimofernandezrojas@mep.go.cr" },
+    { id: "DREC-CE-2643", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2643", institucion: "Escuela Bello Horizonte", tipoDireccion: "Dirección 1", funcionario: "Quesada Guzmán Lyener", correo: "lyener.quesada.guzman@mep.go.cr, esc.bellohorizonte@mep.go.cr" },
+    { id: "DREC-CE-2645", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2645", institucion: "Escuela Hacienda Taboga", tipoDireccion: "Dirección 1", funcionario: "Campos Achío Sianny Lorena", correo: "siany.campos.achio@mep.go.cr, esc.haciendataboga@mep.go.cr" },
+    { id: "DREC-CE-2663", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2663", institucion: "Escuela San Luis", tipoDireccion: "Dirección 1", funcionario: "Murray Jiménez Jensee", correo: "jensee.murray.jimenez@mep.go.cr, esc.sanluis.canas@mep.go.cr" },
+    { id: "DREC-CE-2676", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2676", institucion: "Escuela San Antonio", tipoDireccion: "Dirección 1", funcionario: "Rojas Umaña Johanna", correo: "johanna.rojas.umana@mep.go.cr, esc.sanantonio.canas@mep.go.cr" },
+    { id: "DREC-CE-2688", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2688", institucion: "Escuela Nueva Guatemala", tipoDireccion: "Dirección 1", funcionario: "Ordóñez Moncada Evelyn", correo: "evelyn.ordonez.moncada@mep.go.cr, esc.nuevaguatemala@mep.go.cr" },
+    { id: "DREC-CE-5004", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-5004", institucion: "Escuela Lajas", tipoDireccion: "Dirección 1", funcionario: "Chavarría Gómez Yendry", correo: "yendry.chavarria.gomez.@mep.go.cr, esc.lajas@mep.go.cr" },
+    { id: "DREC-CE-5005", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-5005", institucion: "Jardín de Niños Monseñor Luis Leipold", tipoDireccion: "Dirección 1", funcionario: "Zúñiga Matarrita Lucila", correo: "lucila.zuniga.marrita@mep.go.cr, jn.monsenorluisleipold@mep.go.cr" },
+    { id: "DREC-CE-2601", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2601", institucion: "Escuela Las Palmas", tipoDireccion: "Dirección 3", funcionario: "Ordóñez Solano Neilyn", correo: "neilyn.ordonez.solano@mep.go.cr, esc.barriolaspalmas@mep.go.cr" },
+    { id: "DREC-CE-2604", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2604", institucion: "Escuela Antonio Obando", tipoDireccion: "Dirección 4", funcionario: "Díjeres Espinoza Zeanne", correo: "zeanne.dijeres.espinoza@mep.go.cr, esc.antonioobandoespinoza@mep.go.cr" },
+    { id: "DREC-CE-2606", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2606", institucion: "Escuela Bebedero", tipoDireccion: "Dirección 3", funcionario: "López Victoria Pastor", correo: "pastor.lopez.victoria@mep.go.cr, esc.bebedero@mep.go.cr" },
+    { id: "DREC-CE-2613", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2613", institucion: "Escuela Monseñor Luis Leipold", tipoDireccion: "Dirección 4", funcionario: "Cascante Villegas Marily", correo: "marily.cascante.villegas@mep.go.cr, esc.monsenorluisleipold@mep.go.cr" },
+    { id: "DREC-CE-2625", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2625", institucion: "Escuela INVU Las Cañas", tipoDireccion: "Dirección 4", funcionario: "Jerez Zapata José", correo: "jose.jerez.zapata@mep.go.cr, esc.invulascanas.canas@mep.go.cr" },
+    { id: "DREC-CE-2664", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2664", institucion: "Escuela San Cristobal", tipoDireccion: "Dirección 3", funcionario: "Soto Mayorga Henry Javier", correo: "javier.soto.mayorga@mep.go.cr, esc.sancristobal.canas@mep.go.cr" },
+    { id: "DREC-CE-2682", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-01-63-2682", institucion: "Escuela San Miguel", tipoDireccion: "Dirección 2", funcionario: "Rojas Calvo Karol", correo: "karol.rojas.calvo@mep.go.cr, esc.sanmiguel.canas@mep.go.cr" },
+    { id: "DREC-CE-4111", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-02-63-4111", institucion: "Liceo Miguel Araya Venegas", tipoDireccion: "Dirección 2", funcionario: "Ramírez Vásquez Henry Alberto", correo: "henry.ramirez.vasquez@mep.go.cr, lic.miguelarayavenegas@mep.go.cr" },
+    { id: "DREC-CE-4875", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-05-63-4875", institucion: "Liceo Nocturno Juan Santamaría", tipoDireccion: "Dirección 1", funcionario: "Rosales Marín Marbella", correo: "marbella.rosales.marin@mep.go.cr, lic.nocturnojuansantamaria@mep.go.cr" },
+    { id: "DREC-CE-4876", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-05-63-4876", institucion: "IPEC", tipoDireccion: "Dirección 1", funcionario: "Elizondo Solano Heilyn", correo: "heilyn.elizondo.solano@mep.go.cr, ipec.canascentral@mep.go.cr" },
+    { id: "DREC-CE-5645", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-02-63-5645", institucion: "Liceo Bebedero", tipoDireccion: "Dirección 1", funcionario: "Solórzano Espinoza Sonia", correo: "sonia.solorzano.espinoza@mep.go.cr, lic.debebedero@mep.goc.r" },
+    { id: "DREC-CE-5967", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-02-63-5967", institucion: "Liceo Rural Nueva Guatemala", tipoDireccion: "Dirección 1", funcionario: "Villarreal Soto Karen", correo: "karen.villarreal.soto@mep.go.cr, lic.ruralnuevaguatemala@mep.go.cr" },
+    { id: "DREC-CE-6538", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-03-63-6538", institucion: "C.T.P Cañas", tipoDireccion: "Dirección 3", funcionario: "Fernández Cabezas Elieth", correo: "elieth.fernandez.cabezas@mep.go.cr, ctp.decanas@mep.go.cr" },
+    { id: "DREC-CE-6727", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "210-573-05-63-6727", institucion: "CINDEA Bebedero", tipoDireccion: "Dirección 1", funcionario: "García Castillo Ana Zeneida", correo: "ana.garcia.castillo@mep.go.cr, cindea.bebedero@mep.go.cr" },
+    { id: "DREC-CE-PRIV-CECELO", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "", institucion: "CECELO (Privado)", tipoDireccion: "Preescolar, primaria y secundaria", funcionario: "Orlando De La O Castañeda", correo: "direccionacademica@cecelo.ed.cr, cecelo@prodieca.org" },
+    { id: "DREC-CE-PRIV-SAINTTIMOTHY", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "", institucion: "Saint Timothy School (Privado)", tipoDireccion: "Preescolar", funcionario: "Acón Sibaja Shirley", correo: "shirleyacon15@gmail.com, escolartimothy@gmail.com" },
+    { id: "DREC-CE-PRIV-CENIT", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 01 (Cañas)", codigoPresupuestario: "", institucion: "CENIT (Privado)", tipoDireccion: "Preescolar y Primaria", funcionario: "Ivannia Villegas Molina", correo: "infocanas@cenitcr.com, ivannia.villegas@cenitcr.ed.cr" },
+    /* Circuito 02 (Abangares) */
+    { id: "DREC-CE-2600", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-69-2600", institucion: "Arizona", tipoDireccion: "PEU", funcionario: "Maureen Chaves Herra", correo: "maureen.chaves.herra@mep.go.cr, esc.arizona@mep.go.cr" },
+    { id: "DREC-CE-2598", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-2598", institucion: "Santa Lucía", tipoDireccion: "PEU", funcionario: "Marlen Gutiérrez Serrano", correo: "marlen.gutierrez.serrano@mep.go.cr, esc.santalucialasjuntas@mep.go.cr" },
+    { id: "DREC-CE-2621", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-2621", institucion: "Concepción", tipoDireccion: "PEU", funcionario: "Yulissa Selín García", correo: "yulissa.selin.garcia@mep.go.cr, esc.concepcionlasjuntas@mep.go.cr" },
+    { id: "DREC-CE-2628", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-2628", institucion: "Los Ángeles", tipoDireccion: "PEU", funcionario: "Nolly Gutíerrez Zúñiga", correo: "nolly.gutierrez.zuñiga@mep.go.cr, esc.losangeles.canas@mep.go.cr" },
+    { id: "DREC-CE-2652", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-2652", institucion: "Tres Amigos", tipoDireccion: "PEU", funcionario: "Betsy Álvarez Gutiérrez", correo: "betsy.alvarez.gutierrez@mep.go.cr, esc.tresamigos@mep.go.cr" },
+    { id: "DREC-CE-2656", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-2656", institucion: "Lourdes", tipoDireccion: "DEGB1", funcionario: "Ivis del Carmen Gutiérrez Cabrera", correo: "ivis.gutierrez.cabrera@mep.go.cr, esc.lourdesdeabangares@mep.go.cr" },
+    { id: "DREC-CE-2666", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-2666", institucion: "Pozo Azul", tipoDireccion: "DEGB1", funcionario: "Mariela Pérez García", correo: "eylin.perez.garcia@mep.go.cr, esc.pozoazul@mep.go.cr" },
+    { id: "DREC-CE-2680", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-2680", institucion: "San Juan Grande", tipoDireccion: "DEGB1", funcionario: "Yorleny Álvarez González", correo: "yorleny.alvarez.gonzalez@mep.go.cr, esc.sanjuangrande@mep.go.cr" },
+    { id: "DREC-CE-2596", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-2596", institucion: "San Juan Chiquito", tipoDireccion: "DEGB2", funcionario: "Claudia Cabezas Varela", correo: "claudia.cabezas.varela@mep.go.cr, esc.sanjuanchiquito@mep.go.cr" },
+    { id: "DREC-CE-2603", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-2603", institucion: "San Francisco", tipoDireccion: "DEGB2", funcionario: "Rocío Azofeifa Quesada", correo: "rocio.azofeifa.quesada@mep.go.cr, esc.sanfrancisco.canas@mep.go.cr" },
+    { id: "DREC-CE-2595", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-2595", institucion: "Matapalo", tipoDireccion: "DEGB2", funcionario: "Mary Chris Villalobos Sánchez", correo: "mary.villalobos.sanchez@mep.go.cr, esc.matapalo.canas@mep.go.cr" },
+    { id: "DREC-CE-2658", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-2658", institucion: "Limonal", tipoDireccion: "DEGB2", funcionario: "Gustavo Arguedas Rojas", correo: "gustavo.arguedas.rojas@mep.go.cr, esc.limonaldeabangares@mep.go.cr" },
+    { id: "DREC-CE-2655", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-2655", institucion: "Delia Oviedo de Acuña", tipoDireccion: "DEGB4", funcionario: "Grettel Arana Noguera", correo: "grettel.arana.noguera@mep.go.cr, esc.deliaoviedodeacuna@mep.go.cr" },
+    { id: "DREC-CE-4207", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-4207", institucion: "CTP de Abangares", tipoDireccion: "Director CTP", funcionario: "Sandy Jiménez Cascante", correo: "sandy.jimenez.cascante@mep.go.cr, ctp.deabangares@mep.go.cr" },
+    { id: "DREC-CE-5676", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 02 (Abangares)", codigoPresupuestario: "210-573-01-63-5676", institucion: "CINDEA de Abangares", tipoDireccion: "Director Colegio", funcionario: "Nilsa Marciaga Corrales", correo: "nilsa.marciaga.corrales@mep.go.cr, cindeadeabangares@mep.go.cr" },
+    /* Circuito 03 (Tilarán) */
+    { id: "DREC-CE-2607", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-69-2607", institucion: "Esc. Viejo Arenal", tipoDireccion: "UNIDOCENTE", funcionario: "Álvaro Mauricio Laines Reyes", correo: "esc.viejoarenal@mep.go.cr, alvaro.laines.reyes@mep.go.cr" },
+    { id: "DREC-CE-2610", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2610", institucion: "Esc. Asentamiento IDA Nuevo Arenal", tipoDireccion: "UNIDOCENTE", funcionario: "Lucia Zamora Matamoros", correo: "esc.asentamientoidanuevoarenal@mep.go.cr, lucia.zamora.matamorros@mep.go.cr" },
+    { id: "DREC-CE-2627", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2627", institucion: "Esc. La Palma", tipoDireccion: "UNIDOCENTE", funcionario: "Randall Alberto Herrera Arroyo", correo: "esc.lapalmasantarosa@mep.go.cr, randall.herrera.arroyo@mep.go.cr" },
+    { id: "DREC-CE-2629", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2629", institucion: "Esc. Paraíso", tipoDireccion: "UNIDOCENTE", funcionario: "Graciela González Castro", correo: "esc.paraisocanas@mep.go.cr, graciela.gonzalez.castro@mep.go.cr" },
+    { id: "DREC-CE-2633", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2633", institucion: "Esc. El Aguacate", tipoDireccion: "UNIDOCENTE", funcionario: "María del Carmen Rocha Vallejos", correo: "esc.elaguacate.canas@mep.go.cr, maria.rocha.vallejos@mep.go.cr" },
+    { id: "DREC-CE-2634", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2634", institucion: "Cerro San José", tipoDireccion: "UNIDOCENTE", funcionario: "Elena Carolina Alfaro Sánchez", correo: "esc.cerrosanjose@mep.go.cr, elena.alfaro.sanchez@mep.go.cr" },
+    { id: "DREC-CE-2641", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2641", institucion: "Esc. El Silencio", tipoDireccion: "UNIDOCENTE", funcionario: "Yeison Alfonso Sibaja Rodríguez", correo: "esc.elsilencio.canas@mep.go.cr, yeison.sibaja.rodriguez@mep.go.cr" },
+    { id: "DREC-CE-2654", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2654", institucion: "Esc. La Unión", tipoDireccion: "UNIDOCENTE", funcionario: "Marvy Cabalceta Barrantes", correo: "esc.union.canas@mep.go.cr, marvy.cabalceta.barrantes@mep.go.cr" },
+    { id: "DREC-CE-2660", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2660", institucion: "Esc. Ranchitos", tipoDireccion: "UNIDOCENTE", funcionario: "Elena Martínez Molina", correo: "esc.ranchitos@mep.go.cr, elena.martinez.molina@mep.go.cr" },
+    { id: "DREC-CE-2662", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2662", institucion: "Esc. Mata de Caña", tipoDireccion: "UNIDOCENTE", funcionario: "Gerald Vinicio Alfaro Álvarez", correo: "esc.matadecana@mep.go.cr, ana.ruiz.marchena@mep.go.cr" },
+    { id: "DREC-CE-2669", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2669", institucion: "Esc. Río Chiquito", tipoDireccion: "UNIDOCENTE", funcionario: "Jessica Maria Herrera Ramirez", correo: "esc.riochiquito@mep.go.cr, jessica.herrera.ramirez@mep.go.cr" },
+    { id: "DREC-CE-2674", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2674", institucion: "Esc. Sabalito", tipoDireccion: "UNIDOCENTE", funcionario: "Kimberly Maria Chaves Rodriguez", correo: "esc.sabalito2674@mep.go.cr, kimberly.chaves.rodriguez@mep.go.cr" },
+    { id: "DREC-CE-2678", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2678", institucion: "Esc. Las Parcelas", tipoDireccion: "UNIDOCENTE", funcionario: "Karol Araya Badilla", correo: "esc.lasparcelas@mep.go.cr, karol.araya.badilla@mep.go.cr" },
+    { id: "DREC-CE-2689", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2689", institucion: "Esc. Solania", tipoDireccion: "UNIDOCENTE", funcionario: "Andrea Álvarez Rosales", correo: "esc.solania@mep.go.cr, andrea.alvarez.rosales@mep.go.cr" },
+    { id: "DREC-CE-2698", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2698", institucion: "Esc. La Maravilla", tipoDireccion: "UNIDOCENTE", funcionario: "Ingrid Arias Herrera", correo: "esc.lamaravillalibano@mep.go.cr, ingrid.arias.herrera@mep.go.cr" },
+    { id: "DREC-CE-5570", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-5570", institucion: "Esc. El Roble", tipoDireccion: "UNIDOCENTE", funcionario: "Maria Fernanda Porras Jimenez", correo: "esc.elroble.canas@mep.go.cr, maria1.porras.jimenez@mep.go.cr" },
+    { id: "DREC-CE-2608", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2608", institucion: "Esc. Asentamiento Monseñor Morera Vega", tipoDireccion: "Dirección 1", funcionario: "Olga Vanessa García Fernández", correo: "esc.monsenormorera@mep.go.cr, vanessa.garcia.fernandez@mep.go.cr" },
+    { id: "DREC-CE-2631", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2631", institucion: "Esc. San Luis", tipoDireccion: "Dirección 1", funcionario: "Heyder Angulo Obando", correo: "esc.sanluisdetilaran@mep.go.cr, heyder.angulo.obando@mep.go.cr" },
+    { id: "DREC-CE-2639", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2639", institucion: "Esc. Rosita Chaves", tipoDireccion: "Dirección 1", funcionario: "Guillermo Obando Calvo", correo: "esc.rositachavesdecabezas@mep.go.cr, alexandra.ortiz.torres@mep.go.cr" },
+    { id: "DREC-CE-2659", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2659", institucion: "Esc. Los Ángeles", tipoDireccion: "Dirección 1", funcionario: "Alexander Zambrana López", correo: "esc.losangelessantarosa@mep.go.cr, alexander.zambrana.lopez@mep.go.cr" },
+    { id: "DREC-CE-2668", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2668", institucion: "Esc. Quebrada Grande", tipoDireccion: "Dirección 1", funcionario: "Roberto Gerardo Sandoval Chaves", correo: "esc.quebradagrande@mep.go.cr, roberto.sandoval.chaves@mep.go.cr" },
+    { id: "DREC-CE-2671", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2671", institucion: "Esc. Río Piedras", tipoDireccion: "Dirección 1", funcionario: "Adriana Herrera Mejías", correo: "esc.rio.piedras@mep.go.cr, adriana.herrera.mejias@mep.go.cr" },
+    { id: "DREC-CE-2672", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2672", institucion: "Esc. Linda Vista", tipoDireccion: "Dirección 1", funcionario: "Gerald Esteban Mora Ureña", correo: "esc.lindavistasantarosa@mep.go.cr, gerald.mora.urena@mep.go.cr" },
+    { id: "DREC-CE-2690", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2690", institucion: "Esc. Jaime Gutiérrez Braun", tipoDireccion: "Dirección 1", funcionario: "Alexandra Ortíz Torrez", correo: "esc.jaimegutierrezbraun@mep.go.cr, alexandra.ortiz.torres@mep.go.cr" },
+    { id: "DREC-CE-2599", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2599", institucion: "Esc. Arenal", tipoDireccion: "Dirección 2", funcionario: "Yeimy Soto Briceño", correo: "esc.arenal@mep.go.cr, yemmy.soto.briceno@mep.go.cr" },
+    { id: "DREC-CE-2693", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2693", institucion: "Esc. Tronadora", tipoDireccion: "Dirección 2", funcionario: "Kattia Martínez Segura", correo: "esc.tronadora@mep.go.cr, kattia.martinez.segura@mep.go.cr" },
+    { id: "DREC-CE-2605", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2605", institucion: "Esc. Líder el Carmen", tipoDireccion: "Dirección 3", funcionario: "Max Gustavo Arias Martínez", correo: "esc.liderelcarmenl@mep.go.cr, max.arias.martinez@mep.go.cr" },
+    { id: "DREC-CE-2691", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-01-63-2691", institucion: "Esc. José María Calderón Mayorga", tipoDireccion: "Dirección 4", funcionario: "Maybel María Rosales Solorzano", correo: "esc.josemariacalderon@mep.go.cr, maybel.rosales.solorzano@mep.go.cr" },
+    { id: "DREC-CE-4114", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-02-63-4114", institucion: "Liceo Experimental Bilingüe Arenal", tipoDireccion: "Dirección 1", funcionario: "Oscar Orias Silva", correo: "lic.expbilinguenuevoarenal@mep.go.cr, oscar.orias.silva@mep.go.cr" },
+    { id: "DREC-CE-4874", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-05-63-4874", institucion: "Colegio Noct. Maurilio Alvarado Vargas", tipoDireccion: "Dirección 1", funcionario: "Ivette Villalobos Carranza", correo: "col.nocturnomaurilioalvarado@mep.go.cr, ivette.villalobos.carranza@mep.go.cr" },
+    { id: "DREC-CE-6728", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-05-63-6728", institucion: "CINDEA (Tilarán- Arenal)", tipoDireccion: "Dirección 1", funcionario: "Grevin Miranda Corrales", correo: "cindea.tilaran@mep.go.cr, grevin.miranda.corrales@mep.go.cr" },
+    { id: "DREC-CE-4110", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-02-63-4110", institucion: "Liceo Maurilio Alvarado Vargas", tipoDireccion: "Dirección 2", funcionario: "Manrique Espinoza Solano", correo: "lic.maurilioalvaradovargas@mep.go.cr, manrique.espinoza.solano@mep.go.cr" },
+    { id: "DREC-CE-6034", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "210-573-03-63-6034", institucion: "CTP Tronadora", tipoDireccion: "Dirección 3", funcionario: "Manuel Durán Pimentel", correo: "ctp.tronadora@mep.go.cr, manuel.duran.pimentel@mep.go.cr" },
+    { id: "DREC-CE-PRIV-JNTILARAN", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "", institucion: "Jardín de Niños Tilarán (Privado)", tipoDireccion: "Preescolar y Primaria", funcionario: "Sheila Daniels Acuña", correo: "jardinjnt@gmail.com, sheila.dnls@gmail.com" },
+    { id: "DREC-CE-PRIV-QUERUBIN", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 03 (Tilarán)", codigoPresupuestario: "", institucion: "Querubín (Privado)", tipoDireccion: "Preescolar", funcionario: "Arelys Soto Jiménez", correo: "arelys.soto.jimenez@mep.go.cr" },
+    /* Circuito 04 (Colorado) */
+    { id: "DREC-CE-2617", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-69-2617", institucion: "El Níspero", tipoDireccion: "UNIDOCENTE", funcionario: "Laura Sirias Cortés", correo: "esc.elnispero@mep.go.cr, laura.sirias.cortes@mep.go.cr" },
+    { id: "DREC-CE-2622", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2622", institucion: "Concepción", tipoDireccion: "UNIDOCENTE", funcionario: "Hellen Chaves Chaves", correo: "esc.concepciondecolorado@mep.go.cr, hellen.chaves.chaves@mep.go.cr" },
+    { id: "DREC-CE-2626", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2626", institucion: "Barrio Jesús", tipoDireccion: "UNIDOCENTE", funcionario: "Douglas Carrera Matarrita", correo: "esc.barriodejesus@mep.go.cr, douglas.carrera.matarrita@mep.go.cr" },
+    { id: "DREC-CE-2632", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2632", institucion: "Raizal", tipoDireccion: "UNIDOCENTE", funcionario: "Jonathan Ríos Chaves", correo: "esc.raizal@mep.go.cr, jonathan.rios.chaves@mep.go.cr" },
+    { id: "DREC-CE-5569", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-5569", institucion: "María Raffols", tipoDireccion: "UNIDOCENTE", funcionario: "Sonia Reyes Reyes", correo: "esc.mariarafols@mep.go.cr, sonia.reyes.reyes@mep.go.cr" },
+    { id: "DREC-CE-5883", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-5883", institucion: "Barbudal", tipoDireccion: "UNIDOCENTE", funcionario: "Yazmín García Arredondo", correo: "esc.barbudal@mep.go.cr, Yazmin.garcia.arredondo@mep.go.cr" },
+    { id: "DREC-CE-2697", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2697", institucion: "Higuerillas", tipoDireccion: "UNIDOCENTE", funcionario: "Kener Gutierrez Calvo", correo: "esc.higuerillas@mep.go.cr, Kener.gutierrez.calvo@mep.go.cr" },
+    { id: "DREC-CE-6638", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-6638", institucion: "Tiquiruzas", tipoDireccion: "UNIDOCENTE", funcionario: "Keilyn Morales González", correo: "esc.tiquiruzas@mep.go.cr, keilyn.morales.gonzalez@mep.go.cr" },
+    { id: "DREC-CE-2612", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2612", institucion: "Peñas Blancas", tipoDireccion: "Dirección 1", funcionario: "Yorleny López Zamora", correo: "esc.penasblancascolorado@mep.go.cr, Yorleny.lopez.zamora@mep.go.cr" },
+    { id: "DREC-CE-2640", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2640", institucion: "San Joaquín", tipoDireccion: "Dirección 1", funcionario: "Randy Matarrita Enriquez", correo: "esc.sanjoaquindecolorado@mep.go.cr, randy.matarrita.enriquez@mep.go.cr" },
+    { id: "DREC-CE-2649", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2649", institucion: "Las Brisas", tipoDireccion: "Dirección 1", funcionario: "Vianey Álvarez Campos", correo: "esc.lasbrisas.canas@mep.go.cr, Vianney.alvarez.campos@mep.go.cr" },
+    { id: "DREC-CE-2651", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2651", institucion: "Piedra Verde", tipoDireccion: "Dirección 1", funcionario: "Karla Campos Abadía", correo: "esc.piedraverde@mep.go.cr, karla.campos.abadia@mep.go.cr" },
+    { id: "DREC-CE-2665", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2665", institucion: "Porozal", tipoDireccion: "Dirección 1", funcionario: "Jossie Chavarria Rojas", correo: "esc.porozal@mep.go.cr, sararodriguez.guevara@mep.go.cr" },
+    { id: "DREC-CE-2667", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2667", institucion: "Pueblo Nuevo", tipoDireccion: "Dirección 1", funcionario: "Arturo Chaverri Arguedas", correo: "esc.pueblonuevocolorado@mep.go.cr, arturo.chaverri.arguedas@mep.go.cr" },
+    { id: "DREC-CE-2687", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2687", institucion: "Santa Lucía", tipoDireccion: "Dirección 1", funcionario: "Silvia Alvarado Calvo", correo: "esc.santalucia.canas@mep.go.cr, silvia.alvarado.calvo@mep.go.cr" },
+    { id: "DREC-CE-2650", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2650", institucion: "Joaquín Arroyo", tipoDireccion: "Dirección 1", funcionario: "Keneth Sequeira cascante", correo: "esc.joaquinarroyo@mep.go.cr, keneth.sequeira.cascante@mep.go.cr" },
+    { id: "DREC-CE-2620", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2620", institucion: "Colorado", tipoDireccion: "Dirección 2", funcionario: "Manuel A. Bello Méndez", correo: "esc.tecnicadecolorado@mep.go.cr, manuel.bello.mendez@mep.go.cr" },
+    { id: "DREC-CE-2677", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-2677", institucion: "San Buenaventura", tipoDireccion: "Dirección 2", funcionario: "Lilliam Sánchez Gómez", correo: "esc.sanbuenaventuracolordo@mep.go.cr, lilliam.sanchez.gomez@mep.go.cr" },
+    { id: "DREC-CE-4113", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-4113", institucion: "Liceo de Colorado", tipoDireccion: "Dirección 1", funcionario: "Luis Alonso Gamboa Ramírez", correo: "lic.coloradoabangares@mep.go.cr, alonso.gamboa.ramirez@mep.go.cr" },
+    { id: "DREC-CE-6729", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 04 (Colorado)", codigoPresupuestario: "210-573-01-63-6729", institucion: "CINDEA La Palma", tipoDireccion: "Dirección 1", funcionario: "Erika Mohr Jiménez", correo: "Cindea.lapalma@mep.go.cr, erika.mohr.jimenezo@mep.go.cr" },
+    /* Circuito 05 (La Altura) */
+    { id: "DREC-CE-2602", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2602", institucion: "Escuela Altos de Cebadilla", tipoDireccion: "UNIDOCENTE", funcionario: "Montiel Monge Henry", correo: "henry.montiel.monge@mep.go.cr, esc.altosdecebadilla@mep.go.cr" },
+    { id: "DREC-CE-2611", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2611", institucion: "Escuela Los Tornos", tipoDireccion: "UNIDOCENTE", funcionario: "Mesen Varela Angie", correo: "angie.mesen.varela@mep.go.cr, esc.lostornos@mep.go.cr" },
+    { id: "DREC-CE-2614", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2614", institucion: "Escuela Pueblo Nuevo", tipoDireccion: "UNIDOCENTE", funcionario: "Mejías Araya Blanca Nieves", correo: "blanca.mejias.araya@mep.go.cr, esc.pueblonuevo.canas@mep.go.cr" },
+    { id: "DREC-CE-2616", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2616", institucion: "Escuela Campos de Oro", tipoDireccion: "UNIDOCENTE", funcionario: "Gutiérrez Vargas Jennifer Marcela", correo: "jennifer.gutierrez.vargas@mep.go.cr, esc.camposdeoro@mep.go.cr" },
+    { id: "DREC-CE-2635", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2635", institucion: "Escuela El Dos de Abangares", tipoDireccion: "UNIDOCENTE", funcionario: "Alan Jackson Savallos Chevez", correo: "jackson.savallos.chevez@mep.go.cr, esc.eldosdeabangares@mep.go.cr" },
+    { id: "DREC-CE-2637", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2637", institucion: "Escuela Monte Los Olivos", tipoDireccion: "UNIDOCENTE", funcionario: "Jiménez Mora Elizabeth", correo: "elizabeth.jimenez.mora@mep.go.cr, esc.montelosolivos@mep.go.cr" },
+    { id: "DREC-CE-2648", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2648", institucion: "Escuela La Cruz", tipoDireccion: "UNIDOCENTE", funcionario: "Edis Andrea Montero Porras", correo: "edis.montero.porras@mep.go.cr, esc.lacruz@mep.go.cr" },
+    { id: "DREC-CE-2657", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2657", institucion: "Escuela Las Nubes", tipoDireccion: "UNIDOCENTE", funcionario: "Marta Jorlliana Campos Méndez", correo: "marta.campos.mendez@mep.go.cr, esc.lasnubesquebradagrande@mep.go.cr" },
+    { id: "DREC-CE-2661", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2661", institucion: "Escuela Los Patios", tipoDireccion: "UNIDOCENTE", funcionario: "Gabriela Salazar Arias", correo: "gabriela.salazar.arias@mep.go.cr, esc.lospatios@mep.go.cr" },
+    { id: "DREC-CE-2670", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2670", institucion: "Escuela La Esperanza", tipoDireccion: "UNIDOCENTE", funcionario: "Díaz Trejos Laura Patricia", correo: "patricia.diaz.trejos@mep.go.cr, esc.laesperanza.canas@mep.go.cr" },
+    { id: "DREC-CE-2675", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2675", institucion: "Escuela Candelaria", tipoDireccion: "UNIDOCENTE", funcionario: "López Mejías Eitel", correo: "eitel.lopez.mejias@mep.go.cr, esc.decandelaria@mep.go.cr" },
+    { id: "DREC-CE-2694", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2694", institucion: "Escuela Turín", tipoDireccion: "UNIDOCENTE", funcionario: "Arguedas Matamoros Yohanna", correo: "yohanna.arguedas.matamoros@mep.go.cr, esc.turin@mep.go.cr" },
+    { id: "DREC-CE-2692", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2692", institucion: "Escuela Tres Hermanos", tipoDireccion: "UNIDOCENTE", funcionario: "Leonso Bernal Medina Espinoza", correo: "leonso.medina.espinoza@mep.go.cr, esc.treshermanos@mep.go.cr" },
+    { id: "DREC-CE-5006", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-5006", institucion: "Escuela La Plaza", tipoDireccion: "UNIDOCENTE", funcionario: "Luis Roberto Gutiérrez Jaen", correo: "luis.gutierrez.jaen@mep.go.cr, esc.laplaza@mep.go.cr" },
+    { id: "DREC-CE-6373", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-6373", institucion: "Escuela Las Brisas", tipoDireccion: "UNIDOCENTE", funcionario: "Isabel Yanori Peña Aguirre", correo: "isabel.pena.aguirre@mep.go.cr, esc.lasbrisasquebradagrande@mep.go.cr" },
+    { id: "DREC-CE-2636", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2636", institucion: "Escuela El Dos de Tilarán", tipoDireccion: "Dirección 1", funcionario: "González Álvarez Ericka", correo: "ericka.gonzalez.alvarez.@mep.go.cr, esc.eldosdetilaran@mep.go.cr" },
+    { id: "DREC-CE-2683", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2683", institucion: "Escuela San Miguel", tipoDireccion: "Dirección 1", funcionario: "Paniagua González Lilliam", correo: "lillian.paniagua.gonzalez@mep.go.cr, esc.sanmiguelquebradagrande@mep.go.cr" },
+    { id: "DREC-CE-2685", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2685", institucion: "Escuela San Rafael", tipoDireccion: "Dirección 1", funcionario: "Elber Antonio Chinchilla García", correo: "elber.chinchilla.garcia@mep.go.cr, esc.sanrafaeldeabangares@mep.go.cr" },
+    { id: "DREC-CE-2695", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2695", institucion: "Escuela Cañitas", tipoDireccion: "Dirección 1", funcionario: "Herrera Rojas María Lorena", correo: "maria.herrera.rojas@mep.go.cr, esc.canitas@mep.go.cr" },
+    { id: "DREC-CE-2615", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-2615", institucion: "Escuela Cabeceras de Cañas", tipoDireccion: "Dirección 2", funcionario: "Castro Rodríguez Karla", correo: "karla.castro.rodriguez@mep.go.cr, esc.cabeceradecanas@mep.go.cr" },
+    { id: "DREC-CE-4112", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-4112", institucion: "Colegio San Rafael", tipoDireccion: "Dirección 3", funcionario: "Villegas Guzmán Yolanda", correo: "yolanda.villegas.guzman@mep.go.cr, lic.sanrafaeldeabangares@mep.go.cr" },
+    { id: "DREC-CE-4915", categoria: "Centros Educativos por Circuitos Escolares", circuito: "Circuito 05 (La Altura)", codigoPresupuestario: "210-573-01-63-4915", institucion: "Liceo Rural Cabeceras", tipoDireccion: "Dirección 3", funcionario: "Chan Quintero Víctor", correo: "victor.chan.quintero@mep.go.cr, lic.ruralcabeceras@mep.go.cr" }
+];
+
+/* Detección de duplicados contra lo ya cargado en la colección drec_directorio:
+   se considera duplicado un registro semilla cuando coincide su id, o cuando
+   coincide categoría + departamento/institución + funcionario, o categoría +
+   extensión, o categoría + primer correo. Así nunca se siembran registros
+   repetidos aunque el administrador ya los haya digitado manualmente. */
+function duplicadoDirectario(nuevo, existentes) {
+    const idNuevo = String(nuevo.id);
+    const correosNuevo = String(nuevo.correo || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+    return existentes.some(r => {
+        if (String(r.id) === idNuevo) return true;
+        if (String(r.categoria || "") !== String(nuevo.categoria || "")) return false;
+        const claveA = normalize(String(r.departamento || r.institucion || r.oficina || "")).trim();
+        const claveB = normalize(String(nuevo.departamento || nuevo.institucion || "")).trim();
+        const mismoDepartamento = claveA !== "" && claveA === claveB;
+        const mismoFuncionario = normalize(r.funcionario || "") !== "" && normalize(r.funcionario || "") === normalize(nuevo.funcionario || "");
+        const mismaExtension = String(r.extension || "").trim() !== "" && String(r.extension || "").trim() === String(nuevo.extension || "").trim();
+        const correosNuevoSet = correosNuevo;
+        const correosExistentes = String(r.correo || "").split(",").map(s => s.trim().toLowerCase()).filter(Boolean);
+        const mismoCorreo = correosNuevoSet.length > 0 && correosNuevoSet.some(c => correosExistentes.indexOf(c) !== -1);
+        if ((mismoDepartamento || mismoFuncionario || mismaExtension || mismoCorreo)) return true;
+        if (nuevo.codigoPresupuestario && String(r.codigoPresupuestario || "") === String(nuevo.codigoPresupuestario)) return true;
+        return false;
+    });
+}
+
+/* Siembra idempotente y NO destructiva: completa funcionario/correo de los
+   registros DIRECA existentes que coincidan por extensión, retira las semillas
+   obsoletas de Telefonía Fija / Asesoría Pedagógica y agrega únicamente los
+   registros del directorio que aún no existan (por id), conservando íntegro
+   lo digitado. En modo demo se guarda en LocalStorage; en producción escribe
+   en Firestore solo un Administrador (reglas: allow write: esAdmin). */
 async function sincronizarDirectorioDIRECA() {
-    const faltantes = REGISTROS_DIRECA.concat(REGISTROS_SUPERVISIONES)
-        .filter(nuevo => !dbDirectorio.some(r => String(r.id) === String(nuevo.id)));
-    if (!faltantes.length) return;
-    if (MODO_DEMO) {
+    /* 1) Actualización sin duplicar: si ya existe un registro DIRECA con la
+       misma extensión (p.ej. DIRECA-OF-3000/3001/3002/3006/3007…), se
+       completan únicamente los campos faltantes (funcionario, correo) con los
+       contactos oficiales, sin tocar los datos ya digitados. */
+    const actualizadosFirestore = [];
+    dbDirectorio.forEach(r => {
+        if (String(r.categoria || "") !== "Directorio Telefónico DIRECA") return;
+        const c = DIRECA_CONTACTOS[String(r.extension || "").trim()];
+        if (!c) return;
+        const cambios = {};
+        if (c.funcionario && !String(r.funcionario || "").trim()) cambios.funcionario = c.funcionario;
+        if (c.correo && !String(r.correo || "").trim()) cambios.correo = c.correo;
+        if (!Object.keys(cambios).length) return;
+        Object.assign(r, cambios);
+        const idDoc = String(r.id || "");
+        if (idDoc && !MODO_DEMO) actualizadosFirestore.push({ id: idDoc, datos: cambios });
+    });
+    if (actualizadosFirestore.length && esAdmin() && firebaseDB) {
+        for (const a of actualizadosFirestore) {
+            try {
+                await firebaseDB.collection(COLECCIONES.directorio).doc(a.id).set(a.datos, { merge: true });
+            } catch (e) {
+                console.warn("No se pudo actualizar el registro DIRECA " + a.id + ":", e);
+            }
+        }
+    }
+    /* 2) Migración: los registros semilla antiguos de Telefonía Fija /
+       Asesoría Pedagógica (DREC-TF-* / DREC-AP-*) se retiran porque esa
+       información ahora vive en la categoría «Directorio Telefónico DIRECA»,
+       evitando datos duplicados en el sistema. Los registros digitados
+       manualmente (otros ids) no se tocan. */
+    const obsoletos = dbDirectorio.filter(r => /^(DREC-TF-|DREC-AP-)/.test(String(r.id || "")));
+    if (obsoletos.length) {
+        if (MODO_DEMO) {
+            dbDirectorio = dbDirectorio.filter(r => !obsoletos.includes(r));
+        } else if (esAdmin() && firebaseDB) {
+            for (const r of obsoletos) {
+                try {
+                    await firebaseDB.collection(COLECCIONES.directorio).doc(String(r.id)).delete();
+                } catch (e) {
+                    console.warn("No se pudo retirar el registro obsoleto " + r.id + ":", e);
+                }
+            }
+        }
+    }
+    /* 3) Siembra de registros nuevos (no existe el id ni coincide la extensión
+       / dependencia / correo con algo ya cargado). */
+    const semillas = REGISTROS_DIRECA.concat(REGISTROS_SUPERVISIONES).concat(REGISTROS_DIRECTORIO_DREC);
+    const faltantes = semillas
+        .filter(nuevo => !dbDirectorio.some(r => String(r.id) === String(nuevo.id)))
+        .filter(nuevo => !duplicadoDirectario(nuevo, dbDirectorio));
+    if (faltantes.length && MODO_DEMO) {
         dbDirectorio = dbDirectorio.concat(faltantes.map(r => Object.assign({}, r)));
+    } else if (faltantes.length) {
+        if (!esAdmin() || !firebaseDB) return;
+        for (const r of faltantes) {
+            try {
+                await firebaseDB.collection(COLECCIONES.directorio).doc(r.id).set(Object.assign({}, r), { merge: true });
+            } catch (e) {
+                console.warn("No se pudo sembrar el registro DIRECA " + r.id + ":", e);
+            }
+        }
+    }
+    if (MODO_DEMO && (faltantes.length || actualizadosFirestore.length)) {
         persistirDemo();
         refrescarTodo();
-        return;
-    }
-    if (!esAdmin() || !firebaseDB) return;
-    for (const r of faltantes) {
-        try {
-            await firebaseDB.collection(COLECCIONES.directorio).doc(r.id).set(Object.assign({}, r), { merge: true });
-        } catch (e) {
-            console.warn("No se pudo sembrar el registro DIRECA " + r.id + ":", e);
-        }
     }
 }
 
@@ -615,12 +895,12 @@ const MODULOS = {
         descripcion: "Fechas de I y II período lectivo: educación formal, CINDEA, IPEC y modalidades técnicas (TP).",
         icono: "graduation-cap", color: "#1E40AF", prefijo: "PA",
         coleccion: COLECCIONES.actividades,
-        columnas: [ {campo:"titulo",etiqueta:"Prueba / Período"}, {campo:"modalidad",etiqueta:"Modalidad"}, {campo:"periodo",etiqueta:"Período"}, {campo:"circuito",etiqueta:"Circuito"}, {campo:"fecha",etiqueta:"Inicio"}, {campo:"fechaFin",etiqueta:"Finaliza"} ],
+        columnas: [ {campo:"titulo",etiqueta:"Prueba / Período"}, {campo:"modalidad",etiqueta:"Modalidad"}, {campo:"periodo",etiqueta:"Período"}, {campo:"fecha",etiqueta:"Inicio"}, {campo:"fechaFin",etiqueta:"Finaliza"} ],
         filtros: [ {campo:"modalidad",etiqueta:"Modalidad",opciones:["","Educación Formal","CINDEA","IPEC","Técnico Profesional (TP)"]}, {campo:"periodo",etiqueta:"Período",opciones:["","I Período","II Período"]}, {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
         campos: [ F.titulo,
             { clave:"modalidad", etiqueta:"Modalidad", tipo:"select", requerido:true, opciones:["Educación Formal","CINDEA","IPEC","Técnico Profesional (TP)"] },
             { clave:"periodo", etiqueta:"Período", tipo:"select", opciones:["","I Período","II Período"] },
-            F.circuito, F.fecha, F.fechaFin ]
+            F.circuito, F.fecha, F.fechaFin, F.sede, F.part, F.desc ]
     },
     pruebas_estandarizadas: {
         id: "pruebas_estandarizadas", etiqueta: "Estandarizadas",
@@ -633,7 +913,7 @@ const MODULOS = {
         campos: [ F.titulo,
             { clave:"etapa", etiqueta:"Etapa", tipo:"select", requerido:true, opciones:["Convocatoria","Prueba Nacional","Ampliación"] },
             { clave:"nivel", etiqueta:"Nivel / Población", tipo:"text" },
-            F.circuito, F.fecha, F.fechaFin,  F.sede ]
+            F.circuito, F.fecha, F.fechaFin, F.hora, F.sede, F.part, F.desc ]
     },
     deportivos: {
         id: "deportivos", etiqueta: "Deportivos",
@@ -716,7 +996,7 @@ const MODULOS = {
             { clave:"puesto", etiqueta:"Puesto", tipo:"text",
               categorias:["Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares"] },
             { clave:"telefono", etiqueta:"Teléfono", tipo:"text" },
-            { clave:"extension", etiqueta:"Extensión", tipo:"text", categorias:["Telefonía Fija","Directorio Telefónico DIRECA"] },
+            { clave:"extension", etiqueta:"Extensión", tipo:"text", categorias:["Telefonía Fija","Asesoría Pedagógica","Directorio Telefónico DIRECA"] },
             { clave:"oficina", etiqueta:"Oficina", tipo:"select", requerido:true,
               categorias:["Directorio Telefónico DIRECA"], opciones: OPCIONES_OFICINAS_DIRECA },
             { clave:"oficinaSupervision", etiqueta:"Oficina de supervisión", tipo:"select", requerido:true,
@@ -751,12 +1031,13 @@ const CATEGORIAS_DIRECTORIO = {
         ]
     },
     "Asesoría Pedagógica": {
-        campos: ["categoria", "departamento", "funcionario", "telefono", "correo"],
+        campos: ["categoria", "departamento", "funcionario", "telefono", "extension", "correo"],
         columnas: [
             {campo:"departamento", etiqueta:"Departamento / Oficina"},
             {campo:"funcionario", etiqueta:"Funcionario"},
             {campo:"puesto", etiqueta:"Puesto"},
             {campo:"telefono", etiqueta:"Teléfono"},
+            {campo:"extension", etiqueta:"Ext."},
             {campo:"correo", etiqueta:"Correo"}
         ]
     },
@@ -2905,11 +3186,7 @@ function renderPestanasConfig() {
     // se agrega junto a VISTAS y los módulos para que pueda habilitarse
     // o inhabilitarse frente al Modo Lectura.
     const items = VISTAS.slice()
-        .concat([
-            { id: "comisiones", etiqueta: "Comisiones", icono: "users-round" },
-            { id: "oferentes", etiqueta: "Registro de Oferentes", icono: "clipboard-list" },
-            { id: "satisfaccion", etiqueta: "Satisfacción del Servicio", icono: "message-square-heart" }
-        ])
+        .concat([{ id: "comisiones", etiqueta: "Comisiones", icono: "users-round" }])
         .concat(Object.values(MODULOS).map(m => ({ id: m.id, etiqueta: m.titulo, icono: m.icono })));
     cont.innerHTML = items.map(v => {
         const off = inhabilitadas.indexOf(v.id) !== -1;
@@ -4060,71 +4337,21 @@ async function eliminarUsuario(uid) {
 
 /* ==================== EXPORTACIÓN A EXCEL ==================== */
 function exportarExcel(filas, encabezados, nombreArchivo, nombreHoja) {
-    if (!window.XLSX || !XLSX.utils || !XLSX.writeFile) { showToast("La librería de Excel no está cargada.", "danger"); return; }
-    if (!filas || !filas.length) { showToast("No hay datos para exportar.", "warning"); return; }
-    try {
-        const wb = XLSX.utils.book_new();
-        const titulo = String(nombreHoja || "DREC").toUpperCase();
-        const aoa = [
-            [EXC_TITULO_INSTITUCIONAL],
-            [titulo + " · AÑO " + (config.anio || new Date().getFullYear())],
-            ["Generado el " + new Date().toLocaleString("es-CR") + " · " + filas.length + " registros"],
-            encabezados
-        ].concat(filas);
-        const ws = XLSX.utils.aoa_to_sheet(aoa);
-        const n = encabezados.length;
-        const borde = { style: "thin", color: { rgb: "DCE4EF" } };
-        const base = (bg, color, bold, align) => ({
-            fill: { patternType: "solid", fgColor: { rgb: bg } },
-            font: { name: "Aptos", sz: 10, bold: !!bold, color: { rgb: color } },
-            alignment: { vertical: "center", horizontal: align || "left", wrapText: true },
-            border: { top: borde, bottom: borde, left: borde, right: borde }
-        });
-        // Portada institucional compacta y jerarquía visual clara.
-        [0,1,2].forEach(r => {
-            for (let c=0;c<n;c++) {
-                const cell = ws[XLSX.utils.encode_cell({r,c})] || (ws[XLSX.utils.encode_cell({r,c})]={v:"",t:"s"});
-                cell.s = base("0A192F", "FFFFFF", r !== 2, "center");
-                if (r===0) cell.s.font.sz=13;
-                if (r===1) cell.s.font.sz=11;
-                if (r===2) { cell.s.font.sz=9; cell.s.font.italic=true; cell.s.font.color={rgb:"CBD5E1"}; }
-            }
-        });
-        for (let c=0;c<n;c++) {
-            const cell=ws[XLSX.utils.encode_cell({r:3,c})];
-            if(cell) cell.s=base("1E40AF","FFFFFF",true,"center");
-        }
-        for (let r=4;r<aoa.length;r++) {
-            const row=aoa[r] || [];
-            for(let c=0;c<n;c++) {
-                const cell=ws[XLSX.utils.encode_cell({r,c})];
-                if(!cell) continue;
-                cell.s=base((r-4)%2 ? "F1F5F9":"FFFFFF","1E293B",false,"left");
-                if(typeof cell.v === "number") cell.s.alignment.horizontal="center";
-            }
-        }
-        ws["!merges"]=[
-            {s:{r:0,c:0},e:{r:0,c:n-1}},
-            {s:{r:1,c:0},e:{r:1,c:n-1}},
-            {s:{r:2,c:0},e:{r:2,c:n-1}}
-        ];
-        ws["!cols"]=encabezados.map((e,c)=>{
-            const max=Math.max(String(e||"").length,...filas.map(f=>String((f||[])[c] == null ? "" : (f||[])[c]).split("\n").reduce((m,x)=>Math.max(m,x.length),0)));
-            return {wch:Math.max(13,Math.min(48,Math.ceil(max*1.08)+3))};
-        });
-        ws["!rows"]=[{hpt:27},{hpt:23},{hpt:19},{hpt:32},...filas.map(()=>({hpt:30}))];
-        ws["!freeze"]={xSplit:0,ySplit:4,topLeftCell:"A5",activePane:"bottomLeft",state:"frozen"};
-        ws["!autofilter"]={ref:XLSX.utils.encode_range({s:{r:3,c:0},e:{r:aoa.length-1,c:n-1}})};
-        ws["!pageSetup"]={orientation:n>5?"landscape":"portrait",fitToWidth:1,fitToHeight:0,paperSize:9};
-        ws["!sheetPr"]={pageSetUpPr:{fitToPage:true,autoPageBreaks:false}};
-        XLSX.utils.book_append_sheet(wb,ws,(nombreHoja||"DREC").slice(0,31));
-        wb.Props={Title:titulo,Subject:"Exportación institucional DRE Cañas · MEP",Author:"Dirección Regional de Educación Cañas",CreatedDate:new Date()};
-        XLSX.writeFile(wb,nombreArchivo,{compression:true});
-        showToast("Excel generado correctamente: " + filas.length + " registros.","success");
-    } catch(e) {
-        console.error("Error exportando Excel:",e);
-        showToast("No se pudo generar el Excel: "+(e && e.message ? e.message:e),"danger");
+    if (!window.XLSX) { showToast("La librería de Excel no está cargada.", "danger"); return; }
+    if (!filas.length) { showToast("No hay datos para exportar.", "warning"); return; }
+    const aoa = [encabezados].concat(filas);
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    // Estilo del encabezado: azul MEP, texto blanco en negrita
+    for (let c = 0; c < encabezados.length; c++) {
+        const addr = XLSX.utils.encode_cell({ r: 0, c: c });
+        if (!ws[addr]) ws[addr] = { v: "", t: "s" };
+        ws[addr].s = { fill: { fgColor: { rgb: "0B3C8C" } }, font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 }, alignment: { horizontal: "center", vertical: "center" } };
     }
+    ws["!cols"] = encabezados.map(e => ({ wch: Math.max(12, Math.min(42, e.length + 6)) }));
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, (nombreHoja || "DREC").slice(0, 31));
+    XLSX.writeFile(wb, nombreArchivo);
+    showToast("Archivo «" + nombreArchivo + "» generado.", "success");
 }
 
 // Despachador del selector de exportación de cada módulo.
@@ -4284,19 +4511,6 @@ function exHoja(n, anchosFijos) {
         const filas = [];
         for (let i = 0; i < h.r; i++) filas.push(h.alturas[i] ? { hpt: h.alturas[i] } : {});
         h.ws["!rows"] = filas;
-        // Navegación cómoda en Excel: encabezados congelados, filtros y página imprimible.
-        let filaEncabezado = -1;
-        for (let rr = 0; rr < h.r; rr++) {
-            const celda = h.ws[XLSX.utils.encode_cell({ r: rr, c: 0 })];
-            if (celda && celda.s && celda.s.fill && celda.s.fill.fgColor && celda.s.fill.fgColor.rgb === EXC.azul) { filaEncabezado = rr; break; }
-        }
-        if (filaEncabezado >= 0 && h.r > filaEncabezado + 1) {
-            h.ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: filaEncabezado, c: 0 }, e: { r: h.r - 1, c: h.n - 1 } }) };
-            h.ws["!freeze"] = { xSplit: 0, ySplit: filaEncabezado + 1, topLeftCell: "A" + (filaEncabezado + 2), activePane: "bottomLeft", state: "frozen" };
-        }
-        h.ws["!pageSetup"] = { orientation: h.n > 5 ? "landscape" : "portrait", fitToWidth: 1, fitToHeight: 0, paperSize: 9 };
-        h.ws["!sheetPr"] = { pageSetUpPr: { fitToPage: true, autoPageBreaks: false } };
-        h.ws["!views"] = [{ showGridLines: false, zoomScale: 90 }];
         XLSX.utils.book_append_sheet(wb, h.ws, exNombreHoja(nombre));
     };
     return h;
@@ -4539,7 +4753,6 @@ function exportarProgramacionAnual() {
         const de = id => delAnio.filter(a => a.modulo === id);
         const ordenadas = id => de(id).sort(exOrdenFecha);
         const wb = XLSX.utils.book_new();
-        wb.Props = { Title: "Programación Anual DREC " + anio, Subject: "Documento institucional · DRE Cañas · MEP", Author: "Dirección Regional de Educación Cañas", CreatedDate: new Date() };
 
         const conteos = Object.values(MODULOS).filter(m => m.coleccion === COLECCIONES.actividades)
             .map(m => ({ titulo: m.titulo, cantidad: de(m.id).length }));
