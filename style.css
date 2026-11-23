@@ -1552,3 +1552,398 @@ main button:active { transform: scale(0.97); }
 #btnExportarAnual:hover{filter:brightness(1.08);transform:translateY(-1px)}
 #btnExportarAnual:focus-visible{outline:3px solid rgba(217,119,6,.8);outline-offset:3px}
 @media(max-width:520px){#btnExportarAnual{width:100%}}
+
+
+/* ==========================================================================
+   25. RESPONSIVE GLOBAL · TELÉFONOS, TABLETAS, LAPTOPS Y PANTALLAS GRANDES
+   Capa de adaptación añadida sin modificar la lógica ni los datos del sistema.
+   ========================================================================== */
+
+/* Evita desbordamientos por elementos internos y adapta el lienzo al viewport. */
+html {
+    width: 100%;
+    min-width: 320px;
+    overflow-x: clip;
+}
+body {
+    width: 100%;
+    min-width: 320px;
+    max-width: 100%;
+    overflow-x: clip;
+}
+button, input, select, textarea {
+    max-width: 100%;
+}
+input, select, textarea {
+    font-size: max(16px, 1em);
+}
+.app-shell, .app-columna, .app-main, .vista,
+.card, .mesh-hero, .comisiones-layout, .comisiones-contenido {
+    min-width: 0;
+    max-width: 100%;
+}
+.app-main {
+    width: 100%;
+    padding-left: clamp(12px, 2.5vw, 36px);
+    padding-right: clamp(12px, 2.5vw, 36px);
+}
+.app-header {
+    padding-left: clamp(12px, 2.5vw, 32px);
+    padding-right: clamp(12px, 2.5vw, 32px);
+}
+img, video, canvas, iframe {
+    max-width: 100%;
+}
+
+/* Grillas de Tailwind y grillas propias: las columnas pueden encogerse. */
+.grid {
+    min-width: 0;
+}
+.grid > *, [class*="col-span-"] {
+    min-width: 0;
+}
+[class*="grid-cols-"] {
+    min-width: 0;
+}
+p, h1, h2, h3, h4, label, td, th, a, button {
+    overflow-wrap: anywhere;
+}
+.nav-item-label, .header-titulo, .header-acciones {
+    min-width: 0;
+}
+
+/* Las tablas conservan sus columnas legibles y permiten desplazamiento lateral. */
+.tabla-contenedor, .table-wrap, .tabla-wrapper,
+.overflow-x-auto, .tabla-scroll {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+table.tabla, .tabla {
+    max-width: 100%;
+}
+.tabla th, .tabla td {
+    overflow-wrap: anywhere;
+}
+
+/* Formularios: los controles no fuerzan el ancho del modal o de la tarjeta. */
+.campo, .login-input, input, select, textarea {
+    min-width: 0;
+}
+form, .form-grid, .formulario-grid {
+    min-width: 0;
+}
+.modal, [id^="modal"] > div, .modal-contenido {
+    max-width: calc(100vw - 24px);
+}
+textarea {
+    resize: vertical;
+}
+
+/* Tablet horizontal y laptops pequeñas. */
+@media (min-width: 769px) and (max-width: 1200px) {
+    :root {
+        --sidebar-w: 248px;
+    }
+    .app-main {
+        max-width: 100%;
+        padding-left: 22px;
+        padding-right: 22px;
+    }
+    .sidebar-brand {
+        padding-left: 14px;
+        padding-right: 14px;
+    }
+    .nav-item {
+        gap: 9px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+}
+
+/* Tablets y teléfonos: navegación lateral en modo drawer. */
+@media (max-width: 1023px) {
+    .app-columna {
+        margin-left: 0 !important;
+        width: 100%;
+    }
+    .app-header {
+        min-height: 64px;
+    }
+    .sidebar {
+        width: min(300px, 88vw);
+        max-width: 88vw;
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    .sidebar-overlay {
+        cursor: pointer;
+    }
+    body.sidebar-open {
+        overflow: hidden;
+        touch-action: none;
+    }
+    body.sidebar-open .sidebar {
+        overscroll-behavior: contain;
+    }
+}
+
+/* Teléfonos grandes y tablets verticales. */
+@media (max-width: 768px) {
+    :root {
+        --header-h: 62px;
+        --radio-xl: 20px;
+        --radio-lg: 17px;
+    }
+    .app-main {
+        padding: 16px 14px calc(18px + env(safe-area-inset-bottom));
+    }
+    .app-header {
+        gap: 9px;
+        padding: 9px 12px;
+    }
+    .header-titulo h2 {
+        font-size: clamp(14px, 3.5vw, 18px);
+        line-height: 1.25;
+    }
+    .header-titulo p {
+        font-size: 9px;
+        letter-spacing: .04em;
+    }
+    .header-acciones {
+        gap: 5px;
+    }
+    .header-acciones .chip-demo,
+    .header-acciones .chip-vivo,
+    #firebaseStatus {
+        font-size: 9px;
+        padding: 4px 7px;
+    }
+    #roleBadge {
+        display: none !important;
+    }
+    #btnHeaderLogin {
+        min-height: 40px;
+        padding: 8px 10px;
+        font-size: 11px;
+        white-space: nowrap;
+    }
+    .user-chip {
+        gap: 5px;
+        padding: 4px;
+    }
+    #userName {
+        max-width: 74px;
+        font-size: 10px;
+    }
+    .mesh-hero {
+        padding: clamp(20px, 5vw, 30px) !important;
+        border-radius: 22px !important;
+    }
+    .mesh-hero h2 {
+        font-size: clamp(25px, 6vw, 36px);
+        line-height: 1.12;
+    }
+    .mesh-hero p {
+        overflow-wrap: anywhere;
+    }
+    .card {
+        border-radius: 19px;
+    }
+    .card, .comisiones-panel, .comision-formulario {
+        padding: clamp(14px, 3.5vw, 22px);
+    }
+    .grid.grid-cols-12 {
+        gap: 12px;
+    }
+    .barra-seleccion {
+        bottom: calc(10px + env(safe-area-inset-bottom));
+        max-width: calc(100vw - 20px);
+    }
+    .barra-sel-acciones {
+        flex-wrap: wrap;
+    }
+}
+
+/* Móviles compactos: 320–480 px. */
+@media (max-width: 480px) {
+    .app-main {
+        padding: 12px 10px calc(16px + env(safe-area-inset-bottom));
+    }
+    .app-header {
+        min-height: 58px;
+        padding: 8px 9px;
+        gap: 7px;
+    }
+    .hamburger {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        border-radius: 12px;
+    }
+    .header-titulo p {
+        display: none;
+    }
+    .header-acciones {
+        gap: 4px;
+    }
+    #firebaseStatus {
+        display: none !important;
+    }
+    #btnHeaderLogin {
+        min-height: 38px;
+        padding: 7px 9px;
+        font-size: 10px;
+        gap: 4px;
+    }
+    #btnHeaderLogin svg {
+        width: 14px;
+        height: 14px;
+    }
+    .user-avatar {
+        width: 27px;
+        height: 27px;
+    }
+    #userName {
+        display: none;
+    }
+    .user-salir {
+        width: 30px;
+        height: 30px;
+    }
+    .mesh-hero {
+        padding: 19px 16px !important;
+        border-radius: 18px !important;
+    }
+    .mesh-hero h2 {
+        font-size: clamp(23px, 7vw, 30px);
+    }
+    .mesh-hero p {
+        font-size: 12px;
+        line-height: 1.55;
+    }
+    .hero-pill {
+        max-width: 100%;
+        white-space: normal;
+    }
+    .card {
+        padding: 15px !important;
+        border-radius: 17px;
+    }
+    .grid.grid-cols-12 {
+        gap: 10px;
+    }
+    /* Las tarjetas de estadísticas dejan de quedar demasiado estrechas. */
+    #view-dashboard .col-span-6 {
+        grid-column: span 12 / span 12;
+    }
+    /* Portada: accesos a módulos en una columna cuando el teléfono es angosto. */
+    #portadaModulos {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+    /* Botones y acciones largos se acomodan verticalmente. */
+    .barra-sel-acciones,
+    .acciones-tabla,
+    .grupo-acciones {
+        width: 100%;
+    }
+    .barra-sel-acciones > button,
+    .barra-sel-acciones .btn-mep-danger {
+        flex: 1 1 100%;
+        justify-content: center;
+    }
+    .login-screen {
+        align-items: flex-start;
+        padding: max(16px, env(safe-area-inset-top)) 12px
+                 max(16px, env(safe-area-inset-bottom));
+    }
+    .login-card {
+        margin: auto 0;
+        padding: 22px 18px !important;
+        border-radius: 22px;
+    }
+    .login-card h1 {
+        font-size: 22px;
+    }
+    .sidebar-brand {
+        padding: 15px 14px 12px;
+    }
+    .sidebar-nav {
+        padding: 12px 9px;
+    }
+    .sidebar-foot {
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+    .comision-encabezado {
+        align-items: flex-start !important;
+        padding: 14px !important;
+    }
+    #view-comisiones .comision-seccion-titulo {
+        align-items: flex-start;
+        flex-wrap: wrap;
+        padding: 13px;
+    }
+}
+
+/* Pantallas muy estrechas (320–360 px). */
+@media (max-width: 360px) {
+    .app-main {
+        padding-left: 8px;
+        padding-right: 8px;
+    }
+    .header-titulo h2 {
+        font-size: 13px;
+    }
+    #btnHeaderLogin {
+        font-size: 9px;
+        padding-left: 7px;
+        padding-right: 7px;
+    }
+    .nav-item {
+        font-size: 12px;
+    }
+    .mesh-hero {
+        padding: 16px 13px !important;
+    }
+    .mesh-hero h2 {
+        font-size: 23px;
+    }
+}
+
+/* Orientación horizontal en móviles: aprovecha el ancho y evita cortar el login. */
+@media (max-width: 900px) and (orientation: landscape) {
+    .login-screen {
+        align-items: flex-start;
+        padding-top: 12px;
+        padding-bottom: 12px;
+    }
+    .login-card {
+        margin: 0 auto;
+    }
+    .sidebar {
+        overflow-y: auto;
+    }
+}
+
+/* Accesibilidad: respeta usuarios que reducen las animaciones. */
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+    *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: .01ms !important;
+    }
+}
+
+/* Evita que los componentes flotantes queden fuera de pantalla. */
+@supports (height: 100dvh) {
+    .app-shell:not(.hidden),
+    .app-columna {
+        min-height: 100dvh;
+    }
+    .sidebar {
+        height: 100dvh;
+    }
+}
