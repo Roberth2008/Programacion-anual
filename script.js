@@ -615,12 +615,12 @@ const MODULOS = {
         descripcion: "Fechas de I y II período lectivo: educación formal, CINDEA, IPEC y modalidades técnicas (TP).",
         icono: "graduation-cap", color: "#1E40AF", prefijo: "PA",
         coleccion: COLECCIONES.actividades,
-        columnas: [ {campo:"titulo",etiqueta:"Prueba / Período"}, {campo:"modalidad",etiqueta:"Modalidad"}, {campo:"periodo",etiqueta:"Período"}, {campo:"fecha",etiqueta:"Inicio"}, {campo:"fechaFin",etiqueta:"Finaliza"} ],
+        columnas: [ {campo:"titulo",etiqueta:"Prueba / Período"}, {campo:"modalidad",etiqueta:"Modalidad"}, {campo:"periodo",etiqueta:"Período"}, {campo:"circuito",etiqueta:"Circuito"}, {campo:"fecha",etiqueta:"Inicio"}, {campo:"fechaFin",etiqueta:"Finaliza"} ],
         filtros: [ {campo:"modalidad",etiqueta:"Modalidad",opciones:["","Educación Formal","CINDEA","IPEC","Técnico Profesional (TP)"]}, {campo:"periodo",etiqueta:"Período",opciones:["","I Período","II Período"]}, {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
         campos: [ F.titulo,
             { clave:"modalidad", etiqueta:"Modalidad", tipo:"select", requerido:true, opciones:["Educación Formal","CINDEA","IPEC","Técnico Profesional (TP)"] },
             { clave:"periodo", etiqueta:"Período", tipo:"select", opciones:["","I Período","II Período"] },
-            F.circuito, F.fecha, F.fechaFin, F.sede, F.part, F.desc ]
+            F.circuito, F.fecha, F.fechaFin ]
     },
     pruebas_estandarizadas: {
         id: "pruebas_estandarizadas", etiqueta: "Estandarizadas",
@@ -633,7 +633,7 @@ const MODULOS = {
         campos: [ F.titulo,
             { clave:"etapa", etiqueta:"Etapa", tipo:"select", requerido:true, opciones:["Convocatoria","Prueba Nacional","Ampliación"] },
             { clave:"nivel", etiqueta:"Nivel / Población", tipo:"text" },
-            F.circuito, F.fecha, F.fechaFin, F.hora, F.sede, F.part, F.desc ]
+            F.circuito, F.fecha, F.fechaFin,  F.sede ]
     },
     deportivos: {
         id: "deportivos", etiqueta: "Deportivos",
