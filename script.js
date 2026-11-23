@@ -61,8 +61,10 @@ let config = {
     vision: MARCO_DEFAULT.vision,
     valores: Object.assign({}, MARCO_DEFAULT.valores),
     valoresLista: null,          // lista dinámica de valores [{titulo, texto, icono}] (migración automática)
+    oferentesTitulo: "Registro de Oferentes · Nombramientos interinos",
     oferentesTexto: "Complete el formulario de registro para manifestar su interés en participar en los procesos de nombramiento de la Dirección Regional de Educación Cañas. Antes de enviarlo, verifique que la información proporcionada esté actualizada.",
     oferentesUrl: "",
+    satisfaccionTitulo: "Encuesta de satisfacción del servicio",
     satisfaccionTexto: "Le invitamos a compartir su experiencia con el servicio recibido. Sus respuestas serán de gran utilidad para identificar oportunidades de mejora y continuar fortaleciendo la atención a la comunidad educativa.",
     satisfaccionUrl: "",
     pestanasInhabilitadas: []   // ids de pestañas ocultas para el Modo Lectura
@@ -2065,7 +2067,9 @@ function escucharDatos() {
         if (d.exists) config = Object.assign({
             anio: new Date().getFullYear(), version: "Vs.001", publicado: true, saludo: "", firma: "",
             mision: MARCO_DEFAULT.mision, vision: MARCO_DEFAULT.vision,
-            valores: Object.assign({}, MARCO_DEFAULT.valores), valoresLista: null, pestanasInhabilitadas: []
+            valores: Object.assign({}, MARCO_DEFAULT.valores), valoresLista: null, pestanasInhabilitadas: [],
+            oferentesTitulo: "Registro de Oferentes · Nombramientos interinos",
+            satisfaccionTitulo: "Encuesta de satisfacción del servicio"
         }, d.data());
         if (!config.valores) config.valores = Object.assign({}, MARCO_DEFAULT.valores);
         refrescarTodo();
@@ -2364,15 +2368,32 @@ function urlInstitucionalSegura(valor) {
 function renderEnlacePublico(tipo) {
     const url = urlInstitucionalSegura(config[tipo + "Url"]);
     const texto = String(config[tipo + "Texto"] || "").trim();
+    // Título separado del cuerpo explicativo. Compatibilidad con datos
+    // previos: si config no trae título guardado (configuraciones antiguas
+    // o guardadas con el campo vacío), se usa el título por defecto.
+    const tituloPorDefecto = tipo === "oferentes"
+        ? "Registro de Oferentes · Nombramientos interinos"
+        : "Encuesta de satisfacción del servicio";
+    const titulo = String(config[tipo + "Titulo"] || "").trim() || tituloPorDefecto;
     const cont = $(tipo + "Publico");
     if (!cont) return;
+    // Bloque editorial: título propio + cuerpo de la breve explicación,
+    // con aparición sutil (la animación vive en style.css y respeta
+    // prefers-reduced-motion).
+    const bloqueExplicacion =
+        '<div class="drec-explicacion' + (tipo === "satisfaccion" ? " satisfaccion" : "") + '">' +
+            '<div class="drec-explicacion-marco">' +
+                '<h3 class="drec-explicacion-titulo font-display">' + esc(titulo) + '</h3>' +
+                '<p class="drec-explicacion-cuerpo">' + esc(texto) + '</p>' +
+            '</div>' +
+        '</div>';
     const tituloAccion = tipo === "oferentes" ? "Ingresar al registro" : "Completar encuesta";
     if (!url) {
-        cont.innerHTML = '<p class="drec-enlace-descripcion">' + esc(texto) + '</p>' +
+        cont.innerHTML = bloqueExplicacion +
             '<div class="drec-qr-vacio"><i data-lucide="qr-code"></i><strong>Enlace pendiente de configuración</strong><span>El personal administrador habilitará aquí el código QR y el acceso correspondiente.</span></div>';
     } else {
         const qr = "https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=12&data=" + encodeURIComponent(url);
-        cont.innerHTML = '<p class="drec-enlace-descripcion">' + esc(texto) + '</p>' +
+        cont.innerHTML = bloqueExplicacion +
             '<div class="drec-acceso-grid"><div class="drec-qr-marco"><img src="' + qr + '" alt="Código QR para acceder" loading="lazy"></div>' +
             '<div class="drec-acceso-info"><span class="drec-acceso-etiqueta">ACCESO DIGITAL</span><h3>Escanee el código QR</h3>' +
             '<p>Utilice la cámara de su dispositivo para abrir el formulario. También puede ingresar mediante el botón.</p>' +
@@ -2386,7 +2407,8 @@ function renderEnlacePublico(tipo) {
 function renderEnlacesInstitucionales() {
     ["oferentes", "satisfaccion"].forEach(tipo => {
         renderEnlacePublico(tipo);
-        const texto = $(tipo + "Texto"), url = $(tipo + "Url");
+        const titulo = $(tipo + "Titulo"), texto = $(tipo + "Texto"), url = $(tipo + "Url");
+        if (titulo && document.activeElement !== titulo) titulo.value = config[tipo + "Titulo"] || "";
         if (texto && document.activeElement !== texto) texto.value = config[tipo + "Texto"] || "";
         if (url && document.activeElement !== url) url.value = config[tipo + "Url"] || "";
     });
@@ -2395,6 +2417,7 @@ function renderEnlacesInstitucionales() {
 function guardarEnlaceInstitucional(tipo) {
     if (!esAdmin()) return;
     if (tipo !== "oferentes" && tipo !== "satisfaccion") return;
+    const titulo = ($(tipo + "Titulo")?.value || "").trim();
     const texto = ($(tipo + "Texto")?.value || "").trim();
     const urlOriginal = ($(tipo + "Url")?.value || "").trim();
     const url = urlInstitucionalSegura(urlOriginal);
@@ -2406,7 +2429,13 @@ function guardarEnlaceInstitucional(tipo) {
         showToast("Agregue una breve descripción antes de guardar.", "danger");
         return;
     }
-    guardarConfig({ [tipo + "Texto"]: texto, [tipo + "Url"]: url })
+    if (titulo.length > 120) {
+        showToast("El título de la explicación no puede superar los 120 caracteres.", "danger");
+        return;
+    }
+    // El título se guarda en su propio campo; si el administrador lo deja
+    // vacío, en la vista pública se aplica el título por defecto de la sección.
+    guardarConfig({ [tipo + "Titulo"]: titulo, [tipo + "Texto"]: texto, [tipo + "Url"]: url })
         .then(ok => { if (ok) showToast("La sección se actualizó correctamente.", "success"); });
 }
 
