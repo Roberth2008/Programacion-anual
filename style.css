@@ -2081,3 +2081,174 @@ pre, code, a, p, td, th, label, .nav-item-label { overflow-wrap: anywhere; }
     html { scroll-behavior: auto !important; }
     *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* ======================================================================
+   AJUSTE FINAL MULTIDISPOSITIVO · 320 px hasta pantallas ultrawide
+   Capa de compatibilidad: prioriza reflujo, legibilidad y ausencia de
+   desbordamiento horizontal sin modificar la lógica ni los componentes.
+   ====================================================================== */
+:root {
+    --drec-gutter: clamp(8px, 2.2vw, 36px);
+    --drec-space: clamp(10px, 1.5vw, 20px);
+}
+
+html, body {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+}
+
+body, #appShell, .app-columna, #appMain, .vista,
+.card, .modal-caja, .sidebar, .app-header {
+    min-width: 0;
+}
+
+#appMain {
+    width: 100%;
+    max-width: min(100%, 1600px);
+    padding-inline: var(--drec-gutter);
+}
+
+/* Evita que palabras largas, enlaces o valores extensos rompan el diseño. */
+#appMain :where(p, h1, h2, h3, h4, label, a, button, td, th, span) {
+    overflow-wrap: anywhere;
+}
+#appMain :where(img, svg, video, canvas) {
+    max-width: 100%;
+}
+#appMain :where(input, select, textarea) {
+    max-width: 100%;
+    min-width: 0;
+}
+
+/* Contenedores flexibles y rejillas con columnas que pueden encogerse. */
+#appMain .grid:not(.calendario-grid):not(.calendar-grid) {
+    min-width: 0;
+}
+#appMain .grid > *,
+#appMain .flex > * {
+    min-width: 0;
+}
+#appMain .grid.grid-cols-12 {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
+/* Tablas: el desplazamiento, cuando sea necesario, queda dentro del módulo. */
+#appMain :where(.overflow-x-auto, .tabla-contenedor, .table-responsive, .tabla-wrapper) {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    -webkit-overflow-scrolling: touch;
+}
+#appMain table {
+    max-width: 100%;
+}
+#appMain :where(th, td) {
+    overflow-wrap: anywhere;
+}
+
+/* Formularios y acciones: controles cómodos para tacto y teclado. */
+#appMain :where(button, [role="button"], input, select) {
+    touch-action: manipulation;
+}
+#appMain :where(input, select, textarea) {
+    font-size: max(16px, 1em);
+}
+#appMain :where(.form-grid, .comision-campos, .filtros-grid, .filtros-container) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+#appMain :where(.barra-acciones, .acciones, .flex.items-center.justify-between) {
+    flex-wrap: wrap;
+}
+
+/* Diálogos y paneles flotantes dentro del área visible. */
+:where(.modal, [role="dialog"], .modal-overlay) {
+    max-width: 100vw;
+}
+.modal-caja {
+    width: min( min(920px, calc(100vw - 24px)), 100% ) !important;
+    max-height: calc(100dvh - 24px);
+    overflow: auto;
+    overscroll-behavior: contain;
+}
+
+/* Portátiles compactos y tablets horizontales. */
+@media (min-width: 769px) and (max-width: 1199px) {
+    :root { --sidebar-w: 248px; }
+    #appMain { padding: 20px clamp(14px, 2vw, 24px); }
+    .app-header { padding-inline: clamp(14px, 2vw, 24px); }
+    #appMain .grid.grid-cols-12 { gap: 14px !important; }
+}
+
+/* Tablets verticales y móviles grandes. */
+@media (max-width: 768px) {
+    #appMain { padding: 14px clamp(10px, 2.5vw, 18px) calc(18px + env(safe-area-inset-bottom)); }
+    .app-header {
+        flex-wrap: wrap;
+        gap: 8px;
+        padding: 9px clamp(9px, 2vw, 16px);
+    }
+    .header-titulo { flex: 1 1 150px; }
+    .header-acciones { max-width: 100%; flex-wrap: wrap; justify-content: flex-end; }
+    .header-acciones .chip { max-width: 100%; }
+    #appMain .grid.grid-cols-12 { grid-template-columns: minmax(0, 1fr) !important; }
+    #appMain .grid.grid-cols-12 > * { grid-column: 1 / -1 !important; }
+    #appMain .grid.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #appMain :where(.form-grid, .comision-campos, .filtros-grid, .filtros-container) {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+    .modal-caja { width: calc(100vw - 20px) !important; max-height: calc(100dvh - 20px); }
+}
+
+/* Móviles: simplifica cabecera y asegura lectura sin zoom horizontal. */
+@media (max-width: 520px) {
+    #appMain { padding-inline: 9px; }
+    .app-header { align-items: center; }
+    .header-titulo { flex-basis: 120px; }
+    .header-titulo p { font-size: 9px !important; }
+    .header-acciones { gap: 5px; }
+    .header-acciones .chip { display: none; }
+    #btnHeaderLogin { min-width: 42px; min-height: 42px; justify-content: center; padding-inline: 9px !important; }
+    #btnHeaderLogin i { flex: 0 0 auto; }
+    .user-chip { max-width: min(48vw, 190px); }
+    .user-chip #userName { max-width: 90px; }
+    #appMain .grid.grid-cols-2 { grid-template-columns: minmax(0, 1fr) !important; }
+    #appMain .mesh-hero { padding: clamp(16px, 5vw, 22px) !important; }
+    #appMain :where(.card, .mesh-hero) { border-radius: 18px; }
+    #appMain :where(button, .btn-mep-primary, .btn-mep-secondary) { min-height: 40px; }
+    .modal-caja { width: calc(100vw - 12px) !important; max-height: calc(100dvh - 12px); }
+}
+
+/* Dispositivos muy estrechos (320–360 px). */
+@media (max-width: 360px) {
+    #appMain { padding-inline: 7px; }
+    .app-header { gap: 5px; padding-inline: 7px; }
+    .hamburger { width: 38px; height: 38px; }
+    .header-titulo h2 { font-size: 12px !important; }
+    .header-titulo p { display: none; }
+    .user-chip #userName { display: none; }
+    #appMain :where(.card, .drec-enlace-card) { padding: 13px !important; }
+    #appMain .mesh-hero h2 { font-size: clamp(20px, 7vw, 25px) !important; }
+}
+
+/* Monitores grandes y ultrawide: evita líneas excesivamente largas. */
+@media (min-width: 1600px) {
+    #appMain { max-width: 1680px; padding-inline: clamp(32px, 3vw, 56px); }
+    .app-header { padding-inline: clamp(28px, 3vw, 56px); }
+}
+
+/* Pantalla baja en orientación horizontal: prioriza el espacio disponible. */
+@media (max-height: 520px) and (orientation: landscape) {
+    .app-header { position: relative; }
+    .sidebar { height: 100dvh; overflow-y: auto; }
+    .sidebar-nav { min-height: 0; }
+    .modal-caja { max-height: calc(100dvh - 10px); }
+}
+
+/* Respeta preferencias de accesibilidad del sistema operativo. */
+@media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto !important; }
+    *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
