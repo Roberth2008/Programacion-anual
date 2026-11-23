@@ -1771,6 +1771,79 @@ img, video, canvas, iframe { max-width: 100%; }
 .drec-enlace-editor input:focus,.drec-enlace-editor textarea:focus { border-color:#3b82f6; box-shadow:0 0 0 3px rgba(59,130,246,.12); }
 .drec-enlace-editor .btn-mep-primary { display:inline-flex; align-items:center; gap:8px; margin-top:5px; }
 .drec-enlace-editor .btn-mep-primary svg { width:15px; height:15px; }
+
+/* ==================== EXPLICACIÓN EDITORIAL (Oferentes · Satisfacción) ====================
+   Separa visualmente el título propio de la breve explicación del cuerpo de
+   texto, con identidad DREC: Royal Navy (#0A192F), Azul Institucional (#1E40AF),
+   Dorado Cálido (#D97706) y Esmeralda (#059669). Tipografía: Plus Jakarta Sans
+   (títulos, vía .font-display / var(--tipografia-titulos)) e Inter (cuerpo).
+   Incluye una animación sutil de aparición que respeta prefers-reduced-motion. */
+.drec-explicacion { max-width:850px; margin:0 auto 26px; }
+.drec-explicacion-marco {
+    position:relative;
+    padding:clamp(16px,2.5vw,24px) clamp(18px,3vw,30px);
+    background:linear-gradient(160deg,#ffffff 0%,#f8fafc 100%);
+    border:1px solid #e2e8f0;
+    border-radius:18px;
+    box-shadow:0 1px 2px rgba(10,25,47,.04), 0 12px 32px -18px rgba(10,25,47,.18);
+    overflow:hidden;
+}
+/* Capa decorativa: filete dorado superior y acento institucional por esquina */
+.drec-explicacion-marco::before {
+    content:""; position:absolute; top:0; left:0; right:0; height:3px;
+    background:linear-gradient(90deg,#D97706 0%,#F5C97B 45%,#1E40AF 100%);
+    opacity:.9;
+}
+.drec-explicacion-marco::after {
+    content:""; position:absolute; right:-38px; bottom:-38px;
+    width:110px; height:110px; border-radius:50%;
+    background:radial-gradient(circle,rgba(30,64,175,.08),rgba(30,64,175,0) 70%);
+    pointer-events:none;
+}
+.drec-explicacion-titulo {
+    margin:0 0 6px;
+    color:#0A192F;
+    font-family:'Plus Jakarta Sans',ui-sans-serif,system-ui,sans-serif;
+    font-size:clamp(19px,2.4vw,24px);
+    font-weight:800;
+    letter-spacing:-.015em;
+    line-height:1.25;
+    text-align:center;
+}
+/* Detalle tipográfico: guion corto dorado bajo el título del marco */
+.drec-explicacion-titulo::after {
+    content:""; display:block; width:44px; height:3px; margin:10px auto 0;
+    border-radius:999px;
+    background:#D97706;
+}
+.drec-explicacion-cuerpo {
+    margin:14px 0 0;
+    color:#475569;
+    font-family:Inter,ui-sans-serif,system-ui,sans-serif;
+    font-size:13.5px;
+    font-weight:500;
+    line-height:1.85;
+    text-align:center;
+    letter-spacing:.01em;
+}
+/* Variante de acento esmeralda para la sección de Satisfacción */
+.drec-explicacion.satisfaccion .drec-explicacion-marco::before {
+    background:linear-gradient(90deg,#059669 0%,#6ee7b7 45%,#1E40AF 100%);
+}
+.drec-explicacion.satisfaccion .drec-explicacion-titulo::after { background:#059669; }
+/* Animación sutil de aparición al cargar o al mostrar la vista */
+@keyframes drecExplicacionAparecer {
+    from { opacity:0; transform:translateY(10px); }
+    to   { opacity:1; transform:translateY(0); }
+}
+.drec-explicacion-marco { animation:drecExplicacionAparecer .55s cubic-bezier(.22,.61,.36,1) both; }
+.drec-explicacion-titulo { animation:drecExplicacionAparecer .55s cubic-bezier(.22,.61,.36,1) .08s both; }
+.drec-explicacion-cuerpo { animation:drecExplicacionAparecer .55s cubic-bezier(.22,.61,.36,1) .16s both; }
+@media (prefers-reduced-motion: reduce) {
+    .drec-explicacion-marco,
+    .drec-explicacion-titulo,
+    .drec-explicacion-cuerpo { animation:none; transform:none; }
+}
 @media(max-width:640px) {
  .drec-enlace-cabecera { gap:11px; }
  .drec-enlace-cabecera .icono-tile { width:42px; height:42px; flex-basis:42px; }
