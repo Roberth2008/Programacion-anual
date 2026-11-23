@@ -2905,7 +2905,11 @@ function renderPestanasConfig() {
     // se agrega junto a VISTAS y los módulos para que pueda habilitarse
     // o inhabilitarse frente al Modo Lectura.
     const items = VISTAS.slice()
-        .concat([{ id: "comisiones", etiqueta: "Comisiones", icono: "users-round" }])
+        .concat([
+            { id: "comisiones", etiqueta: "Comisiones", icono: "users-round" },
+            { id: "oferentes", etiqueta: "Registro de Oferentes", icono: "clipboard-list" },
+            { id: "satisfaccion", etiqueta: "Satisfacción del Servicio", icono: "message-square-heart" }
+        ])
         .concat(Object.values(MODULOS).map(m => ({ id: m.id, etiqueta: m.titulo, icono: m.icono })));
     cont.innerHTML = items.map(v => {
         const off = inhabilitadas.indexOf(v.id) !== -1;
