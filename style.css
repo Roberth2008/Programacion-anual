@@ -2159,3 +2159,90 @@ input, select, textarea { max-width: 100%; }
 @media (prefers-reduced-motion: reduce) {
     .vista, .vista * { scroll-behavior: auto !important; }
 }
+
+/* =====================================================================
+   RESPONSIVE GLOBAL REFORZADO · CAPA FINAL
+   Cobertura adicional para vistas, formularios, tarjetas, tablas,
+   paneles administrativos y pantallas táctiles.
+   ===================================================================== */
+*, *::before, *::after { min-width: 0; }
+body, #appShell, .app-columna, #appMain { max-width: 100%; }
+.vista { width: 100%; }
+.vista :is(p,h1,h2,h3,h4,label,a,span,td,th) { overflow-wrap: anywhere; }
+.vista :is(input,select,textarea) { min-width: 0; max-width: 100%; }
+.vista img, .vista iframe, .vista video, .vista canvas { max-width: 100%; }
+.vista .card, .vista .mesh-hero, .vista [class*="grid-cols-"],
+.vista [class*="col-span-"] { min-width: 0; max-width: 100%; }
+.vista .flex, .vista .flex > * { min-width: 0; }
+.vista pre, .vista code, .vista .break-all {
+    max-width: 100%; overflow-wrap: anywhere; white-space: pre-wrap;
+}
+.vista input:not([type="checkbox"]):not([type="radio"]),
+.vista select, .vista textarea,
+.modal-caja input:not([type="checkbox"]):not([type="radio"]),
+.modal-caja select, .modal-caja textarea { font-size: 16px; }
+.vista textarea, .modal-caja textarea { width: 100%; resize: vertical; }
+.vista form, .modal-caja form { min-width: 0; }
+.vista .overflow-x-auto, .modal-caja .overflow-x-auto {
+    width: 100%; max-width: 100%; overflow-x: auto;
+    overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch;
+}
+.vista table.tabla { border-collapse: separate; border-spacing: 0; }
+.vista table.tabla th, .vista table.tabla td { overflow-wrap: anywhere; vertical-align: top; }
+
+@media (max-width: 900px) {
+    .header-acciones { flex-wrap: nowrap; }
+    .app-header { gap: 10px; }
+    .app-main { max-width: 100%; }
+    .sidebar { width: min(310px,88vw); }
+    .barra-seleccion { left: 10px; right: 10px; max-width: calc(100vw - 20px); flex-wrap: wrap; }
+}
+@media (min-width: 600px) and (max-width: 1023px) {
+    .vista .grid.grid-cols-12 { column-gap: 14px; row-gap: 14px; }
+    .vista .grid.grid-cols-12 > .col-span-6,
+    .vista .grid.grid-cols-12 > .lg\:col-span-6 { grid-column: span 6 / span 6; }
+    .app-header { padding-inline: clamp(14px,2.5vw,24px); }
+    .app-main { padding-inline: clamp(14px,2.5vw,26px); }
+}
+@media (max-width: 599px) {
+    .vista .grid.grid-cols-12 { grid-template-columns: minmax(0,1fr); }
+    .vista .grid.grid-cols-12 > [class*="col-span-"],
+    .vista .grid.grid-cols-12 > [class*="lg:col-span-"] { grid-column: 1 / -1 !important; }
+    .vista .flex.items-center.justify-between,
+    .vista .flex.items-start.justify-between { flex-wrap: wrap; }
+    .vista .card { padding: clamp(12px,3.5vw,18px); }
+    .vista .tabla { min-width: 600px !important; table-layout: auto !important; }
+    .app-header .header-titulo { flex: 1 1 80px; }
+    .app-header .header-acciones { flex: 0 0 auto; }
+    .modal-caja {
+        inset-inline: 10px; width: calc(100vw - 20px) !important;
+        max-width: calc(100vw - 20px) !important; margin-inline: auto;
+    }
+    .barra-seleccion { bottom: max(8px,env(safe-area-inset-bottom)); }
+    .barra-sel-acciones { flex-wrap: wrap; }
+    .barra-sel-acciones > button { flex: 1 1 140px; }
+}
+@media (max-width: 359px) {
+    .app-main { padding-inline: 7px !important; }
+    .app-header { padding-inline: 6px !important; }
+    .header-acciones { gap: 3px; }
+    .chip { letter-spacing: 0; }
+    .login-card { padding: 20px !important; border-radius: 20px; }
+    .vista .card { border-radius: 15px; }
+}
+@media (max-height: 560px) and (orientation: landscape) {
+    .login-screen { align-items: flex-start; }
+    .login-card { margin-block: 12px; }
+    .modal-caja { max-height: calc(100dvh - 16px); overflow-y: auto; }
+    .app-header { position: relative; }
+}
+@media (pointer: coarse) {
+    button, .nav-item, .accion-btn, select,
+    input[type="checkbox"], input[type="radio"] { min-height: 44px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        scroll-behavior: auto !important; animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important; transition-duration: .01ms !important;
+    }
+}

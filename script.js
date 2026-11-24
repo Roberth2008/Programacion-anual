@@ -219,6 +219,9 @@ async function eliminarRegistrosLote(coleccion, ids) {
             break;
         }
     }
+    // TAREA 2: todos los seedKeys borrados por lote quedan registrados en
+    // drec_configuracion/seed_inicial_v2 y no vuelven a sembrarse nunca.
+    if (ok) await registrarSemillasEliminadas(ids);
     return ok;
 }
 
@@ -363,19 +366,17 @@ function extensionDeOficina(oficina) {
     return e ? e[1] : "";
 }
 
-/* Oficinas de supervisión escolar por circuito (categoría «Circuitos»). */
+/* Oficinas de supervisión escolar por circuito (categoría «Circuitos»).
+   Regla del proyecto: el Directorio NO maneja números telefónicos externos;
+   solo se listan las oficinas de supervisión (sin teléfono). */
 const SUPERVISIONES_CIRCUITOS = [
-    ["Supervisión circuito 01", "2669-2611"],
-    ["Supervisión circuito 02", "2662-0685"],
-    ["Supervisión circuito 03", "2695-5509"],
-    ["Supervisión circuito 04", "2668-6836"],
-    ["Supervisión circuito 05", "2100 5138"]
+    ["Supervisión circuito 01"],
+    ["Supervisión circuito 02"],
+    ["Supervisión circuito 03"],
+    ["Supervisión circuito 04"],
+    ["Supervisión circuito 05"]
 ];
 const OPCIONES_SUPERVISIONES = SUPERVISIONES_CIRCUITOS.map(o => o[0]);
-function telefonoDeSupervision(oficina) {
-    const e = SUPERVISIONES_CIRCUITOS.find(o => o[0] === oficina);
-    return e ? e[1] : "";
-}
 
 /* ==================== CONTACTOS DRE CAÑAS PARA LA CATEGORÍA
    «DIRECTORIO TELEFÓNICO DIRECA» ====================
@@ -434,7 +435,20 @@ const REGISTROS_SUPERVISIONES = SUPERVISIONES_CIRCUITOS.map(o => ({
     id: "DIRECA-SUP-" + o[0].replace(/\D/g, ""),
     categoria: "Circuitos",
     oficinaSupervision: o[0],
-    telefono: o[1]
+    funcionario: ({
+        "Supervisión circuito 01": "MSc. Yessenia Ruiz Matarrita",
+        "Supervisión circuito 02": "Gricelda Vargas Segura",
+        "Supervisión circuito 03": "Haydee Solórzano Miranda",
+        "Supervisión circuito 04": "Ana Yancy Morales Murillo",
+        "Supervisión circuito 05": "Adriana Álvarez Murillo"
+    }[o[0]] || ""),
+    correo: ({
+        "Supervisión circuito 01": "yesenia.ruiz.matarrita@mep.go.cr, supervision01.canas@mep.go.cr",
+        "Supervisión circuito 02": "gricelda.vargas.segura@mep.go.cr, supervision02.canas@mep.go.cr",
+        "Supervisión circuito 03": "haydee.solorzano.miranda@mep.go.cr, supervision03.canas@mep.go.cr",
+        "Supervisión circuito 04": "ana.morales.murillo@mep.go.cr, supervision04.canas@mep.go.cr",
+        "Supervisión circuito 05": "adriana.alvarez.murillo@mep.go.cr, supervision05.canas@mep.go.cr"
+    }[o[0]] || "")
 }));
 
 /* EXCLUSIÓN OBLIGATORIA: la extensión 3003 / Nidia Briceño Jiménez jamás se
@@ -448,22 +462,24 @@ function registroDIRECAExcluido(r) {
 /* ==================== DIRECTORIO DREC: SUPERVISIONES ESCOLARES Y
    CENTROS EDUCATIVOS POR CIRCUITOS ====================
    Nota: los datos de «Telefonía Fija» y «Asesoría Pedagógica» de la DRE Cañas
-   se siembran ahora bajo la categoría «Directorio Telefónico DIRECA»
-   (ver DIRECA_CONTACTOS más abajo) para que se muestren en ese filtro,
-   sin repetirlos aquí. Reglas: SIN números de teléfono fijo ni móvil; SÍ se
-   incluye «extension» cuando existe. Siembra no destructiva y sin duplicados
-   (ver duplicadoDirectario()). Fuente: Directorio Telefónico DRE Cañas (MEP). */
+   se siembran ahora de forma individualizada por funcionario en sus categorías
+   oficiales (ver REGISTROS_TELEFONIA_FIJA y REGISTROS_ASESORIA_PEDAGOGICA más
+   abajo). Las categorías «Directorio Telefónico DIRECA» (DIRECA-OF-*) y
+   «Circuitos» (DIRECA-SUP-*) también SIEMBRAN sus registros oficiales.
+   Reglas: SIN números de teléfono fijo ni móvil; SÍ se incluye «extension»
+   cuando existe. Siembra única y sin duplicados (ver duplicadoDirectario()).
+   Fuente: Directorio Telefónico DRE Cañas (MEP). */
 const REGISTROS_DIRECTORIO_DREC = [
     /* ---------- Supervisiones Escolares (sin teléfono ni extensión) ---------- */
-    { id: "DREC-SUP-01A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 01", funcionario: "Yesenia De Los Ángeles Ruiz Matarrita", correo: "yesenia.ruiz.matarrita@mep.go.cr" },
+    { id: "DREC-SUP-01A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 01", funcionario: "Yesenia De Los Ángeles Ruiz Matarrita", correo: "yesenia.ruiz.matarrita@mep.go.cr, supervision01.canas@mep.go.cr" },
     { id: "DREC-SUP-01B", categoria: "Supervisiones Escolares", departamento: "Asistente de Supervisión Educativa 01", funcionario: "Annia Guiselle Ávila Arias", correo: "annia.avila.arias@mep.go.cr" },
-    { id: "DREC-SUP-02A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 02", funcionario: "Gricelda Vargas Segura", correo: "gricelda.vargas.segura@mep.go.cr" },
+    { id: "DREC-SUP-02A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 02", funcionario: "Gricelda Vargas Segura", correo: "gricelda.vargas.segura@mep.go.cr, supervision02.canas@mep.go.cr" },
     { id: "DREC-SUP-02B", categoria: "Supervisiones Escolares", departamento: "Asistente de Supervisión Educativa 02", funcionario: "Nora Graciela Herrera Venegas", correo: "nora.herrera.venegas@mep.go.cr" },
-    { id: "DREC-SUP-03A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 03", funcionario: "Haydee Solórzano Miranda", correo: "haydee.solorzano.miranda@mep.go.cr" },
+    { id: "DREC-SUP-03A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 03", funcionario: "Haydee Solórzano Miranda", correo: "haydee.solorzano.miranda@mep.go.cr, supervision03.canas@mep.go.cr" },
     { id: "DREC-SUP-03B", categoria: "Supervisiones Escolares", departamento: "Asistente de Supervisión Educativa 03", funcionario: "Dayhala Marchena Mora", correo: "dayhala.marchena.mora@mep.go.cr" },
-    { id: "DREC-SUP-04A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 04", funcionario: "Ana Yancy Morales Murillo", correo: "ana.morales.murillo@mep.go.cr" },
+    { id: "DREC-SUP-04A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 04", funcionario: "Ana Yancy Morales Murillo", correo: "ana.morales.murillo@mep.go.cr, supervision04.canas@mep.go.cr" },
     { id: "DREC-SUP-04B", categoria: "Supervisiones Escolares", departamento: "Asistente de Supervisión Educativa 04", funcionario: "Edwards Gerardo Rodríguez Calderón", correo: "edward.rodriguez.calderon@mep.go.cr" },
-    { id: "DREC-SUP-05A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 05", funcionario: "Adriana Álvarez Murillo", correo: "adriana.alvarez.murillo@mep.go.cr" },
+    { id: "DREC-SUP-05A", categoria: "Supervisiones Escolares", departamento: "Supervisora Escolar Circuito 05", funcionario: "Adriana Álvarez Murillo", correo: "adriana.alvarez.murillo@mep.go.cr, supervision05.canas@mep.go.cr" },
     { id: "DREC-SUP-05B", categoria: "Supervisiones Escolares", departamento: "Asistente de Supervisión Educativa 05", funcionario: "Ángelica María Quesada Barrantes", correo: "angelica.quesada.barrantes@mep.go.cr" },
     /* ---------- Centros Educativos por Circuitos Escolares ---------- */
     /* Circuito 01 (Cañas) */
@@ -627,79 +643,208 @@ function duplicadoDirectario(nuevo, existentes) {
     });
 }
 
-/* Siembra idempotente y NO destructiva: completa funcionario/correo de los
-   registros DIRECA existentes que coincidan por extensión, retira las semillas
-   obsoletas de Telefonía Fija / Asesoría Pedagógica y agrega únicamente los
-   registros del directorio que aún no existan (por id), conservando íntegro
-   lo digitado. En modo demo se guarda en LocalStorage; en producción escribe
-   en Firestore solo un Administrador (reglas: allow write: esAdmin). */
+/* Siembra del directorio en Modo Demo (LocalStorage): única vez por navegador
+   (flag drec_demo_seed_v2), retira las semillas individuales antiguas
+   con los prefijos DREC-TF- y DREC-AP- y siembra el catálogo completo SIN recrear los
+   seedKey que el Administrador eliminó (drec_demo_semillas_eliminadas). En producción la
+   lógica equivalente vive en ejecutarSembradoInicial() (Firestore). */
 async function sincronizarDirectorioDIRECA() {
-    /* 1) Actualización sin duplicar: si ya existe un registro DIRECA con la
-       misma extensión (p.ej. DIRECA-OF-3000/3001/3002/3006/3007…), se
-       completan únicamente los campos faltantes (funcionario, correo) con los
-       contactos oficiales, sin tocar los datos ya digitados. */
-    const actualizadosFirestore = [];
-    dbDirectorio.forEach(r => {
-        if (String(r.categoria || "") !== "Directorio Telefónico DIRECA") return;
-        const c = DIRECA_CONTACTOS[String(r.extension || "").trim()];
-        if (!c) return;
-        const cambios = {};
-        if (c.funcionario && !String(r.funcionario || "").trim()) cambios.funcionario = c.funcionario;
-        if (c.correo && !String(r.correo || "").trim()) cambios.correo = c.correo;
-        if (!Object.keys(cambios).length) return;
-        Object.assign(r, cambios);
-        const idDoc = String(r.id || "");
-        if (idDoc && !MODO_DEMO) actualizadosFirestore.push({ id: idDoc, datos: cambios });
+    if (!MODO_DEMO) return; // Producción: usar ejecutarSembradoInicial().
+    let completadoDemo = false;
+    let eliminadasDemo = [];
+    try {
+        completadoDemo = localStorage.getItem("drec_demo_seed_v2") === "true";
+        eliminadasDemo = JSON.parse(localStorage.getItem("drec_demo_semillas_eliminadas") || "[]");
+    } catch (e) { eliminadasDemo = []; }
+    eliminadasDemo.forEach(k => semillasEliminadas.add(String(k)));
+    /* Migración: retira únicamente las semillas individuales antiguas
+       con prefijos DREC-TF- o DREC-AP-, supersedidas por DREC2-.
+       Las semillas de «Directorio Telefónico DIRECA» (DIRECA-OF-)
+       y «Circuitos» (DIRECA-SUP-) son oficiales y se conservan. */
+    const residuales = dbDirectorio.filter(r => /^(DREC-TF-|DREC-AP-)/.test(String(r.id || "")));
+    residuales.forEach(r => {
+        semillasEliminadas.add(String(r.seedKey || r.id));
+        dbDirectorio = dbDirectorio.filter(x => x !== r);
     });
-    if (actualizadosFirestore.length && esAdmin() && firebaseDB) {
-        for (const a of actualizadosFirestore) {
+    /* Siembra única de lo que falte, respetando lo eliminado. */
+    if (!completadoDemo) {
+        const faltantes = SEMILLAS_DIRECTORIO
+            .filter(sem => !semillasEliminadas.has(String(sem.seedKey || sem.id)))
+            .filter(sem => !dbDirectorio.some(r => String(r.id) === String(sem.id)))
+            .filter(sem => !duplicadoDirectario(sem, dbDirectorio));
+        dbDirectorio = dbDirectorio.concat(faltantes.map(r => Object.assign({}, r)));
+    }
+    sembradoCompletado = true;
+    try {
+        localStorage.setItem("drec_demo_seed_v2", "true");
+        localStorage.setItem("drec_demo_semillas_eliminadas", JSON.stringify(Array.from(semillasEliminadas)));
+    } catch (e) { console.warn("No se pudo registrar el estado de semillas demo:", e); }
+    persistirDemo();
+    refrescarTodo();
+}
+
+/* ==================== SEMILLAS OFICIALES: TELEFONÍA FIJA Y ASESORÍA PEDAGÓGICA ====================
+   Registros semilla individualizados por funcionario (TAREA 1). Cada documento
+   lleva su «seedKey» (= id del documento) para que el control de sembrado
+   (drec_configuracion/seed_inicial_v2) pueda registrar eliminaciones y evitar
+   que un registro borrado por un Administrador vuelva a sembrarse. El campo
+   «oficina» se incluye por compatibilidad con las vistas/genéricos que lo
+   esperan. Regla del proyecto: el Directorio NO maneja números telefónicos
+   externos; solo la extensión interna. */
+function semillasPor(Lista, prefijo) {
+    return Lista.map(o => Object.assign({}, o, { id: prefijo + String(o.extension) + "-" + String(o.seq).padStart(2, "0"), seedKey: prefijo + String(o.extension) + "-" + String(o.seq).padStart(2, "0") }));
+}
+const TELEFONIA_FIJA_BASE = [
+    { seq: 1, departamento: "Director Regional", funcionario: "Wilmer Alvarado Fonseca", extension: "3011", correo: "dre.canas@mep.go.cr, wilmer.alvarado.fonseca@mep.go.cr" },
+    { seq: 1, departamento: "Secretaría Dirección", funcionario: "Kattia Fernández Robleto", extension: "3012", correo: "dre.canas@mep.go.cr, kattia.fernandez.robleto@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría Legal", funcionario: "Amira Berger Vega", extension: "3013", correo: "amira.berger.vega@mep.go.cr" },
+    { seq: 1, departamento: "Plataforma de Servicios", funcionario: "Andrea Morales Castillo", extension: "3000", correo: "plataformadeservicios.canas@mep.go.cr, andrea.morales.castillo@mep.go.cr" },
+    { seq: 1, departamento: "Jefatura Servicios Administrativos y Financieros", funcionario: "Ileana Marchena Vega", extension: "3009", correo: "ileana.marchena.vega@mep.go.cr" },
+    { seq: 1, departamento: "Secretaría Servicios Administrativos y Financieros", funcionario: "Shirley Fernández Cabezas", extension: "3008", correo: "serviciosadmfinan.canas@mep.go.cr, shirley.fernandez.cabezas@mep.go.cr" },
+    { seq: 1, departamento: "Juntas de Educación", funcionario: "Ana Lidieth Rojas Castro", extension: "3006", correo: "juntas.canas@mep.go.cr, ana.rojas.castro@mep.go.cr" },
+    { seq: 2, departamento: "Juntas de Educación", funcionario: "Grettel Atencio Reyes", extension: "3007", correo: "grettel.atencio.reyes@mep.go.cr" },
+    { seq: 1, departamento: "Soporte Técnico", funcionario: "Jorge Solano González", extension: "3036", correo: "jorge.solano.gonzalez@mep.go.cr" },
+    { seq: 1, departamento: "Educación Abierta", funcionario: "Jacqueline Chevez Gutiérrez", extension: "3002", correo: "educacionabierta.drecanas@mep.go.cr, jacqueline.chevez.gutierrez@mep.go.cr" },
+    { seq: 2, departamento: "Educación Abierta", funcionario: "Enid Mora Madríz", extension: "3002", correo: "educacionabierta.drecanas@mep.go.cr, enid.mora.madriz@mep.go.cr" },
+    { seq: 1, departamento: "Oficiales de seguridad", funcionario: "Carlos Alberto Vega Rodríguez", extension: "3001", correo: "carlos.vega.rodriguez@mep.go.cr" },
+    { seq: 2, departamento: "Oficiales de seguridad", funcionario: "Roberto Calvo Chaves", extension: "3001", correo: "roberto.calvo.chaves@mep.go.cr" },
+    { seq: 3, departamento: "Oficiales de seguridad", funcionario: "Jonathan Zamora Varela", extension: "3001", correo: "jonathan.zamora.varela@mep.go.cr" }
+];
+const ASESORIA_PEDAGOGICA_BASE = [
+    { seq: 1, departamento: "Jefatura Asesoría Pedagógica", funcionario: "Olga Cristina Badilla Huertas", extension: "3018", correo: "apedagogica.canas@mep.go.cr, olga.badilla.huertas@mep.go.cr" },
+    { seq: 1, departamento: "Secretaría Asesoría Pedagógica", funcionario: "Mariangel Cerdas Alvarado", extension: "3019", correo: "apedagogica.canas@mep.go.cr, mariangel.cerdas.alvarado@mep.go.cr" },
+    { seq: 1, departamento: "ETIR Docencia", funcionario: "Marilyn Vargas Soto", extension: "3023", correo: "marilyn.vargas.soto@mep.go.cr" },
+    { seq: 1, departamento: "ETIR Educativa", funcionario: "Cynthia María Robledo Mendoza", extension: "3022", correo: "cynthia.robledo.mendoza@mep.go.cr" },
+    { seq: 1, departamento: "ETIR Psicología", funcionario: "Ana Mariela Amador Moya", extension: "3020", correo: "ana.amador.moya@mep.go.cr" },
+    { seq: 1, departamento: "ETIR Trabajo Social", funcionario: "Miriam Betancourt Tijerino", extension: "3021", correo: "miriam.betancour.tijerino@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Artes Plásticas", funcionario: "Jessica Nayiba López Céspedes", extension: "3017", correo: "nayiba.lopez.cespedes@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Personas Jóvenes y Adultos", funcionario: "Bettina María Moreno Arrieta", extension: "3016", correo: "bettina.moreno.arrieta@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Orientación", funcionario: "José Roberto Delgado Bonilla", extension: "3015", correo: "jose.delgado.bonilla@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría Educación Musical", funcionario: "Karol Cabalceta Mejías", extension: "3014", correo: "karol.cabalceta.mejias@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Español", funcionario: "Cynthia Marcela Porras Arias", extension: "3030", correo: "cynthia.porras.arias@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Matemática", funcionario: "Laura Patricia Briceño Cabezas", extension: "3031", correo: "laura.briceno.cabezas@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Evaluación de los Aprendizajes", funcionario: "Jennifer Alvarado Mata", extension: "3028", correo: "jennifer.alvarado.mata@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Ciencias", funcionario: "Edwin Alonso Amador Campos", extension: "3029", correo: "alonso.amador.campos@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Educación Física", funcionario: "Daniel Emilio Silva Cantillo", extension: "3024", correo: "daniel.silva.cantillo@mep.go.cr" },
+    { seq: 1, departamento: "Coordinación Vivamos la Guanacastequidad", funcionario: "", extension: "3027", correo: "" },
+    { seq: 1, departamento: "Asesoría de Preescolar", funcionario: "Maureen Cristina Cambronero Arrieta", extension: "3026", correo: "maureen.cambronero.arrieta@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Inglés", funcionario: "Henry Enríquez Baltodano", extension: "3025", correo: "henry.enriquez.baltodano@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Educación Cívica", funcionario: "María Gabriela Monge Delgado", extension: "3034", correo: "maria.monge.delgado@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Estudios Sociales", funcionario: "Samuel Antonio Acuna León", extension: "3033", correo: "samuel.acuna.leon@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Educación Religiosa", funcionario: "José Mario Cortes Matarrita", extension: "3032", correo: "jose.cortes.matarrita@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Educación Especial", funcionario: "Ana Maricel Brenes Quesada", extension: "3035", correo: "ana.brenes.quesada@mep.go.cr" },
+    { seq: 1, departamento: "Asesoría de Capacitación y Desarrollo", funcionario: "Meysbol Torres Herrera", extension: "3010", correo: "meysbol.torres.herrera@mep.go.cr" }
+];
+const REGISTROS_TELEFONIA_FIJA = semillasPor(TELEFONIA_FIJA_BASE, "DREC2-TF-").map(r => Object.assign({
+    categoria: "Telefonía Fija",
+    oficina: r.departamento
+}, r, { categoria: "Telefonía Fija" }));
+const REGISTROS_ASESORIA_PEDAGOGICA = semillasPor(ASESORIA_PEDAGOGICA_BASE, "DREC2-AP-").map(r => Object.assign({
+    categoria: "Asesoría Pedagógica",
+    oficina: r.departamento
+}, r, { categoria: "Asesoría Pedagógica" }));
+
+/* Catálogo completo de semillas del directorio (todas las generaciones). */
+const SEMILLAS_DIRECTORIO = REGISTROS_DIRECA
+    .concat(REGISTROS_SUPERVISIONES)
+    .concat(REGISTROS_DIRECTORIO_DREC)
+    .concat(REGISTROS_TELEFONIA_FIJA)
+    .concat(REGISTROS_ASESORIA_PEDAGOGICA);
+
+/* Control de semillas eliminadas y de sembrado único (TAREA 2).
+   - «semillasEliminadas»: Set de seedKey que un Administrador eliminó y que
+     JAMÁS deben volver a sembrarse.
+   - «sembradoCompletado»: flag booleano persistido en Firestore; cuando es
+     true, la rutina de sembrado automático ya no se vuelve a ejecutar. */
+let semillasEliminadas = new Set();
+let sembradoCompletado = false;
+
+/* Reconoce si un id de documento corresponde a una semilla del sistema
+   (directorio, de cualquier generación, u oficial de comisiones). */
+function esIdSemilla(id) {
+    const s = String(id || "");
+    return /^(DIRECA-OF-|DIRECA-SUP-|DREC-TF-|DREC-AP-|DREC-SUP-|DREC-CE-|DREC2-TF-|DREC2-AP-)/.test(s)
+        || COMISIONES_OFICIALES.some(c => c.id === s);
+}
+
+/* Registra seedKeys eliminados en drec_configuracion/seed_inicial_v2 con
+   setDoc(..., { merge: true }) + arrayUnion, para que nunca vuelvan a
+   sembrarse. En Modo Demo no hace falta (LocalStorage ya persiste). */
+function registrarSemillasEliminadas(ids) {
+    const lista = (Array.isArray(ids) ? ids : [ids]).map(String).filter(esIdSemilla);
+    if (!lista.length) return Promise.resolve();
+    lista.forEach(id => semillasEliminadas.add(id));
+    if (MODO_DEMO || !firebaseDB) return Promise.resolve();
+    return firebaseDB.collection(COLECCIONES.config).doc("seed_inicial_v2")
+        .set({ semillas_eliminadas: firebase.firestore.FieldValue.arrayUnion.apply(null, lista) }, { merge: true })
+        .catch(e => console.warn("No se pudo registrar la eliminación de la semilla:", e));
+}
+
+/* Siembra ÚNICA del directorio (solo en producción, solo Administrador):
+   1) Lee el control drec_configuracion/seed_inicial_v2 (flag + eliminadas).
+   2) Migra/retira únicamente las semillas individuales antiguas
+      (prefijos DREC-TF- y DREC-AP-, superseded por DREC2-*); las semillas
+      de «Directorio Telefónico DIRECA» (DIRECA-OF-*) y «Circuitos»
+      (DIRECA-SUP-*) son oficiales y se conservan.
+   3) Siembra los registros faltantes (Supervisiones Escolares, Centros
+      Educativos, Telefonía Fija y Asesoría Pedagógica individualizados),
+      SIN recrear ningún seedKey en «semillas_eliminadas».
+   4) Marca el sembrado como completado UNA sola vez. */
+async function ejecutarSembradoInicial() {
+    if (MODO_DEMO || !esAdmin() || !firebaseDB) return;
+    try {
+        const refCtrl = firebaseDB.collection(COLECCIONES.config).doc("seed_inicial_v2");
+        const snap = await refCtrl.get();
+        const ctrl = (snap && snap.exists) ? (snap.data() || {}) : {};
+        (ctrl.semillas_eliminadas || []).forEach(k => semillasEliminadas.add(String(k)));
+        if (ctrl.completado === true) sembradoCompletado = true;
+
+        /* 2) Migración: retira únicamente las semillas individuales antiguas
+           (DREC-TF-* / DREC-AP-*), reemplazadas por DREC2-TF-* / DREC2-AP-*.
+           Las categorías «Directorio Telefónico DIRECA» y «Circuitos» son
+           OFICIALES: sus semillas DIRECA-OF-* y DIRECA-SUP-* se conservan. */
+        const residuales = dbDirectorio.filter(r => /^(DREC-TF-|DREC-AP-)/.test(String(r.id || "")));
+        const clavesResiduales = [];
+        for (const r of residuales) {
+            const clave = String(r.seedKey || r.id);
+            clavesResiduales.push(clave);
+            if (semillasEliminadas.has(clave)) continue;
             try {
-                await firebaseDB.collection(COLECCIONES.directorio).doc(a.id).set(a.datos, { merge: true });
+                await firebaseDB.collection(COLECCIONES.directorio).doc(String(r.id)).delete();
+                semillasEliminadas.add(clave);
             } catch (e) {
-                console.warn("No se pudo actualizar el registro DIRECA " + a.id + ":", e);
+                console.warn("No se pudo retirar la semilla heredada " + r.id + ":", e);
             }
         }
-    }
-    /* 2) Migración: los registros semilla antiguos de Telefonía Fija /
-       Asesoría Pedagógica (DREC-TF-* / DREC-AP-*) se retiran porque esa
-       información ahora vive en la categoría «Directorio Telefónico DIRECA»,
-       evitando datos duplicados en el sistema. Los registros digitados
-       manualmente (otros ids) no se tocan. */
-    const obsoletos = dbDirectorio.filter(r => /^(DREC-TF-|DREC-AP-)/.test(String(r.id || "")));
-    if (obsoletos.length) {
-        if (MODO_DEMO) {
-            dbDirectorio = dbDirectorio.filter(r => !obsoletos.includes(r));
-        } else if (esAdmin() && firebaseDB) {
-            for (const r of obsoletos) {
+
+        /* 3) Siembra única de lo que falte, respetando lo eliminado. */
+        if (!sembradoCompletado) {
+            const faltantes = SEMILLAS_DIRECTORIO
+                .filter(sem => !semillasEliminadas.has(String(sem.seedKey || sem.id)))
+                .filter(sem => !dbDirectorio.some(r => String(r.id) === String(sem.id)))
+                .filter(sem => !duplicadoDirectario(sem, dbDirectorio));
+            for (const sem of faltantes) {
                 try {
-                    await firebaseDB.collection(COLECCIONES.directorio).doc(String(r.id)).delete();
+                    await firebaseDB.collection(COLECCIONES.directorio).doc(String(sem.id)).set(Object.assign({}, sem), { merge: true });
                 } catch (e) {
-                    console.warn("No se pudo retirar el registro obsoleto " + r.id + ":", e);
+                    console.warn("No se pudo sembrar el registro " + sem.id + ":", e);
                 }
             }
         }
-    }
-    /* 3) Siembra de registros nuevos (no existe el id ni coincide la extensión
-       / dependencia / correo con algo ya cargado). */
-    const semillas = REGISTROS_DIRECA.concat(REGISTROS_SUPERVISIONES).concat(REGISTROS_DIRECTORIO_DREC);
-    const faltantes = semillas
-        .filter(nuevo => !dbDirectorio.some(r => String(r.id) === String(nuevo.id)))
-        .filter(nuevo => !duplicadoDirectario(nuevo, dbDirectorio));
-    if (faltantes.length && MODO_DEMO) {
-        dbDirectorio = dbDirectorio.concat(faltantes.map(r => Object.assign({}, r)));
-    } else if (faltantes.length) {
-        if (!esAdmin() || !firebaseDB) return;
-        for (const r of faltantes) {
-            try {
-                await firebaseDB.collection(COLECCIONES.directorio).doc(r.id).set(Object.assign({}, r), { merge: true });
-            } catch (e) {
-                console.warn("No se pudo sembrar el registro DIRECA " + r.id + ":", e);
-            }
+
+        /* 4) Flag de sembrado completado + registro de eliminaciones. */
+        sembradoCompletado = true;
+        const union = Array.from(semillasEliminadas).concat(clavesResiduales);
+        if (union.length) {
+            await refCtrl.set({
+                completado: true,
+                semillas_eliminadas: firebase.firestore.FieldValue.arrayUnion.apply(null, union.map(String))
+            }, { merge: true });
+        } else {
+            await refCtrl.set({ completado: true }, { merge: true });
         }
-    }
-    if (MODO_DEMO && (faltantes.length || actualizadosFirestore.length)) {
-        persistirDemo();
-        refrescarTodo();
+    } catch (e) {
+        console.warn("No se pudo ejecutar el sembrado inicial controlado:", e);
     }
 }
 
@@ -977,17 +1122,17 @@ const MODULOS = {
     directorio: {
         id: "directorio", etiqueta: "Directorio",
         titulo: "Directorio Telefónico Institucional",
-        descripcion: "Telefonía fija, Asesoría Pedagógica, Supervisiones Escolares y Centros Educativos de la DREC y sus circuitos 01–05.",
+        descripcion: "Telefonía fija, Asesoría Pedagógica, Supervisiones Escolares, Centros Educativos, Circuitos y Directorio Telefónico DIRECA de la DREC (circuitos 01–05).",
         icono: "phone", color: "#64748B", prefijo: "DIR",
         coleccion: COLECCIONES.directorio,
         // Columnas universales (cuando el filtro de categoría está en «Todos»
         // o mezcla categorías). Con categoría seleccionada se usan las
         // columnas específicas de CATEGORIAS_DIRECTORIO.
-        columnas: [ {campo:"categoria",etiqueta:"Categoría"}, {campo:"circuito",etiqueta:"Circuito"}, {campo:"departamento",etiqueta:"Departamento / Institución"}, {campo:"oficina",etiqueta:"Oficina"}, {campo:"funcionario",etiqueta:"Funcionario / Director"}, {campo:"telefono",etiqueta:"Teléfono"}, {campo:"extension",etiqueta:"Ext."}, {campo:"movil",etiqueta:"Móvil"}, {campo:"correo",etiqueta:"Correo"} ],
-        filtros: [ {campo:"categoria",etiqueta:"Categoría",opciones:["","Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos por Circuitos Escolares","Directorio Telefónico DIRECA","Circuitos"]}, {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
+        columnas: [ {campo:"categoria",etiqueta:"Categoría"}, {campo:"circuito",etiqueta:"Circuito"}, {campo:"departamento",etiqueta:"Departamento / Institución"}, {campo:"oficina",etiqueta:"Oficina"}, {campo:"funcionario",etiqueta:"Funcionario / Director"}, {campo:"puesto",etiqueta:"Puesto"}, {campo:"numero",etiqueta:"Número"}, {campo:"extension",etiqueta:"Ext."}, {campo:"correo",etiqueta:"Correo"} ],
+        filtros: [ {campo:"categoria",etiqueta:"Categoría",opciones:["","Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos por Circuitos Escolares","Circuitos","Directorio Telefónico DIRECA"]}, {campo:"circuito",etiqueta:"Circuito",opciones:null} ],
         campos: [
             { clave:"categoria", etiqueta:"Categoría / Tipo de registro", tipo:"select", requerido:true,
-              opciones:["Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos por Circuitos Escolares","Directorio Telefónico DIRECA","Circuitos"] },
+              opciones:["Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares","Centros Educativos por Circuitos Escolares","Circuitos","Directorio Telefónico DIRECA"] },
             { clave:"circuito", etiqueta:"Circuito / Región", tipo:"select", categorias:["Centros Educativos por Circuitos Escolares"], requerido:true,
               opciones:["","Dirección Regional","Circuito 01 (Cañas)","Circuito 02 (Abangares)","Circuito 03 (Tilarán)","Circuito 04 (Colorado)","Circuito 05 (La Altura)"] },
             { clave:"departamento", etiqueta:"Departamento / Oficina", tipo:"text", requerido:true,
@@ -995,13 +1140,11 @@ const MODULOS = {
             { clave:"funcionario", etiqueta:"Nombre de funcionario / directora o director", tipo:"text", requerido:true },
             { clave:"puesto", etiqueta:"Puesto", tipo:"text",
               categorias:["Telefonía Fija","Asesoría Pedagógica","Supervisiones Escolares"] },
-            { clave:"telefono", etiqueta:"Teléfono", tipo:"text" },
             { clave:"extension", etiqueta:"Extensión", tipo:"text", categorias:["Telefonía Fija","Asesoría Pedagógica","Directorio Telefónico DIRECA"] },
             { clave:"oficina", etiqueta:"Oficina", tipo:"select", requerido:true,
               categorias:["Directorio Telefónico DIRECA"], opciones: OPCIONES_OFICINAS_DIRECA },
             { clave:"oficinaSupervision", etiqueta:"Oficina de supervisión", tipo:"select", requerido:true,
               categorias:["Circuitos"], opciones: OPCIONES_SUPERVISIONES },
-            { clave:"movil", etiqueta:"Móvil / Celular", tipo:"text", categorias:["Centros Educativos por Circuitos Escolares"] },
             { clave:"correo", etiqueta:"Correo(s) electrónico(s)", tipo:"text" },
             { clave:"numero", etiqueta:"Número", tipo:"text", categorias:["Centros Educativos por Circuitos Escolares"] },
             { clave:"codigoPresupuestario", etiqueta:"Código presupuestario", tipo:"text", categorias:["Centros Educativos por Circuitos Escolares"] },
@@ -1020,46 +1163,43 @@ const MODULOS = {
    perder lo ya escrito. */
 const CATEGORIAS_DIRECTORIO = {
     "Telefonía Fija": {
-        campos: ["categoria", "departamento", "funcionario", "telefono", "extension", "correo"],
+        campos: ["categoria", "departamento", "funcionario", "puesto", "extension", "correo"],
         columnas: [
             {campo:"departamento", etiqueta:"Departamento / Oficina"},
             {campo:"funcionario", etiqueta:"Funcionario"},
             {campo:"puesto", etiqueta:"Puesto"},
-            {campo:"telefono", etiqueta:"Teléfono"},
             {campo:"extension", etiqueta:"Ext."},
             {campo:"correo", etiqueta:"Correo"}
         ]
     },
     "Asesoría Pedagógica": {
-        campos: ["categoria", "departamento", "funcionario", "telefono", "extension", "correo"],
+        campos: ["categoria", "departamento", "funcionario", "puesto", "extension", "correo"],
         columnas: [
             {campo:"departamento", etiqueta:"Departamento / Oficina"},
             {campo:"funcionario", etiqueta:"Funcionario"},
             {campo:"puesto", etiqueta:"Puesto"},
-            {campo:"telefono", etiqueta:"Teléfono"},
             {campo:"extension", etiqueta:"Ext."},
             {campo:"correo", etiqueta:"Correo"}
         ]
     },
     "Supervisiones Escolares": {
-        campos: ["categoria", "departamento", "funcionario", "telefono", "correo"],
+        campos: ["categoria", "departamento", "funcionario", "puesto", "correo"],
         columnas: [
             {campo:"departamento", etiqueta:"Departamento / Oficina"},
             {campo:"funcionario", etiqueta:"Funcionario"},
-            {campo:"telefono", etiqueta:"Teléfono"},
+            {campo:"puesto", etiqueta:"Puesto"},
             {campo:"correo", etiqueta:"Correo"}
         ]
     },
     "Centros Educativos por Circuitos Escolares": {
-        campos: ["categoria", "circuito", "institucion", "telefono", "codigoPresupuestario",  "tipoDireccion", "funcionario",  "movil", "correo"],
+        campos: ["categoria", "circuito", "institucion", "numero", "codigoPresupuestario",  "tipoDireccion", "funcionario", "correo"],
         columnas: [
             {campo:"circuito", etiqueta:"Circuito"},
             {campo:"codigoPresupuestario", etiqueta:"Cód. Presupuestario"},
             {campo:"institucion", etiqueta:"Institución"},
+            {campo:"numero", etiqueta:"Número"},
             {campo:"tipoDireccion", etiqueta:"Tipo de dirección"},
             {campo:"funcionario", etiqueta:"Director(a)"},
-            {campo:"telefono", etiqueta:"Teléfono"},
-            {campo:"movil", etiqueta:"Móvil"},
             {campo:"correo", etiqueta:"Correo"}
         ]
     },
@@ -1067,23 +1207,24 @@ const CATEGORIAS_DIRECTORIO = {
     // Campos: «Oficina» (desplegable con autocompletado de la extensión y
     // opción de oficina manual) y «# de Extensión» (editable a mano).
     "Directorio Telefónico DIRECA": {
-        campos: ["categoria", "oficina", "extension", "funcionario", "correo", "notas"],
+        campos: ["categoria", "oficina", "extension", "funcionario", "puesto", "correo", "notas"],
         columnas: [
             {campo:"oficina", etiqueta:"Oficina"},
             {campo:"extension", etiqueta:"# de Extensión"},
             {campo:"funcionario", etiqueta:"Funcionario"},
+            {campo:"puesto", etiqueta:"Puesto"},
             {campo:"correo", etiqueta:"Correo"}
         ]
     },
     // ==================== CIRCUITOS (OFICINAS DE SUPERVISIÓN) ====================
-    // Campos: «Oficina de supervisión» (autocompleta el teléfono), «Teléfono»,
-    // «Supervisor» y «Correo electrónico».
+    // Campos: «Oficina de supervisión», «Supervisor» y «Correo electrónico».
+    // Regla del proyecto: SIN números telefónicos en el Directorio.
     "Circuitos": {
-        campos: ["categoria", "oficinaSupervision", "telefono", "funcionario", "correo", "notas"],
+        campos: ["categoria", "oficinaSupervision", "funcionario", "puesto", "correo", "notas"],
         columnas: [
             {campo:"oficinaSupervision", etiqueta:"Oficina de supervisión"},
-            {campo:"telefono", etiqueta:"Teléfono"},
             {campo:"funcionario", etiqueta:"Supervisor"},
+            {campo:"puesto", etiqueta:"Puesto"},
             {campo:"correo", etiqueta:"Correo electrónico"}
         ]
     }
@@ -1105,6 +1246,9 @@ function camposDeCategoria(categoria) {
         if (categoria === "Circuitos" && clave === "funcionario") c.etiqueta = "Supervisor";
         if (categoria === "Circuitos" && clave === "correo") c.etiqueta = "Correo electrónico";
         if (categoria === "Directorio Telefónico DIRECA" && clave === "extension") c.etiqueta = "# de Extensión";
+        // En «Directorio Telefónico DIRECA» hay oficinas sin funcionario
+        // asignado (Comedor, Of. Archivo, etc.): el campo queda opcional.
+        if (categoria === "Directorio Telefónico DIRECA" && clave === "funcionario") c.requerido = false;
         return c;
     }).filter(Boolean);
 }
@@ -1297,9 +1441,7 @@ function refrescarCamposCTP() {
    · Oficina (DIRECA): al elegirla en el desplegable se autocompleta su «# de
      Extensión». La extensión SIEMPRE queda editable a mano (correcciones).
    · Oficina manual: la opción «Otra oficina (escribir manualmente)» despliega
-     un campo de texto libre para digitar una oficina no listada.
-   · Oficina de supervisión (Circuitos): al elegirla se autocompleta su
-     «Teléfono», que permanece editable a mano. */
+     un campo de texto libre para digitar una oficina no listada. */
 function activarAutocompletadoDirectorio(categoria) {
     const selOf = $("ef-oficina");
     if (selOf && categoria === "Directorio Telefónico DIRECA") {
@@ -1315,14 +1457,6 @@ function activarAutocompletadoDirectorio(categoria) {
             }
         });
         if (selOf.value === "__OTRA__") mostrarOficinaManual(true, true);
-    }
-    const selSup = $("ef-oficinaSupervision");
-    if (selSup && categoria === "Circuitos") {
-        selSup.addEventListener("change", () => {
-            const tel = $("ef-telefono");
-            const auto = telefonoDeSupervision(selSup.value);
-            if (tel && auto) tel.value = auto; // editable manualmente tras el autocompletado
-        });
     }
 }
 
@@ -1392,11 +1526,6 @@ function fmtFecha(iso) {
 function fmtRango(a, b) {
     if (a && b && a !== b) return fmtFecha(a) + " al " + fmtFecha(b);
     return fmtFecha(a || b);
-}
-function fmtTelefono(t) {
-    const d = String(t || "").replace(/\D/g, "");
-    if (d.length === 8) return d.slice(0, 4) + "-" + d.slice(4);
-    return esc(t || "");
 }
 function generarId(prefijo) {
     return prefijo + "-" + Date.now().toString(36).toUpperCase() + "-" + Math.random().toString(36).slice(2, 6).toUpperCase();
@@ -2292,10 +2421,10 @@ function postLogin(silencioso) {
     } else {
         escucharDatos();
     }
-    // Siembra no destructiva del Directorio Telefónico DIRECA y de los
-    // Circuitos: agrega solo lo que falte (en producción lo escribe un
-    // Administrador; en demo se guarda en LocalStorage).
+    // En Modo Demo se siembra el catálogo en LocalStorage; en producción el
+    // sembrado único (flag + semillas eliminadas) vive en drec_configuracion.
     sincronizarDirectorioDIRECA();
+    ejecutarSembradoInicial();
     switchTab("inicio");
     crearIconos();
     showToast(esAdmin()
@@ -2336,9 +2465,23 @@ function escucharDatos() {
             const existentes = new Set(dbComisiones.map(c => c.id));
             const faltantes = COMISIONES_OFICIALES.filter(c => !existentes.has(c.id));
             if (faltantes.length) {
-                const batch = firebaseDB.batch();
-                faltantes.forEach(c => batch.set(firebaseDB.collection(COLECCIONES.comisiones).doc(c.id), {nombre:c.nombre,tipo:c.tipo,miembros:[],actualizadoEn:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}));
-                try { await batch.commit(); } catch(e) { console.error("Precarga comisiones",e); }
+                // TAREA 2: la precarga de comisiones respeta el control de semillas:
+                // nunca re-crea una comisión cuya semilla fue eliminada ni vuelve a
+                // sembrar cuando el sembrado inicial ya se completó.
+                let ctrl = {};
+                try {
+                    const dCtrl = await firebaseDB.collection(COLECCIONES.config).doc("seed_inicial_v2").get();
+                    if (dCtrl && dCtrl.exists) ctrl = dCtrl.data() || {};
+                } catch (e) { console.warn("No se pudo leer el control de semillas:", e); }
+                const eliminadas = (ctrl.semillas_eliminadas || []).map(String);
+                const porSembrar = ctrl.completado === true
+                    ? []
+                    : faltantes.filter(c => eliminadas.indexOf(String(c.id)) === -1);
+                if (porSembrar.length) {
+                    const batch = firebaseDB.batch();
+                    porSembrar.forEach(c => batch.set(firebaseDB.collection(COLECCIONES.comisiones).doc(c.id), {nombre:c.nombre,tipo:c.tipo,miembros:[],actualizadoEn:firebase.firestore.FieldValue.serverTimestamp()},{merge:true}));
+                    try { await batch.commit(); } catch(e) { console.error("Precarga comisiones",e); }
+                }
             }
         }
         renderComisiones();
@@ -2355,6 +2498,16 @@ function escucharDatos() {
         if (!config.valores) config.valores = Object.assign({}, MARCO_DEFAULT.valores);
         refrescarTodo();
     }, err => console.error("Configuración:", err)));
+
+    if (esAdmin()) {
+        // TAREA 2: control de semillas en tiempo real (drec_configuracion/seed_inicial_v2).
+        unsubsTiempoReal.push(firebaseDB.collection(COLECCIONES.config).doc("seed_inicial_v2").onSnapshot(d => {
+            if (!d || !d.exists) return;
+            const dd = d.data() || {};
+            if (dd.completado === true) sembradoCompletado = true;
+            (dd.semillas_eliminadas || []).forEach(k => semillasEliminadas.add(String(k)));
+        }, err => console.warn("No se pudo sincronizar el control de semillas:", err)));
+    }
 
     if (esAdmin()) {
         unsubsTiempoReal.push(firebaseDB.collection(COLECCIONES.usuarios).onSnapshot(snap => {
@@ -2433,7 +2586,12 @@ function eliminarDoc(coleccion, id) {
         return Promise.resolve(true);
     }
     return firebaseDB.collection(coleccion).doc(String(id)).delete()
-        .then(() => true)
+        .then(async () => {
+            // TAREA 2: registrar el seedKey como eliminado para que esta semilla
+            // jamás vuelva a sembrarse al refrescar la página.
+            await registrarSemillasEliminadas([id]);
+            return true;
+        })
         .catch(e => {
             console.error("Error eliminando:", e);
             showToast("No se pudo eliminar (" + (e.code || e.message) + ").", "danger");
@@ -2495,6 +2653,13 @@ function cargarDatosDemo() {
 
 function restaurarDemo() {
     if (!MODO_DEMO) { showToast("Disponible solo en modo demostración.", "warning"); return; }
+    // Restaurar es una acción explícita: se re-habilita el sembrado de demo.
+    try {
+        localStorage.removeItem("drec_demo_seed_v2");
+        localStorage.removeItem("drec_demo_semillas_eliminadas");
+        semillasEliminadas = new Set();
+        sembradoCompletado = false;
+    } catch (e) {}
     sembrarDatosDemo();
     persistirDemo();
     refrescarTodo();
@@ -2584,24 +2749,22 @@ function sembrarDatosDemo() {
 
     dbActividades = A;
     dbDirectorio = [
-        { id: "DEMO-D01", departamento: "Dirección Regional", funcionario: "M.Sc. Nombre Apellido I", puesto: "Directora Regional", telefono: "2695-5151", extension: "101", correo: "direccion.canas@mep.go.cr", circuito: "Dirección Regional" },
-        { id: "DEMO-D02", departamento: "Subdirección Regional", funcionario: "Lic. Nombre Apellido II", puesto: "Subdirector", telefono: "2695-5151", extension: "102", correo: "subdireccion.canas@mep.go.cr", circuito: "Dirección Regional" },
-        { id: "DEMO-D03", departamento: "Asesoría de Primaria", funcionario: "Lic. Nombre Apellido III", puesto: "Asesor(a) Supervisor(a)", telefono: "2695-5152", extension: "110", correo: "primaria.canas@mep.go.cr", circuito: "Dirección Regional" },
-        { id: "DEMO-D04", departamento: "Asesoría de Secundaria", funcionario: "M.Sc. Nombre Apellido IV", puesto: "Asesor(a) Supervisor(a)", telefono: "2695-5152", extension: "111", correo: "secundaria.canas@mep.go.cr", circuito: "Dirección Regional" },
-        { id: "DEMO-D05", departamento: "Asesoría de Educación Técnica (TP)", funcionario: "Lic. Nombre Apellido V", puesto: "Asesor(a) Supervisor(a)", telefono: "2695-5153", extension: "115", correo: "tecnica.canas@mep.go.cr", circuito: "Dirección Regional" },
-        { id: "DEMO-D06", departamento: "Departamento de Permanencia", funcionario: "Lic. Nombre Apellido VI", puesto: "Coordinador(a)", telefono: "2695-5154", extension: "120", correo: "permanencia.canas@mep.go.cr", circuito: "Dirección Regional" },
-        { id: "DEMO-D07", departamento: "Asesoría Circuitual 01", funcionario: "Lic. Nombre Apellido VII", puesto: "Asesor(a) Supervisor(a)", telefono: "2695-5160", extension: "201", correo: "circuito01.canas@mep.go.cr", circuito: "Circuito 01 (Cañas)" },
-        { id: "DEMO-D08", departamento: "Asesoría Circuitual 02", funcionario: "Lic. Nombre Apellido VIII", puesto: "Asesor(a) Supervisor(a)", telefono: "2695-5161", extension: "202", correo: "circuito02.canas@mep.go.cr", circuito: "Circuito 02 (Abangares)" },
-        { id: "DEMO-D09", departamento: "Asesoría Circuitual 03", funcionario: "M.Sc. Nombre Apellido IX", puesto: "Asesor(a) Supervisor(a)", telefono: "2695-5162", extension: "203", correo: "circuito03.canas@mep.go.cr", circuito: "Circuito 03 (Tilarán)" },
-        { id: "DEMO-D10", departamento: "Asesoría Circuitual 04", funcionario: "Lic. Nombre Apellido X", puesto: "Asesor(a) Supervisor(a)", telefono: "2695-5163", extension: "204", correo: "circuito04.canas@mep.go.cr", circuito: "Circuito 04 (Colorado)" }
+        { id: "DEMO-D01", departamento: "Dirección Regional", funcionario: "M.Sc. Nombre Apellido I", puesto: "Directora Regional", extension: "101", correo: "direccion.canas@mep.go.cr", circuito: "Dirección Regional" },
+        { id: "DEMO-D02", departamento: "Subdirección Regional", funcionario: "Lic. Nombre Apellido II", puesto: "Subdirector", extension: "102", correo: "subdireccion.canas@mep.go.cr", circuito: "Dirección Regional" },
+        { id: "DEMO-D03", departamento: "Asesoría de Primaria", funcionario: "Lic. Nombre Apellido III", puesto: "Asesor(a) Supervisor(a)", extension: "110", correo: "primaria.canas@mep.go.cr", circuito: "Dirección Regional" },
+        { id: "DEMO-D04", departamento: "Asesoría de Secundaria", funcionario: "M.Sc. Nombre Apellido IV", puesto: "Asesor(a) Supervisor(a)", extension: "111", correo: "secundaria.canas@mep.go.cr", circuito: "Dirección Regional" },
+        { id: "DEMO-D05", departamento: "Asesoría de Educación Técnica (TP)", funcionario: "Lic. Nombre Apellido V", puesto: "Asesor(a) Supervisor(a)", extension: "115", correo: "tecnica.canas@mep.go.cr", circuito: "Dirección Regional" },
+        { id: "DEMO-D06", departamento: "Departamento de Permanencia", funcionario: "Lic. Nombre Apellido VI", puesto: "Coordinador(a)", extension: "120", correo: "permanencia.canas@mep.go.cr", circuito: "Dirección Regional" },
+        { id: "DEMO-D07", departamento: "Asesoría Circuitual 01", funcionario: "Lic. Nombre Apellido VII", puesto: "Asesor(a) Supervisor(a)", extension: "201", correo: "circuito01.canas@mep.go.cr", circuito: "Circuito 01 (Cañas)" },
+        { id: "DEMO-D08", departamento: "Asesoría Circuitual 02", funcionario: "Lic. Nombre Apellido VIII", puesto: "Asesor(a) Supervisor(a)", extension: "202", correo: "circuito02.canas@mep.go.cr", circuito: "Circuito 02 (Abangares)" },
+        { id: "DEMO-D09", departamento: "Asesoría Circuitual 03", funcionario: "M.Sc. Nombre Apellido IX", puesto: "Asesor(a) Supervisor(a)", extension: "203", correo: "circuito03.canas@mep.go.cr", circuito: "Circuito 03 (Tilarán)" },
+        { id: "DEMO-D10", departamento: "Asesoría Circuitual 04", funcionario: "Lic. Nombre Apellido X", puesto: "Asesor(a) Supervisor(a)", extension: "204", correo: "circuito04.canas@mep.go.cr", circuito: "Circuito 04 (Colorado)" }
     ];
     dbDirectorio.forEach(d => { if (!d.categoria) d.categoria = "Telefonía Fija"; });
-    // Directorio Telefónico DIRECA + Circuitos: se AGREGAN a los registros
-    // previos (siembra no destructiva, sin sobreescribir datos existentes).
-    dbDirectorio = dbDirectorio.concat(
-        REGISTROS_DIRECA.map(r => Object.assign({}, r)),
-        REGISTROS_SUPERVISIONES.map(r => Object.assign({}, r))
-    );
+    // Directorio: se AGREGAN TODAS las semillas oficiales (Telefonía Fija,
+    // Asesoría Pedagógica individualizada, Supervisiones, Centros y el catálogo
+    // heredado) — siembra no destructiva, sin sobreescribir datos existentes.
+    dbDirectorio = dbDirectorio.concat(SEMILLAS_DIRECTORIO.map(r => Object.assign({}, r)));
     config = {
         anio: 2026,
         version: "Vs.001",
@@ -2902,7 +3065,6 @@ function valorCelda(r, campo) {
     const v = r[campo];
     if (v == null || v === "") return "—";
     if (campo === "fecha" || campo === "fechaFin") return fmtFecha(v);
-    if (campo === "telefono" || campo === "movil") return fmtTelefono(v);
     if (campo === "correo") {
         // Lista de correos: cada uno con su enlace mailto.
         return String(v).trim().split(/[\s,;/]+/).filter(Boolean).map(c =>
@@ -3186,7 +3348,11 @@ function renderPestanasConfig() {
     // se agrega junto a VISTAS y los módulos para que pueda habilitarse
     // o inhabilitarse frente al Modo Lectura.
     const items = VISTAS.slice()
-        .concat([{ id: "comisiones", etiqueta: "Comisiones", icono: "users-round" }])
+        .concat([
+            { id: "comisiones", etiqueta: "Comisiones", icono: "users-round" },
+            { id: "oferentes", etiqueta: "Registro de Oferentes", icono: "clipboard-list" },
+            { id: "satisfaccion", etiqueta: "Satisfacción del Servicio", icono: "message-square-heart" }
+        ])
         .concat(Object.values(MODULOS).map(m => ({ id: m.id, etiqueta: m.titulo, icono: m.icono })));
     cont.innerHTML = items.map(v => {
         const off = inhabilitadas.indexOf(v.id) !== -1;
@@ -3578,9 +3744,10 @@ function campoInput(c, valor) {
             tipo = "time";
             extra = "";
         }
-        if (c.clave === "telefono" || c.clave === "extension" || c.clave === "movil" || c.clave === "celular") {
-            // Solo dígitos, espacios, guiones, paréntesis y «+».
-            extra = 'maxlength="30" inputmode="tel" oninput="sanitizarTelefono(this)"';
+        if (c.clave === "extension") {
+            // Regla del proyecto: el Directorio no maneja teléfonos; solo la
+            // extensión interna (dígitos cortos).
+            extra = 'maxlength="10" inputmode="numeric" oninput="sanitizarExtension(this)"';
         }
         if (c.clave === "correo") {
             // Puede contener varios correos separados por espacios, comas o «/».
@@ -3595,10 +3762,10 @@ function campoInput(c, valor) {
 }
 
 /* ==================== VALIDACIÓN ESTRICTA DE FORMULARIOS ==================== */
-// Sanitización en vivo de teléfonos, extensiones y móviles: solo dígitos,
-// espacios, guiones, paréntesis y «+».
-function sanitizarTelefono(el) {
-    const limpio = el.value.replace(/[^\d\s()\-+/]/g, "").slice(0, 30);
+// Sanitización en vivo de la extensión interna: solo dígitos (el Directorio
+// no maneja números telefónicos externos; únicamente la extensión).
+function sanitizarExtension(el) {
+    const limpio = el.value.replace(/\D/g, "").slice(0, 10);
     if (el.value !== limpio) el.value = limpio;
 }
 
@@ -3633,7 +3800,7 @@ function correosValidos(txt) {
 }
 
 // Validación integral de un registro: fechas reales y coherentes, hora
-// estricta, correos válidos, teléfonos sanos, códigos numéricos y textos sin
+// estricta, correos válidos, extensión interna, códigos numéricos y textos sin
 // caracteres de control. Devuelve un mensaje legible o null si todo está bien.
 function validarRegistro(cfg, doc) {
     for (const clave of ["fecha", "fechaFin"]) {
@@ -3650,11 +3817,9 @@ function validarRegistro(cfg, doc) {
     if ("correo" in doc && doc.correo && !correosValidos(doc.correo)) {
         return "El correo (o la lista de correos) no es válido (ej: nombre@mep.go.cr).";
     }
-    for (const clave of ["telefono", "extension", "movil", "celular"]) {
-        if (clave in doc && doc[clave]) {
-            if (/[^\d\s()\-+/]/.test(doc[clave])) return "El campo de teléfono solo admite números, espacios, guiones, paréntesis y «+».";
-            if (doc[clave].replace(/\D/g, "").length > 15) return "El campo de teléfono tiene demasiados dígitos.";
-        }
+    if ("extension" in doc && doc.extension) {
+        if (/\D/.test(doc.extension)) return "La extensión interna solo admite dígitos (el Directorio no registra números telefónicos).";
+        if (String(doc.extension).length > 10) return "La extensión interna tiene demasiados dígitos.";
     }
     if (doc.codigoPresupuestario && /[^\d\-]/.test(doc.codigoPresupuestario)) {
         return "El código presupuestario solo admite números y guiones (ej: 210-573-01-63-2594).";
@@ -3776,7 +3941,7 @@ async function guardarEditor(event) {
         });
     }
 
-    // Validación estricta por tipo de campo (fechas reales, HH:MM, correos, teléfonos, códigos).
+    // Validación estricta por tipo de campo (fechas reales, HH:MM, correos, extensión interna, códigos).
     const error = validarRegistro(cfg, doc);
     const cajaError = $("ef-error");
     if (error) {
@@ -3896,7 +4061,6 @@ function verDetalle(modId, id) {
         let valor = esc(v);
         if (c.tipo === "date") valor = fmtFecha(v);
         if (c.clave === "participantes") valor = participantesHTML(v);
-        if (c.clave === "telefono") valor = fmtTelefono(v);
         if (c.clave === "correo") valor = '<a class="text-mep-blue hover:underline" href="mailto:' + esc(v) + '">' + esc(v) + "</a>";
         return '<div class="py-2 border-b border-slate-100 last:border-0"><p class="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">' + esc(c.etiqueta) + "</p>" +
             '<p class="text-sm text-slate-700 font-medium mt-0.5 whitespace-pre-line">' + valor + "</p></div>";
@@ -4464,10 +4628,6 @@ function exFecha(iso) {
 }
 function exTxt(v) { return v == null ? "" : String(v).trim(); }
 function exPart(v) { return serializarParticipantes(parsearParticipantes(v)); }
-function exTel(t) {
-    const d = String(t || "").replace(/\D/g, "");
-    return d.length === 8 ? d.slice(0, 4) + "-" + d.slice(4) : exTxt(t);
-}
 function exCorreos(c) { return String(c || "").trim().split(/[\s,;\/]+/).filter(Boolean).join("\n"); }
 function exFechaPrincipal(a) { return a.fecha || a.entregaDocentes || a.entregaPlataforma || ""; }
 function exOrdenFecha(a, b) {
@@ -4633,12 +4793,13 @@ function exHojaMensual(wb, lista, anio, version) {
 function exValorDirectorio(r, campo) {
     if (campo === "departamento") return exTxt(r.departamento || r.institucion);
     if (campo === "oficina") return exTxt(r.oficina || r.oficinaSupervision);
-    if (campo === "telefono" || campo === "movil") return exTel(r[campo]);
     if (campo === "correo") return exCorreos(r.correo);
     return exTxt(r[campo]);
 }
 function exHojaDirectorio(wb, dir, anio, version) {
-    const categorias = ["Directorio Telefónico DIRECA", "Telefonía Fija", "Asesoría Pedagógica", "Supervisiones Escolares", "Circuitos"];
+    // Categorías oficiales del Directorio (las seis, integradas en el
+    // selector, las tablas y la exportación).
+    const categorias = ["Telefonía Fija", "Asesoría Pedagógica", "Supervisiones Escolares", "Centros Educativos por Circuitos Escolares", "Circuitos", "Directorio Telefónico DIRECA"];
     const n = Math.max.apply(null, categorias.map(c => CATEGORIAS_DIRECTORIO[c].columnas.length));
     const h = exHoja(n);
     exBanner(h, anio, version, "DIRECTORIO TELEFÓNICO INSTITUCIONAL");
@@ -4656,7 +4817,7 @@ function exHojaDirectorio(wb, dir, anio, version) {
             ? (parseInt(String(a.extension).replace(/\D/g, ""), 10) || 0) - (parseInt(String(b.extension).replace(/\D/g, ""), 10) || 0)
             : exCmp(exValorDirectorio(a, cols[0].campo), exValorDirectorio(b, cols[0].campo)));
         ord.forEach((r, i) => {
-            h.spans(conSpan(cols, c => ({ v: exValorDirectorio(r, c.campo), est: exEstDato(i % 2 === 1, c.campo === "extension" || c.campo === "telefono") })));
+            h.spans(conSpan(cols, c => ({ v: exValorDirectorio(r, c.campo), est: exEstDato(i % 2 === 1, c.campo === "extension") })));
         });
         h.completa("", exEstilo({}), 10);
     });
@@ -4669,7 +4830,7 @@ function exHojaDirectorio(wb, dir, anio, version) {
 
 /* ---------- Hoja 12: Centros Educativos ---------- */
 function exHojaCentros(wb, dir, anio, version) {
-    const enc = ["Circuito", "Código Presupuestario", "Institución / Centro Educativo", "Tipo de Dirección", "Director(a)", "Teléfono", "Móvil", "Correo Electrónico"];
+    const enc = ["Circuito", "Código Presupuestario", "Institución / Centro Educativo", "Número", "Tipo de Dirección", "Director(a)", "Correo Electrónico"];
     const regs = dir.filter(r => r.categoria === "Centros Educativos por Circuitos Escolares");
     const idx = c => { const i = EXC_ORDEN_CIRCUITOS.indexOf(c); return i === -1 ? 99 : i; };
     const ord = regs.slice().sort((a, b) => idx(a.circuito) - idx(b.circuito) || exCmp(a.institucion || a.departamento, b.institucion || b.departamento));
@@ -4680,7 +4841,7 @@ function exHojaCentros(wb, dir, anio, version) {
     let circ = null, i = 0;
     ord.forEach(r => {
         if (r.circuito !== circ) { circ = r.circuito; h.completa((exTxt(circ) || "Sin circuito").toUpperCase(), exEstSubDorado(), 22); i = 0; }
-        exDato(h, [exTxt(r.circuito), exTxt(r.codigoPresupuestario), exTxt(r.institucion || r.departamento), exTxt(r.tipoDireccion), exTxt(r.funcionario), exTel(r.telefono), exTel(r.movil), exCorreos(r.correo)], i % 2 === 1, [1, 5, 6]);
+        exDato(h, [exTxt(r.circuito), exTxt(r.codigoPresupuestario), exTxt(r.institucion || r.departamento), exTxt(r.numero), exTxt(r.tipoDireccion), exTxt(r.funcionario), exCorreos(r.correo)], i % 2 === 1, [1]);
         i++;
     });
     h.fin(wb, "Centros Educativos");
