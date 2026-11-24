@@ -4503,16 +4503,79 @@ async function eliminarUsuario(uid) {
 function exportarExcel(filas, encabezados, nombreArchivo, nombreHoja) {
     if (!window.XLSX) { showToast("La librería de Excel no está cargada.", "danger"); return; }
     if (!filas.length) { showToast("No hay datos para exportar.", "warning"); return; }
-    const aoa = [encabezados].concat(filas);
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    // Estilo del encabezado: azul MEP, texto blanco en negrita
-    for (let c = 0; c < encabezados.length; c++) {
-        const addr = XLSX.utils.encode_cell({ r: 0, c: c });
-        if (!ws[addr]) ws[addr] = { v: "", t: "s" };
-        ws[addr].s = { fill: { fgColor: { rgb: "0B3C8C" } }, font: { bold: true, color: { rgb: "FFFFFF" }, sz: 11 }, alignment: { horizontal: "center", vertical: "center" } };
-    }
-    ws["!cols"] = encabezados.map(e => ({ wch: Math.max(12, Math.min(42, e.length + 6)) }));
+
     const wb = XLSX.utils.book_new();
+    wb.Props = {
+        Title: nombreHoja || "Reporte DREC",
+        Subject: "Exportación de datos institucionales",
+        Author: "Dirección Regional de Educación Cañas",
+        Company: "Ministerio de Educación Pública"
+    };
+    const totalCols = Math.max(encabezados.length, 1);
+    const aoa = [
+        [String(nombreHoja || "REPORTE INSTITUCIONAL").toUpperCase()],
+        ["Dirección Regional de Educación Cañas  ·  Generado: " + new Date().toLocaleString("es-CR")],
+        encabezados
+    ].concat(filas);
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    const estiloTitulo = { fill: { patternType: "solid", fgColor: { rgb: "0A192F" } }, font: { name: "Aptos Display", bold: true, color: { rgb: "FFFFFF" }, sz: 16 }, alignment: { horizontal: "left", vertical: "center" } };
+    const estiloSubtitulo = { fill: { patternType: "solid", fgColor: { rgb: "EAF1F8" } }, font: { name: "Aptos", italic: true, color: { rgb: "526477" }, sz: 9 }, alignment: { horizontal: "left", vertical: "center" } };
+    const estiloEncabezado = { fill: { patternType: "solid", fgColor: { rgb: "1E40AF" } }, font: { name: "Aptos", bold: true, color: { rgb: "FFFFFF" }, sz: 10 }, alignment: { horizontal: "center", vertical: "center", wrapText: true }, border: { bottom: { style: "medium", color: { rgb: "0A192F" } } } };
+    const bordeDato = { top: { style: "thin", color: { rgb: "E2E8F0" } }, bottom: { style: "thin", color: { rgb: "E2E8F0" } }, left: { style: "thin", color: { rgb: "E2E8F0" } }, right: { style: "thin", color: { rgb: "E2E8F0" } } };
+
+    for (let c = 0; c < totalCols; c++) {
+        const titulo = XLSX.utils.encode_cell({ r: 0, c: c });
+        const subtitulo = XLSX.utils.encode_cell({ r: 1, c: c });
+        const enc = XLSX.utils.encode_cell({ r: 2, c: c });
+        if (c === 0) {
+            ws[titulo].s = estiloTitulo;
+            ws[subtitulo].s = estiloSubtitulo;
+        }
+        ws[enc].s = estiloEncabezado;
+    }
+    for (let r = 3; r < aoa.length; r++) {
+        for (let c = 0; c < totalCols; c++) {
+            const addr = XLSX.utils.encode_cell({ r: r, c: c });
+            if (!ws[addr]) ws[addr] = { v: "", t: "s" };
+            ws[addr].s = {
+                font: { name: "Aptos", sz: 10, color: { rgb: "243247" } },
+                fill: { patternType: "solid", fgColor: { rgb: (r - 3) % 2 ? "F3F7FC" : "FFFFFF" } },
+                alignment: { vertical: "top", wrapText: true },
+                border: bordeDato
+            };
+        }
+    }
+
+    // Anchos basados en encabezados y valores reales, con límites legibles.
+    const widths = encabezados.map((e, c) => {
+        let max = String(e == null ? "" : e).length;
+        for (let r = 0; r < filas.length; r++) {
+            const value = filas[r] && filas[r][c] != null ? String(filas[r][c]) : "";
+            value.split("\n").forEach(line => { max = Math.max(max, line.length); });
+        }
+        return { wch: Math.max(12, Math.min(58, Math.ceil(max * 1.08) + 3)) };
+    });
+    ws["!cols"] = widths;
+    ws["!merges"] = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: totalCols - 1 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: totalCols - 1 } }
+    ];
+    ws["!rows"] = [{ hpt: 30 }, { hpt: 20 }, { hpt: 30 }];
+    for (let r = 3; r < aoa.length; r++) {
+        let maxLines = 1;
+        for (let c = 0; c < totalCols; c++) {
+            const value = aoa[r] && aoa[r][c] != null ? String(aoa[r][c]) : "";
+            const width = Math.max(10, widths[c].wch - 2);
+            const lines = value.split("\n").reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / width)), 0);
+            maxLines = Math.max(maxLines, lines);
+        }
+        ws["!rows"][r] = { hpt: Math.min(150, Math.max(22, maxLines * 15 + 7)) };
+    }
+    const lastCol = XLSX.utils.encode_col(totalCols - 1);
+    ws["!autofilter"] = { ref: "A3:" + lastCol + Math.max(3, aoa.length) };
+    ws["!freeze"] = { xSplit: 0, ySplit: 3, topLeftCell: "A4", activePane: "bottomLeft", state: "frozen" };
+    ws["!pageSetup"] = { orientation: "landscape", fitToWidth: 1, fitToHeight: 0, paperSize: 9 };
+    ws["!margins"] = { left: 0.25, right: 0.25, top: 0.5, bottom: 0.5, header: 0.2, footer: 0.2 };
     XLSX.utils.book_append_sheet(wb, ws, (nombreHoja || "DREC").slice(0, 31));
     XLSX.writeFile(wb, nombreArchivo);
     showToast("Archivo «" + nombreArchivo + "» generado.", "success");
@@ -4663,14 +4726,44 @@ function exHoja(n, anchosFijos) {
     h.fin = (wb, nombre) => {
         h.ws["!ref"] = XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: Math.max(h.r - 1, 0), c: h.n - 1 } });
         h.ws["!merges"] = h.merges;
-        let anchos = h.fijos ? h.fijos.slice() : h.ancho.map(w => Math.max(11, Math.min(52, Math.ceil(w * 1.1) + 2)));
+        let anchos = h.fijos ? h.fijos.slice() : h.ancho.map(w => Math.max(11, Math.min(60, Math.ceil(w * 1.08) + 3)));
+        // Los anchos predefinidos son una base; el contenido real puede ampliarlos.
+        for (let c = 0; c < h.n; c++) {
+            let max = 0;
+            for (let r = 0; r < h.r; r++) {
+                const celda = h.ws[XLSX.utils.encode_cell({ r: r, c: c })];
+                if (!celda || celda.v == null) continue;
+                String(celda.v).split("\n").forEach(linea => { max = Math.max(max, linea.length); });
+            }
+            anchos[c] = Math.max(anchos[c] || 8, Math.min(68, Math.ceil(max * 1.08) + 3));
+            anchos[c] = Math.min(68, anchos[c]);
+        }
         // Ancho total mínimo para que el banner institucional se lea completo.
         const total = anchos.reduce((a, b) => a + b, 0);
         if (total < 108) { let imax = 0; anchos.forEach((w, i) => { if (w > anchos[imax]) imax = i; }); anchos[imax] += 108 - total; }
         h.ws["!cols"] = anchos.map(w => ({ wch: w }));
         const filas = [];
-        for (let i = 0; i < h.r; i++) filas.push(h.alturas[i] ? { hpt: h.alturas[i] } : {});
+        for (let i = 0; i < h.r; i++) {
+            let altoCalculado = 20;
+            for (let c = 0; c < h.n; c++) {
+                const celda = h.ws[XLSX.utils.encode_cell({ r: i, c: c })];
+                if (!celda || celda.v == null || celda.v === "") continue;
+                // Detecta si la celda pertenece a una combinación y usa el ancho total.
+                const merge = h.merges.find(m => m.s.r === i && c >= m.s.c && c <= m.e.c);
+                let anchoTexto = anchos[c] || 12;
+                if (merge) {
+                    anchoTexto = 0;
+                    for (let k = merge.s.c; k <= merge.e.c; k++) anchoTexto += anchos[k] || 12;
+                }
+                const capacidad = Math.max(8, Math.floor(anchoTexto * 1.05));
+                const lineas = String(celda.v).split("\n").reduce((sum, linea) => sum + Math.max(1, Math.ceil(linea.length / capacidad)), 0);
+                altoCalculado = Math.max(altoCalculado, lineas * 15 + 7);
+            }
+            filas.push({ hpt: h.alturas[i] ? Math.max(h.alturas[i], Math.min(180, altoCalculado)) : Math.min(180, altoCalculado) });
+        }
         h.ws["!rows"] = filas;
+        // Mantiene visibles el encabezado institucional y la fila de títulos al desplazarse.
+        h.ws["!freeze"] = { xSplit: 0, ySplit: 4, topLeftCell: "A5", activePane: "bottomLeft", state: "frozen" };
         XLSX.utils.book_append_sheet(wb, h.ws, exNombreHoja(nombre));
     };
     return h;
@@ -4704,6 +4797,10 @@ function exHojaSimple(wb, nombre, titulo, encabezados, filas, centros, anio, ver
     if (!filas.length) exSinRegistros(h, anio);
     else filas.forEach((f, i) => exDato(h, f, i % 2 === 1, centros));
     h.fin(wb, nombre);
+    if (filas.length) {
+        const ws = wb.Sheets[exNombreHoja(nombre)];
+        ws["!autofilter"] = { ref: "A4:" + XLSX.utils.encode_col(encabezados.length - 1) + (4 + filas.length) };
+    }
 }
 
 /* ---------- Hoja 1: Portada y Marco ---------- */
