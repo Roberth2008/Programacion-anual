@@ -2246,3 +2246,88 @@ body, #appShell, .app-columna, #appMain { max-width: 100%; }
         animation-iteration-count: 1 !important; transition-duration: .01ms !important;
     }
 }
+
+
+/* ==================== ADMINISTRACIÓN DEL DIRECTORIO DE COMISIONES ==================== */
+.comisiones-admin-panel {
+    padding: 22px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(30, 64, 175, .12);
+    background: linear-gradient(145deg, #fff 0%, #f8fbff 100%);
+}
+.comisiones-admin-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+.comisiones-admin-heading h3 {
+    margin-top: 5px;
+    color: var(--navy);
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 800;
+}
+.comisiones-admin-heading p {
+    margin-top: 5px;
+    color: var(--texto-suave);
+    font-size: 12px;
+    line-height: 1.6;
+}
+.comisiones-admin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex: 0 0 auto;
+    padding: 7px 10px;
+    border-radius: 999px;
+    color: #1e40af;
+    background: #eff6ff;
+    font-size: 10px;
+    font-weight: 800;
+}
+.comisiones-admin-badge svg { width: 14px; height: 14px; }
+.comisiones-admin-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(170px, .42fr) auto;
+    align-items: end;
+    gap: 12px;
+}
+.comisiones-admin-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    color: #475569;
+    font-size: 11px;
+    font-weight: 800;
+}
+.comisiones-admin-form .campo { width: 100%; min-height: 44px; }
+.comision-admin-acciones {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-left: auto;
+}
+.comision-admin-acciones button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 38px;
+    padding: 8px 12px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 800;
+}
+.comision-admin-acciones svg { width: 14px; height: 14px; }
+.comision-encabezado { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+@media (max-width: 700px) {
+    .comisiones-admin-heading { flex-direction: column; }
+    .comisiones-admin-form { grid-template-columns: 1fr; }
+    .comisiones-admin-form button { width: 100%; justify-content: center; }
+    .comision-admin-acciones { width: 100%; margin-left: 0; }
+    .comision-admin-acciones button { flex: 1 1 auto; }
+}
